@@ -72,101 +72,108 @@ async function migrate() {
         if (id) dbMap[id] = row;
     });
 
+    // PRE-FETCH ALL EXISTING USERS (To handle "User already exists" correctly)
+    console.log("  Fetching existing Auth Users...");
+    const emailToIdMap = new Map();
+    let page = 1;
+    let hasMore = true;
+    while (hasMore) {
+        const { data: { users }, error } = await supabase.auth.admin.listUsers({ page: page, perPage: 1000 });
+        if (error || !users || users.length === 0) {
+            hasMore = false;
+        } else {
+            users.forEach(u => {
+                if (u.email) emailToIdMap.set(u.email.toLowerCase(), u.id);
+            });
+            console.log(`    Fetched page ${page} (${users.length} users)`);
+            page++;
+        }
+    }
+    console.log(`  Total existing users loaded: ${emailToIdMap.size}`);
+
     for (const row of akunData) {
         const email = cleanString(row['Email']);
-        const pin = cleanString(row['PIN']) || '123456'; // Default PIN if missing
+        const pin = cleanString(row['PIN']) || '123456';
         const idAnggota = cleanString(row['ID Anggota']);
         const status = cleanString(row['Status Akun']);
 
         if (!email) continue;
 
-        console.log(`Processing: ${email} (${idAnggota})`);
+        process.stdout.write(`Processing: ${idAnggota} ... `);
 
-        // Create User in Supabase Auth
-        let userId = null;
-        try {
-            const { data: userData, error: userError } = await supabase.auth.admin.createUser({
-                email: email,
-                password: pin,
-                email_confirm: true,
-                user_metadata: { member_id: idAnggota }
-            });
+        let userId = emailToIdMap.get(email.toLowerCase());
 
-            if (userError) {
-                if (userError.message.includes("already registered") || userError.status === 422) {
-                    console.log(`  User already exists. Fetching ID...`);
-                    // Fetch existing user to get ID
-                    const { data: listUser } = await supabase.auth.admin.listUsers();
-                    const existing = listUser.users.find(u => u.email.toLowerCase() === email.toLowerCase());
-                    if (existing) userId = existing.id;
-                } else {
-                    console.log(`  Error creating user: ${userError.message}`);
+        // Create User if not exists
+        if (!userId) {
+            try {
+                const { data: userData, error: userError } = await supabase.auth.admin.createUser({
+                    email: email,
+                    password: pin,
+                    email_confirm: true,
+                    user_metadata: { member_id: idAnggota }
+                });
+                if (userError) {
+                    console.log(`[AUTH FAIL] ${userError.message}`);
                     continue;
                 }
-            } else {
                 userId = userData.user.id;
-            }
-
-            if (!userId) {
-                console.log(`  Could not obtain User ID for ${email}. Skipping.`);
+                emailToIdMap.set(email.toLowerCase(), userId); // Update cache
+            } catch (e) {
+                console.log(`[EXCEPTION] ${e.message}`);
                 continue;
             }
-
-            // 2. MIGRATE PROFILE (DATABASE)
-            const profileRow = dbMap[idAnggota];
-            // Prepare payload
-            const payload = {
-                id: userId,
-                member_id: idAnggota,
-                account_status: status
-            };
-
-            if (profileRow) {
-                Object.assign(payload, {
-                    full_name: cleanString(profileRow['Nama Lengkap']),
-                    generation: cleanString(profileRow['Angkatan']),
-                    phone: cleanString(profileRow['Nomor Whatsapp']),
-                    gender: cleanString(profileRow['Jenis Kelamin']),
-                    birth_place: cleanString(profileRow['Tempat Lahir']),
-                    birth_date: parseDate(profileRow['Tgl Lahir']),
-
-                    education_level: cleanString(profileRow['Jenjang Pendidikan']),
-                    university: cleanString(profileRow['Universitas']),
-                    faculty: cleanString(profileRow['Fakultas']),
-                    major: cleanString(profileRow['Jurusan']),
-
-                    domicile_country: cleanString(profileRow['Negara Domisili']),
-                    domicile_city: cleanString(profileRow['Kota Domisili']),
-                    domicile_province: cleanString(profileRow['Provinsi Domisili']),
-
-                    photo_url: cleanString(profileRow['Foto']),
-                    linkedin_url: cleanString(profileRow['LinkedIn']),
-
-                    industry_sector: cleanString(profileRow['Sektor Industri']),
-                    job_type: cleanString(profileRow['Jenis Pekerjaan']),
-                    job_position: cleanString(profileRow['Jabatan']),
-                    company_name: cleanString(profileRow['Nama Instansi']),
-
-                    has_business: String(profileRow['Memiliki Usaha']).toLowerCase().includes('ya'),
-                    business_name: cleanString(profileRow['Nama Usaha']),
-                    business_field: cleanString(profileRow['Bidang Usaha']),
-                    business_location: cleanString(profileRow['Lokasi Usaha']),
-
-                    hobbies: cleanString(profileRow['Hobi']),
-                    interests: cleanString(profileRow['Minat']),
-                    communities: cleanString(profileRow['Komunitas Lain'])
-                });
-            }
-
-            // Upsert profile
-            const { error: profileError } = await supabase.from('profiles').upsert(payload);
-
-            if (profileError) console.error(`  Error upserting profile: ${profileError.message}`);
-            else console.log(`  Profile synced!`);
-
-        } catch (e) {
-            console.error(`  Exception: ${e.message}`);
         }
+
+        // 2. MIGRATE / UPDATE PROFILE
+        const profileRow = dbMap[idAnggota];
+        const payload = {
+            id: userId,
+            member_id: idAnggota,
+            account_status: status
+        };
+
+        if (profileRow) {
+            Object.assign(payload, {
+                full_name: cleanString(profileRow['Nama Lengkap']),
+                generation: cleanString(profileRow['Angkatan']),
+                phone: cleanString(profileRow['Nomor Whatsapp']),
+                gender: cleanString(profileRow['Jenis Kelamin']),
+                birth_place: cleanString(profileRow['Tempat Lahir']),
+                birth_date: parseDate(profileRow['Tgl Lahir']),
+
+                education_level: cleanString(profileRow['Jenjang Pendidikan']),
+                university: cleanString(profileRow['Universitas']),
+                faculty: cleanString(profileRow['Fakultas']),
+                major: cleanString(profileRow['Jurusan']),
+
+                domicile_country: cleanString(profileRow['Negara Domisili']),
+                domicile_city: cleanString(profileRow['Kota Domisili']),
+                domicile_province: cleanString(profileRow['Provinsi Domisili']),
+
+                photo_url: cleanString(profileRow['Foto']),
+                linkedin_url: cleanString(profileRow['LinkedIn']),
+
+                industry_sector: cleanString(profileRow['Sektor Industri']),
+                job_type: cleanString(profileRow['Jenis Pekerjaan']),
+                job_position: cleanString(profileRow['Jabatan']),
+                company_name: cleanString(profileRow['Nama Instansi']),
+
+                has_business: String(profileRow['Memiliki Usaha']).toLowerCase().includes('ya'),
+                business_name: cleanString(profileRow['Nama Usaha']),
+                business_field: cleanString(profileRow['Bidang Usaha']),
+                business_location: cleanString(profileRow['Lokasi Usaha']),
+
+                hobbies: cleanString(profileRow['Hobi']),
+                interests: cleanString(profileRow['Minat']),
+                communities: cleanString(profileRow['Komunitas Lain'])
+            });
+        }
+
+        // Upsert profile
+        const { error: profileError } = await supabase.from('profiles').upsert(payload);
+
+        if (profileError) console.log(`[PROFILE FAIL] ${profileError.message}`);
+        else console.log(`[OK]`);
     }
 
     // 3. MIGRATE AGENDA

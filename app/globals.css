@@ -1,34 +1,34 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-:root {
-  /* Palet Warna User - Corporate Djarum Theme */
-  --c-navy: #162B52;     /* Dominan */
-  --c-azure: #0068C7;    /* Aksen 1 */
-  --c-orange: #FF8817;   /* Aksen 2 */
-  --c-red: #EE1C25;      /* Alert */
-
-  --background: #FFFFFF;
-  --foreground: #333333;
-}
-
-@theme inline {
+@theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Seikat Colors */
+  --color-navy: #162B52;
+  --color-azure: #0068C7;
+  --color-orange: #FF8817;
+  --color-red: #EE1C25;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  --background: #FFFFFF;
+  --foreground: #333333;
+  --font-geist-sans: Arial, Helvetica, sans-serif;
+  --font-geist-mono: monospace;
 }
+
+/* Backwards compatibility classes if needed by Navbar/Page components 
+   Tailwind v4 generates classes from --color-* automatically (e.g. bg-navy, text-azure)
+   So we might not need manual utility classes if we name them right in @theme.
+   But my components use 'bg-navy', 'text-azure'.
+   Defining --color-navy in @theme creates bg-navy and text-navy automatically!
+*/
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
 }
