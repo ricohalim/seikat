@@ -63,6 +63,19 @@ export default function DashboardPage() {
         fetchProfile()
     }, [router])
 
+    // Helper to convert GDrive links to direct format
+    const getOptimizedImageUrl = (url: string) => {
+        if (!url) return null;
+        if (url.includes('drive.google.com')) {
+            // Extract ID
+            const idMatch = url.match(/[-\w]{25,}/);
+            if (idMatch) {
+                return `https://drive.google.com/thumbnail?id=${idMatch[0]}&sz=w400`; // Use Thumbnail API for faster loading & less CORS issues
+            }
+        }
+        return url;
+    }
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[50vh]">
@@ -72,6 +85,8 @@ export default function DashboardPage() {
     }
 
     if (!profile) return <div>Data tidak ditemukan.</div>
+
+    const displayPhoto = getOptimizedImageUrl(profile.photo_url);
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -83,8 +98,8 @@ export default function DashboardPage() {
                 <div className="relative pt-16 flex flex-col md:flex-row items-end md:items-end gap-6">
                     <div className="relative">
                         <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-md bg-gray-200 overflow-hidden">
-                            {profile.photo_url ? (
-                                <img src={profile.photo_url} alt="Profile" className="w-full h-full object-cover" />
+                            {displayPhoto ? (
+                                <img src={displayPhoto} alt="Profile" className="w-full h-full object-cover" />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
                                     <UserIcon size={48} />
