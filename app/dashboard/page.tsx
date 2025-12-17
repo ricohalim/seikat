@@ -36,6 +36,7 @@ interface Profile {
 
     linkedin_url: string
     account_status: string
+    role?: string
 }
 
 // ...
@@ -145,6 +146,14 @@ export default function DashboardPage() {
                                 <span className="flex items-center gap-1 bg-blue-50 border border-blue-100 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                                     Verified
                                 </span>
+                            )}
+                            {['admin', 'superadmin'].includes(profile.role || '') && (
+                                <Link
+                                    href="/admin"
+                                    className="flex items-center gap-1 bg-purple-50 border border-purple-100 text-purple-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider hover:bg-purple-100 transition"
+                                >
+                                    Admin Portal
+                                </Link>
                             )}
                         </div>
                         <div className="flex flex-wrap gap-3 text-gray-600 text-sm">
