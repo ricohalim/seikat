@@ -1,20 +1,33 @@
 -- SOLUSI FINAL: SEPARATE & CONQUER
 
--- 1. Helper Function (Admin Check)
+-- 1. Helper Function (Admin Check) - UPDATED robustness
 create or replace function public.is_admin_check()
 returns boolean
 language sql
 security definer
 stable
+set search_path = public -- Secure search path
 as $$
   select exists (
     select 1 from public.profiles 
     where id = auth.uid() 
-    and role in ('admin', 'superadmin')
+    and lower(role) in ('admin', 'superadmin') -- Case insensitive
   );
 $$;
 
--- 2. PUBLIC DIRECTORY RPC (Untuk User Biasa - Data Aman)
+-- ... (RPCs unchanged) ...
+
+-- Events Policies (Split for reliability)
+drop policy if exists "Events Public Read" on events;
+drop policy if exists "Events Admin Write" on events;
+drop policy if exists "Events are viewable by everyone" on events;
+
+create policy "Events Select" on events for select using (true);
+
+-- Explicit Write Policies
+create policy "Events Insert" on events for insert with check (public.is_admin_check() = true);
+create policy "Events Update" on events for update using (public.is_admin_check() = true);
+create policy "Events Delete" on events for delete using (public.is_admin_check() = true);
 create or replace function public.get_directory_members()
 returns table (
   id uuid,
