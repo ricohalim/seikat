@@ -3,20 +3,50 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { Save, Loader2, User, Phone, MapPin, Linkedin, Building2, BookOpen } from 'lucide-react'
+import { Save, Loader2, User, Building2, MapPin, GraduationCap, Briefcase, Heart } from 'lucide-react'
+import {
+    GENDERS, GENERATIONS, EDUCATION_LEVELS, COUNTRIES, PROVINCES,
+    UNIVERSITIES, FACULTIES, JOB_TYPES, BUSINESS_FIELDS, INDUSTRY_SECTORS
+} from '@/lib/constants'
 
 interface ProfileData {
     full_name: string
     phone: string
-    domicile_city: string
+    // birth_place is missing in schema based on previous read, but user asked for it. 
+    // We assume schema update or we add it to UI and it might fail if not in DB.
+    // We will include it.
+    birth_place: string
+    gender: string
+
+    // Academic
+    generation: string
+    education_level: string // Saat Beasiswa
+    current_education_level: string // Trakhir
+    university: string
+    faculty: string
+    major: string
+
+    // Domicile
+    domicile_country: string
     domicile_province: string
-    linkedin_url: string
-    photo_url: string
+    domicile_city: string
 
     // Job
-    company_name: string
+    job_type: string
     job_position: string
+    company_name: string
     industry_sector: string
+    linkedin_url: string
+
+    // Business & Interests
+    hobbies: string
+    interests: string
+    communities: string
+    has_business: boolean
+    business_name: string
+    business_field: string
+
+    photo_url: string
 }
 
 export default function EditProfilePage() {
@@ -28,13 +58,29 @@ export default function EditProfilePage() {
     const [formData, setFormData] = useState<ProfileData>({
         full_name: '',
         phone: '',
-        domicile_city: '',
+        birth_place: '',
+        gender: '',
+        generation: '',
+        education_level: '',
+        current_education_level: '',
+        university: '',
+        faculty: '',
+        major: '',
+        domicile_country: 'INDONESIA',
         domicile_province: '',
-        linkedin_url: '',
-        photo_url: '',
-        company_name: '',
+        domicile_city: '',
+        job_type: '',
         job_position: '',
-        industry_sector: ''
+        company_name: '',
+        industry_sector: '',
+        linkedin_url: '',
+        hobbies: '',
+        interests: '',
+        communities: '',
+        has_business: false,
+        business_name: '',
+        business_field: '',
+        photo_url: ''
     })
 
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
@@ -60,13 +106,29 @@ export default function EditProfilePage() {
                 setFormData({
                     full_name: data.full_name || '',
                     phone: data.phone || '',
-                    domicile_city: data.domicile_city || '',
+                    birth_place: data.birth_place || '',
+                    gender: data.gender || '',
+                    generation: data.generation || '',
+                    education_level: data.education_level || '',
+                    current_education_level: data.current_education_level || '',
+                    university: data.university || '',
+                    faculty: data.faculty || '',
+                    major: data.major || '',
+                    domicile_country: data.domicile_country || 'INDONESIA',
                     domicile_province: data.domicile_province || '',
-                    linkedin_url: data.linkedin_url || '',
-                    photo_url: data.photo_url || '',
-                    company_name: data.company_name || '',
+                    domicile_city: data.domicile_city || '',
+                    job_type: data.job_type || '',
                     job_position: data.job_position || '',
-                    industry_sector: data.industry_sector || ''
+                    company_name: data.company_name || '',
+                    industry_sector: data.industry_sector || '',
+                    linkedin_url: data.linkedin_url || '',
+                    hobbies: data.hobbies || '',
+                    interests: data.interests || '',
+                    communities: data.communities || '',
+                    has_business: data.has_business || false,
+                    business_name: data.business_name || '',
+                    business_field: data.business_field || '',
+                    photo_url: data.photo_url || ''
                 })
             }
             setLoading(false)
@@ -75,9 +137,21 @@ export default function EditProfilePage() {
         fetchProfile()
     }, [router])
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
+
+        // Special case for University Uppercase
+        if (name === 'university') {
+            setFormData(prev => ({ ...prev, [name]: value.toUpperCase() }))
+            return
+        }
+
         setFormData(prev => ({ ...prev, [name]: value }))
+    }
+
+    const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, checked } = e.target
+        setFormData(prev => ({ ...prev, [name]: checked }))
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -87,16 +161,19 @@ export default function EditProfilePage() {
 
         if (!userId) return
 
+        // OMIT columns that might not exist yet if verification fails? 
+        // No, we try to update all. Supabase will error if column missing.
+        // If error, we show it.
+
         const { error } = await supabase
             .from('profiles')
             .update(formData)
             .eq('id', userId)
 
         if (error) {
-            setMessage({ type: 'error', text: 'Gagal menyimpan perubahan: ' + error.message })
+            setMessage({ type: 'error', text: 'Gagal menyimpan: ' + error.message + ' (Mungkin ada kolom database yang belum dibuat admin)' })
         } else {
             setMessage({ type: 'success', text: 'Profil berhasil diperbarui!' })
-            // Optional: Refresh router to update Sidebar name etc if changed
             router.refresh()
         }
         setSaving(false)
@@ -108,7 +185,7 @@ export default function EditProfilePage() {
         <div className="max-w-3xl mx-auto space-y-6">
             <div>
                 <h2 className="text-2xl font-bold text-navy">Edit Profil</h2>
-                <p className="text-gray-500 text-sm">Perbarui informasi terbaru Anda.</p>
+                <p className="text-gray-500 text-sm">Lengkapi data Anda agar akurat 100%.</p>
             </div>
 
             {message && (
@@ -117,82 +194,259 @@ export default function EditProfilePage() {
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8 space-y-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
 
-                {/* Section 1: Basic Info */}
-                <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-navy border-b border-gray-100 pb-2 flex items-center gap-2">
-                        <User size={20} className="text-azure" /> Informasi Dasar
+                {/* Section: FOTO & KONTAK */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 className="text-sm font-bold text-azure uppercase mb-4 flex items-center gap-2 border-b border-gray-50 pb-2">
+                        <User size={16} /> Foto & Kontak
                     </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="md:col-span-2">
-                            <label className="block text-xs font-bold text-gray-500 mb-1 ml-1">Link Foto Profil (Google Drive Public)</label>
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Link Foto Profil (Google Drive Public)</label>
                             <input type="text" name="photo_url" value={formData.photo_url} onChange={handleChange}
-                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none transition"
+                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
                                 placeholder="https://drive.google.com/..."
                             />
-                            <p className="text-[10px] text-gray-400 mt-1 ml-1">Pastikan link Google Drive sudah di-set "Anyone with the link can view".</p>
                         </div>
-
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 ml-1">Nama Lengkap</label>
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Nama Lengkap</label>
                             <input type="text" name="full_name" value={formData.full_name} onChange={handleChange} required
-                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none transition"
+                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 ml-1">Nomor Whatsapp</label>
+                            <label className="block text-xs font-bold text-gray-500 mb-1">No. Whatsapp</label>
                             <input type="text" name="phone" value={formData.phone} onChange={handleChange}
-                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none transition"
+                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 ml-1">Kota Domisili</label>
-                            <input type="text" name="domicile_city" value={formData.domicile_city} onChange={handleChange}
-                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none transition"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 ml-1">Provinsi</label>
-                            <input type="text" name="domicile_province" value={formData.domicile_province} onChange={handleChange}
-                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none transition"
-                            />
-                        </div>
-                        <div className="md:col-span-2">
-                            <label className="block text-xs font-bold text-gray-500 mb-1 ml-1">LinkedIn URL</label>
+                            <label className="block text-xs font-bold text-gray-500 mb-1">LinkedIn URL</label>
                             <input type="text" name="linkedin_url" value={formData.linkedin_url} onChange={handleChange}
-                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none transition"
-                                placeholder="https://linkedin.com/in/..."
+                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
                             />
                         </div>
                     </div>
                 </div>
 
-                {/* Section 2: Job Info */}
-                <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-navy border-b border-gray-100 pb-2 flex items-center gap-2">
-                        <Building2 size={20} className="text-orange" /> Pekerjaan
+                {/* Section: DATA AKADEMIK */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 className="text-sm font-bold text-azure uppercase mb-4 flex items-center gap-2 border-b border-gray-50 pb-2">
+                        <GraduationCap size={16} /> Data Akademik
                     </h3>
-
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 ml-1">Jabatan / Posisi</label>
-                            <input type="text" name="job_position" value={formData.job_position} onChange={handleChange}
-                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none transition"
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Jenis Kelamin</label>
+                            <select name="gender" value={formData.gender} onChange={handleChange}
+                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none bg-white"
+                            >
+                                <option value="">- Pilih -</option>
+                                {GENDERS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Tempat Lahir</label>
+                            <input type="text" name="birth_place" value={formData.birth_place} onChange={handleChange}
+                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 ml-1">Perusahaan / Instansi</label>
-                            <input type="text" name="company_name" value={formData.company_name} onChange={handleChange}
-                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none transition"
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Angkatan</label>
+                            <select name="generation" value={formData.generation} onChange={handleChange}
+                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none bg-white"
+                            >
+                                <option value="">- Pilih -</option>
+                                {GENERATIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Pendidikan (Saat Terima Beasiswa)</label>
+                            <select name="education_level" value={formData.education_level} onChange={handleChange}
+                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none bg-white"
+                            >
+                                <option value="">- Pilih -</option>
+                                {EDUCATION_LEVELS.filter(l => ['D4', 'S1'].includes(l)).map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                            </select>
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Universitas</label>
+                            <input
+                                list="universities-list"
+                                type="text"
+                                name="university"
+                                value={formData.university}
+                                onChange={handleChange}
+                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
+                                placeholder="Ketik nama universitas..."
+                            />
+                            <datalist id="universities-list">
+                                {UNIVERSITIES.map(uni => <option key={uni} value={uni} />)}
+                            </datalist>
+                            <p className="text-[10px] text-gray-400 mt-1">Bisa ketik sendiri jika tidak ada di list (Otomatis huruf besar)</p>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Fakultas</label>
+                            <select name="faculty" value={formData.faculty} onChange={handleChange}
+                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none bg-white"
+                            >
+                                <option value="">- Pilih -</option>
+                                {FACULTIES.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Jurusan</label>
+                            <input type="text" name="major" value={formData.major} onChange={handleChange}
+                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
+                            />
+                        </div>
+
+                        <div className="md:col-span-2 border-t border-dashed border-gray-200 pt-4 mt-2">
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Pendidikan Terakhir / Saat Ini</label>
+                            <select name="current_education_level" value={formData.current_education_level} onChange={handleChange}
+                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none bg-white"
+                            >
+                                <option value="">- Pilih -</option>
+                                {EDUCATION_LEVELS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Section: DOMISILI */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 className="text-sm font-bold text-azure uppercase mb-4 flex items-center gap-2 border-b border-gray-50 pb-2">
+                        <MapPin size={16} /> Domisili
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Negara</label>
+                            <select name="domicile_country" value={formData.domicile_country} onChange={handleChange}
+                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none bg-white"
+                            >
+                                <option value="">- Pilih -</option>
+                                {COUNTRIES.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                            </select>
+                        </div>
+                        {formData.domicile_country === 'INDONESIA' ? (
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 mb-1">Provinsi</label>
+                                <select name="domicile_province" value={formData.domicile_province} onChange={handleChange}
+                                    className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none bg-white"
+                                >
+                                    <option value="">- Pilih -</option>
+                                    {PROVINCES.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                </select>
+                            </div>
+                        ) : (
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 mb-1">Provinsi / Wilayah</label>
+                                <input type="text" name="domicile_province" value={formData.domicile_province} onChange={handleChange}
+                                    className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
+                                />
+                            </div>
+                        )}
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Kota</label>
+                            <input type="text" name="domicile_city" value={formData.domicile_city} onChange={handleChange}
+                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Section: PEKERJAAN */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 className="text-sm font-bold text-azure uppercase mb-4 flex items-center gap-2 border-b border-gray-50 pb-2">
+                        <Briefcase size={16} /> Pekerjaan
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="md:col-span-2">
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Sektor Industri</label>
+                            <select name="industry_sector" value={formData.industry_sector} onChange={handleChange}
+                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none bg-white"
+                            >
+                                <option value="">- Pilih -</option>
+                                {INDUSTRY_SECTORS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Jenis Pekerjaan</label>
+                            <select name="job_type" value={formData.job_type} onChange={handleChange}
+                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none bg-white"
+                            >
+                                <option value="">- Pilih -</option>
+                                {JOB_TYPES.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Jabatan / Posisi</label>
+                            <input type="text" name="job_position" value={formData.job_position} onChange={handleChange}
+                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
                             />
                         </div>
                         <div className="md:col-span-2">
-                            <label className="block text-xs font-bold text-gray-500 mb-1 ml-1">Sektor Industri</label>
-                            <input type="text" name="industry_sector" value={formData.industry_sector} onChange={handleChange}
-                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none transition"
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Nama Instansi / Perusahaan</label>
+                            <input type="text" name="company_name" value={formData.company_name} onChange={handleChange}
+                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
                             />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Section: MINAT & USAHA */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 className="text-sm font-bold text-azure uppercase mb-4 flex items-center gap-2 border-b border-gray-50 pb-2">
+                        <Heart size={16} /> Minat & Usaha
+                    </h3>
+                    <div className="grid grid-cols-1 gap-4">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Hobi</label>
+                            <input type="text" name="hobbies" value={formData.hobbies} onChange={handleChange}
+                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Minat</label>
+                            <input type="text" name="interests" value={formData.interests} onChange={handleChange}
+                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Komunitas Lain</label>
+                            <input type="text" name="communities" value={formData.communities} onChange={handleChange}
+                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
+                            />
+                        </div>
+                        <div className="border-t border-gray-50 pt-4 mt-2">
+                            <label className="flex items-center gap-2 text-sm font-bold text-navy mb-4 cursor-pointer">
+                                <input type="checkbox" name="has_business" checked={formData.has_business} onChange={handleCheckboxChange}
+                                    className="w-4 h-4 text-navy rounded border-gray-300 focus:ring-navy"
+                                />
+                                Memiliki Usaha / Bisnis Sendiri?
+                            </label>
+
+                            {formData.has_business && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-6 animate-in fade-in slide-in-from-top-2">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1">Nama Usaha</label>
+                                        <input type="text" name="business_name" value={formData.business_name} onChange={handleChange}
+                                            className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1">Bidang Usaha</label>
+                                        <select name="business_field" value={formData.business_field} onChange={handleChange}
+                                            className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none bg-white"
+                                        >
+                                            <option value="">- Pilih -</option>
+                                            {BUSINESS_FIELDS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -201,7 +455,7 @@ export default function EditProfilePage() {
                     <button
                         type="submit"
                         disabled={saving}
-                        className="bg-navy text-white px-6 py-3 rounded-lg font-bold shadow-md hover:bg-navy/90 transition flex items-center gap-2 disabled:opacity-50"
+                        className="bg-navy text-white px-8 py-3 rounded-lg font-bold shadow-md hover:bg-navy/90 transition flex items-center gap-2 disabled:opacity-50"
                     >
                         {saving ? (
                             <>
