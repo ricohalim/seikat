@@ -122,6 +122,34 @@ export default function RegisterPage() {
 
             const currentEdLevel = isSameEducation ? formData.education_level : formData.current_education_level
 
+            // 0. Check Existing Registration (Priority)
+            // Check 'temp_registrations'
+            const { data: tempList } = await supabase
+                .from('temp_registrations')
+                .select('status')
+                .eq('email', email)
+                .maybeSingle()
+
+            if (tempList) {
+                if (tempList.status === 'Pending') {
+                    setError('Email ini sudah terdaftar dan sedang dalam proses verifikasi. Silakan cek status di halaman "Cek Akun".')
+                    setLoading(false)
+                    return
+                }
+                if (tempList.status === 'Approved') {
+                    setError('Email ini sudah terdaftar sebagai Member Aktif. Silakan langsung Login.')
+                    setLoading(false)
+                    return
+                }
+            }
+
+            // Check 'profiles' (Active) - if email column exists or if we rely on Auth.
+            // Supabase Auth signUp will handle existing auth users, but if 'profiles' exists but auth doesn't? (Migration case)
+            // We'll trust Supabase Auth 'User already registered' error for the most part, 
+            // but the user specifically asked "Check email first".
+            // Since we can't easily query profiles.email (if it doesn't exist/is secured), 
+            // we rely on temp_registrations check above + Supabase Auth check below.
+
             // 3. Register Data Payload
             const profilePayload = {
                 ...formData,

@@ -12,20 +12,53 @@ interface Member {
     linkedin_url: string
 }
 
+import { calculateProfileCompleteness } from '@/lib/utils'
+import Link from 'next/link'
+import { Lock, AlertCircle } from 'lucide-react'
+
+// ...
+
 export default function DirectoryPage() {
     const [members, setMembers] = useState<Member[]>([])
     const [filteredMembers, setFilteredMembers] = useState<Member[]>([])
     const [loading, setLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState('')
 
-    // Fetch specific fields to be lightweight
+    // Authorization State
+    const [isAuthorized, setIsAuthorized] = useState(false)
+    const [isUserLoading, setIsUserLoading] = useState(true)
+
+    // Check Authorization First
     useEffect(() => {
+        async function checkAccess() {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) return // Auth middleware handles redirect typically
+
+            // Fetch MY profile
+            const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+
+            if (profile) {
+                const percent = calculateProfileCompleteness(profile)
+                if (percent >= 90) {
+                    setIsAuthorized(true)
+                }
+            }
+            setIsUserLoading(false)
+        }
+        checkAccess()
+    }, [])
+
+    // Fetch Directory ONLY if Authorized
+    useEffect(() => {
+        if (!isAuthorized || isUserLoading) return
+
         async function fetchMembers() {
             const { data, error } = await supabase
                 .from('profiles')
                 .select(`
                   id, full_name, generation, photo_url, linkedin_url
                 `)
+                .neq('account_status', 'Pending') // Ideally show only Active
                 .order('full_name', { ascending: true })
 
             if (error) {
@@ -37,8 +70,38 @@ export default function DirectoryPage() {
             setLoading(false)
         }
 
-        fetchMembers()
-    }, [])
+        // Only run fetch logic if authorized
+        if (isAuthorized) {
+            fetchMembers()
+        }
+    }, [isAuthorized, isUserLoading])
+
+    if (isUserLoading) return <div className="p-8 text-center text-gray-500">Memeriksa akses...</div>
+
+    if (!isAuthorized) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6 space-y-6">
+                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-2">
+                    <Lock size={40} />
+                </div>
+                <div>
+                    <h2 className="text-2xl font-bold text-navy">Akses Terkunci</h2>
+                    <p className="text-gray-500 max-w-md mx-auto mt-2">
+                        Fitur Direktori Alumni hanya dapat diakses oleh anggota yang telah melengkapi profil mereka (Verified Badge).
+                    </p>
+                </div>
+                <div className="bg-orange/5 border border-orange/20 p-4 rounded-xl max-w-md text-left flex items-start gap-3">
+                    <AlertCircle className="text-orange flex-shrink-0 mt-0.5" size={18} />
+                    <p className="text-sm text-gray-600">
+                        Profil Anda belum memenuhi syarat 90% kelengkapan. Silakan lengkapi data kontak, pekerjaan, dan akademik Anda.
+                    </p>
+                </div>
+                <Link href="/dashboard/profile" className="bg-navy text-white px-6 py-3 rounded-xl font-bold hover:bg-navy/90 transition shadow-lg hover:shadow-xl hover:-translate-y-1">
+                    Lengkapi Profil Sekarang
+                </Link>
+            </div>
+        )
+    }
 
     // Search Logic
     useEffect(() => {

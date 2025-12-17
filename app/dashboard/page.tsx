@@ -35,9 +35,11 @@ interface Profile {
 }
 
 import QRCode from 'react-qr-code'
-import { X } from 'lucide-react'
+import { calculateProfileCompleteness } from '@/lib/utils'
+import Link from 'next/link'
+import { AlertCircle, CheckCircle, X } from 'lucide-react'
 
-// ... existing imports ...
+// ...
 
 export default function DashboardPage() {
     const [profile, setProfile] = useState<Profile | null>(null)
@@ -46,25 +48,45 @@ export default function DashboardPage() {
     const router = useRouter()
 
     useEffect(() => {
-        // ... existing fetchProfile ...
+        async function fetchProfile() {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) {
+                router.push('/auth/login')
+                return
+            }
+
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', user.id)
+                .single()
+
+            if (error) {
+                console.error('Error fetching profile:', error)
+            } else {
+                setProfile({ ...data, email: user.email })
+            }
+            setLoading(false)
+        }
+
+        fetchProfile()
     }, [router])
 
-    // ... existing helpers ...
-
-    if (loading) {
-        // ... existing loading ...
-    }
+    if (loading) return <div className="p-8 text-center text-gray-500">Memuat profil...</div>
 
     if (!profile) return <div>Data tidak ditemukan.</div>
+
+    // Calculate Integrity
+    const completionPercentage = calculateProfileCompleteness(profile)
+    const isVerified = completionPercentage >= 90
 
     // Helper to convert GDrive links to direct format
     const getOptimizedImageUrl = (url: string) => {
         if (!url) return null;
         if (url.includes('drive.google.com')) {
-            // Extract ID
             const idMatch = url.match(/[-\w]{25,}/);
             if (idMatch) {
-                return `https://drive.google.com/thumbnail?id=${idMatch[0]}&sz=w400`; // Use Thumbnail API for faster loading & less CORS issues
+                return `https://drive.google.com/thumbnail?id=${idMatch[0]}&sz=w400`;
             }
         }
         return url;
@@ -75,13 +97,31 @@ export default function DashboardPage() {
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
 
+            {/* Verification Status Banner (If incomplete) */}
+            {!isVerified && (
+                <div className="bg-orange/10 border border-orange/20 rounded-xl p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-orange/20 p-2 rounded-full text-orange">
+                            <AlertCircle size={20} />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-navy text-sm">Profil Belum Lengkap ({completionPercentage}%)</h4>
+                            <p className="text-xs text-gray-600">Lengkapi profil Anda hingga 90% untuk mendapatkan lencana Verified dan akses fitur Agenda.</p>
+                        </div>
+                    </div>
+                    <Link href="/dashboard/profile" className="text-xs font-bold bg-white border border-orange/30 text-orange px-3 py-2 rounded-lg hover:bg-orange/5 transition">
+                        Lengkapi Profil
+                    </Link>
+                </div>
+            )}
+
             {/* 1. Header Card (Hero) */}
             <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-navy to-azure opacity-90"></div>
 
                 <div className="relative pt-16 flex flex-col md:flex-row items-end md:items-end gap-6">
                     <div className="relative">
-                        <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-md bg-gray-200 overflow-hidden">
+                        <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-md bg-gray-200 overflow-hidden relative">
                             {/* ... img logic ... */}
                             {displayPhoto ? (
                                 <img src={displayPhoto} alt="Profile" className="w-full h-full object-cover" />
@@ -91,9 +131,9 @@ export default function DashboardPage() {
                                 </div>
                             )}
                         </div>
-                        {profile.account_status === 'Active' && (
-                            <div className="absolute bottom-2 right-2 bg-green-500 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border-2 border-white shadow-sm">
-                                Active
+                        {isVerified && (
+                            <div className="absolute bottom-2 right-2 bg-blue-500 text-white p-1.5 rounded-full border-2 border-white shadow-sm" title="Verified Member">
+                                <CheckCircle size={14} fill="white" className="text-blue-500" />
                             </div>
                         )}
                     </div>
