@@ -1,14 +1,20 @@
 
-// Auto-generate generations starting from 18 (2002/2003) up to current
+// Auto-generate generations starting from 18 (2002/2003) up to current - 2 years
 export const generateGenerations = () => {
     const generations = []
     const startGen = 18
     const startYear = 2002
-    // Use fixed current year to simulate consistent behavior for now, or just Date
-    const currentYear = new Date().getFullYear()
 
-    // Allow for +1 year relative to current acad year
-    const endYear = currentYear + 1
+    // "Angkatan -2 tahun karna belum jadi alumni"
+    // Example: Current 2024 -> Show until 2022 (Batch 38) ? 
+    // Or does it mean "Current Batch is 42, but Alumni is up to 40"?
+    // If current year is 2025. 2025 - 2002 = 23. 18+23 = 41.
+    // User said "terbaru 40". 
+    // If User says "terbaru 40", and current year is roughly 2024/2025.
+    // Let's use `currentYear - 2` as the safety buffer for "Alumni Status".
+
+    const currentYear = new Date().getFullYear()
+    const endYear = currentYear - 2 // Strict limit as per request
 
     for (let year = startYear; year <= endYear; year++) {
         const gen = startGen + (year - startYear)

@@ -2,18 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Search, MapPin, Building2, GraduationCap, X } from 'lucide-react'
+import { Search, MapPin, Building2, GraduationCap, X, Linkedin } from 'lucide-react'
 
 interface Member {
     id: string
     full_name: string
     generation: string
-    university: string
-    company_name: string
-    job_position: string
     photo_url: string
-    domicile_city: string
-    domicile_province: string
+    linkedin_url: string
 }
 
 export default function DirectoryPage() {
@@ -28,10 +24,8 @@ export default function DirectoryPage() {
             const { data, error } = await supabase
                 .from('profiles')
                 .select(`
-          id, full_name, generation, university, 
-          company_name, job_position, photo_url,
-          domicile_city, domicile_province
-        `)
+                  id, full_name, generation, photo_url, linkedin_url
+                `)
                 .order('full_name', { ascending: true })
 
             if (error) {
@@ -52,11 +46,8 @@ export default function DirectoryPage() {
 
         const results = members.filter(member => {
             const name = member.full_name?.toLowerCase() || ''
-            const uni = member.university?.toLowerCase() || ''
-            const company = member.company_name?.toLowerCase() || ''
             const batch = member.generation?.toString().toLowerCase() || ''
-
-            return name.includes(query) || uni.includes(query) || company.includes(query) || batch.includes(query)
+            return name.includes(query) || batch.includes(query)
         })
 
         setFilteredMembers(results)
@@ -87,7 +78,7 @@ export default function DirectoryPage() {
                     </div>
                     <input
                         type="text"
-                        placeholder="Cari nama, kampus, perusahaan..."
+                        placeholder="Cari nama atau angkatan..."
                         className="block w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy text-sm transition"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -113,7 +104,7 @@ export default function DirectoryPage() {
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {filteredMembers.map((member) => (
-                            <div key={member.id} className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition border border-gray-100 group">
+                            <div key={member.id} className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition border border-gray-100 group relative">
                                 <div className="h-24 bg-gradient-to-r from-gray-100 to-gray-200 relative">
                                     <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] font-bold text-navy shadow-sm">
                                         TS {member.generation}
@@ -135,23 +126,24 @@ export default function DirectoryPage() {
                                         )}
                                     </div>
 
-                                    <h3 className="font-bold text-navy truncate" title={member.full_name}>
-                                        {member.full_name}
-                                    </h3>
-                                    <div className="text-sm text-gray-500 mb-3 truncate flex items-center gap-1">
-                                        <GraduationCap size={14} />
-                                        {member.university || 'Universitas -'}
+                                    <div className="flex justify-between items-start gap-2">
+                                        <h3 className="font-bold text-navy line-clamp-2" title={member.full_name}>
+                                            {member.full_name}
+                                        </h3>
+
+                                        {member.linkedin_url && (
+                                            <a href={member.linkedin_url} target="_blank" rel="noopener noreferrer"
+                                                className="text-gray-400 hover:text-[#0077b5] transition flex-shrink-0"
+                                            >
+                                                <Linkedin size={18} />
+                                            </a>
+                                        )}
                                     </div>
 
-                                    <div className="space-y-1 text-xs text-gray-600 border-t border-gray-50 pt-3">
-                                        <div className="flex items-start gap-2">
-                                            <Building2 size={14} className="text-gray-400 mt-0.5" />
-                                            <span className="line-clamp-1">{member.job_position || '-'} at {member.company_name || '-'}</span>
-                                        </div>
-                                        <div className="flex items-start gap-2">
-                                            <MapPin size={14} className="text-gray-400 mt-0.5" />
-                                            <span className="line-clamp-1">{member.domicile_city}, {member.domicile_province}</span>
-                                        </div>
+                                    <div className="mt-1">
+                                        <span className="text-xs font-medium text-gray-500 bg-gray-50 px-2 py-1 rounded inline-block">
+                                            Beswan {member.generation}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -163,10 +155,6 @@ export default function DirectoryPage() {
                             <p>Tidak ada alumni yang cocok dengan pencarian "{searchQuery}"</p>
                         </div>
                     )}
-
-                    <div className="text-center text-xs text-gray-400 mt-8">
-                        Menampilkan {filteredMembers.length} dari {members.length} Alumni
-                    </div>
                 </>
             )}
         </div>

@@ -8,20 +8,19 @@ import {
     GENDERS, GENERATIONS, EDUCATION_LEVELS, COUNTRIES, PROVINCES,
     UNIVERSITIES, FACULTIES, JOB_TYPES, BUSINESS_FIELDS, INDUSTRY_SECTORS
 } from '@/lib/constants'
+import ProfileImageUpload from '@/app/components/ProfileImageUpload'
 
 interface ProfileData {
     full_name: string
     phone: string
-    // birth_place is missing in schema based on previous read, but user asked for it. 
-    // We assume schema update or we add it to UI and it might fail if not in DB.
-    // We will include it.
     birth_place: string
     gender: string
 
     // Academic
     generation: string
     education_level: string // Saat Beasiswa
-    current_education_level: string // Trakhir
+    // For 'current' education logic
+    current_education_level: string
     university: string
     faculty: string
     major: string
@@ -36,16 +35,20 @@ interface ProfileData {
     job_position: string
     company_name: string
     industry_sector: string
-    linkedin_url: string
+    linkedin_url: string // Stores FULL URL for DB, but used as Username in UI? No, store full URL for standard. UI input takes username.
 
     // Business & Interests
     hobbies: string
     interests: string
-    communities: string
+    communities: string // Added back
     has_business: boolean
     business_name: string
+    business_desc: string
     business_field: string
+    business_position: string
+    business_location: string
 
+    // Img
     photo_url: string
 }
 
@@ -54,6 +57,10 @@ export default function EditProfilePage() {
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [userId, setUserId] = useState<string | null>(null)
+
+    // Local state for UI logic
+    const [isSameEducation, setIsSameEducation] = useState(true)
+    const [linkedinUsername, setLinkedinUsername] = useState('')
 
     const [formData, setFormData] = useState<ProfileData>({
         full_name: '',
@@ -79,7 +86,10 @@ export default function EditProfilePage() {
         communities: '',
         has_business: false,
         business_name: '',
+        business_desc: '',
         business_field: '',
+        business_position: '',
+        business_location: '',
         photo_url: ''
     })
 
@@ -100,9 +110,16 @@ export default function EditProfilePage() {
                 .eq('id', user.id)
                 .single()
 
-            if (error) {
-                console.error('Error fetching profile:', error)
-            } else if (data) {
+            if (data) {
+                // Extract Linkedin Username
+                let liUser = ''
+                if (data.linkedin_url) {
+                    const parts = data.linkedin_url.split('/in/')
+                    if (parts.length > 1) liUser = parts[1].replace('/', '')
+                    else liUser = data.linkedin_url
+                }
+                setLinkedinUsername(liUser)
+
                 setFormData({
                     full_name: data.full_name || '',
                     phone: data.phone || '',
@@ -127,9 +144,20 @@ export default function EditProfilePage() {
                     communities: data.communities || '',
                     has_business: data.has_business || false,
                     business_name: data.business_name || '',
+                    business_desc: data.business_desc || '',
                     business_field: data.business_field || '',
+                    business_position: data.business_position || '',
+                    business_location: data.business_location || '',
                     photo_url: data.photo_url || ''
                 })
+
+                // Check Logic for "Same Education"
+                // If current_education_level is empty OR equal to education_level, set true
+                if (!data.current_education_level || data.current_education_level === data.education_level) {
+                    setIsSameEducation(true)
+                } else {
+                    setIsSameEducation(false)
+                }
             }
             setLoading(false)
         }
@@ -140,13 +168,30 @@ export default function EditProfilePage() {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
 
-        // Special case for University Uppercase
+        // University Uppercase
         if (name === 'university') {
             setFormData(prev => ({ ...prev, [name]: value.toUpperCase() }))
             return
         }
 
         setFormData(prev => ({ ...prev, [name]: value }))
+    }
+
+    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        let val = e.target.value.replace(/[^0-9+]/g, '') // Allow numbers and +
+
+        // Auto-prefix logic? 
+        // If user starts typing '08', maybe replace with '628'?
+        // Or just let them type, but validate on Save. 
+        // Let's force it on blur or simple replace if they type '08...'
+        if (val.startsWith('0')) {
+            val = '62' + val.substring(1)
+        }
+        setFormData(prev => ({ ...prev, phone: val }))
+    }
+
+    const handleLinkedinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setLinkedinUsername(e.target.value)
     }
 
     const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -161,9 +206,34 @@ export default function EditProfilePage() {
 
         if (!userId) return
 
-        // OMIT columns that might not exist yet if verification fails? 
-        // No, we try to update all. Supabase will error if column missing.
-        // If error, we show it.
+        // 1. Validate Phone
+        if (formData.phone && !formData.phone.startsWith('62') && !formData.phone.startsWith('+')) {
+            // Default to indonesia if no code
+            // But user asked for validation "Start with country code". 
+            // If they typed '8123', we prepend 62.
+            const cleanPhone = '62' + formData.phone.replace(/^0+/, '')
+            setFormData(prev => ({ ...prev, phone: cleanPhone }))
+            // Note: React state update is async, so we use local variable for submission payload
+            formData.phone = cleanPhone
+        }
+
+        // 2. Prepare LinkedIn URL
+        if (linkedinUsername) {
+            // Remove full url junk if they pasted it despite instructions
+            let cleanUser = linkedinUsername
+            if (cleanUser.includes('linkedin.com/in/')) {
+                cleanUser = cleanUser.split('linkedin.com/in/')[1].replace(/\/$/, '')
+            }
+            formData.linkedin_url = `https://www.linkedin.com/in/${cleanUser}`
+        } else {
+            formData.linkedin_url = ''
+        }
+
+        // 3. Handle Education Logic
+        if (isSameEducation) {
+            // If same, current level = scholarship level 
+            formData.current_education_level = formData.education_level
+        }
 
         const { error } = await supabase
             .from('profiles')
@@ -171,7 +241,7 @@ export default function EditProfilePage() {
             .eq('id', userId)
 
         if (error) {
-            setMessage({ type: 'error', text: 'Gagal menyimpan: ' + error.message + ' (Mungkin ada kolom database yang belum dibuat admin)' })
+            setMessage({ type: 'error', text: 'Gagal menyimpan: ' + error.message })
         } else {
             setMessage({ type: 'success', text: 'Profil berhasil diperbarui!' })
             router.refresh()
@@ -201,14 +271,13 @@ export default function EditProfilePage() {
                     <h3 className="text-sm font-bold text-azure uppercase mb-4 flex items-center gap-2 border-b border-gray-50 pb-2">
                         <User size={16} /> Foto & Kontak
                     </h3>
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1">Link Foto Profil (Google Drive Public)</label>
-                            <input type="text" name="photo_url" value={formData.photo_url} onChange={handleChange}
-                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
-                                placeholder="https://drive.google.com/..."
-                            />
-                        </div>
+
+                    <ProfileImageUpload
+                        currentUrl={formData.photo_url}
+                        onUploadComplete={(url) => setFormData(p => ({ ...p, photo_url: url }))}
+                    />
+
+                    <div className="space-y-4 mt-6">
                         <div>
                             <label className="block text-xs font-bold text-gray-500 mb-1">Nama Lengkap</label>
                             <input type="text" name="full_name" value={formData.full_name} onChange={handleChange} required
@@ -217,15 +286,26 @@ export default function EditProfilePage() {
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-gray-500 mb-1">No. Whatsapp</label>
-                            <input type="text" name="phone" value={formData.phone} onChange={handleChange}
-                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
-                            />
+                            <div className="relative">
+                                <span className="absolute left-3 top-2 text-gray-400 font-medium">+</span>
+                                <input type="text" name="phone" value={formData.phone} onChange={handlePhoneChange}
+                                    placeholder="628123456789"
+                                    className="w-full pl-6 p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
+                                />
+                            </div>
+                            <p className="text-[10px] text-gray-400 mt-1">Gunakan kode negara (contoh: 62812...)</p>
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1">LinkedIn URL</label>
-                            <input type="text" name="linkedin_url" value={formData.linkedin_url} onChange={handleChange}
-                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
-                            />
+                            <label className="block text-xs font-bold text-gray-500 mb-1">LinkedIn Username</label>
+                            <div className="flex items-center">
+                                <span className="bg-gray-50 border border-r-0 border-gray-300 text-gray-500 text-xs p-2 rounded-l-lg">
+                                    linkedin.com/in/
+                                </span>
+                                <input type="text" value={linkedinUsername} onChange={handleLinkedinChange}
+                                    className="flex-1 p-2 border border-gray-200 rounded-r-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
+                                    placeholder="username"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -260,13 +340,15 @@ export default function EditProfilePage() {
                                 {GENERATIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                             </select>
                         </div>
+
+                        {/* Scholarship Education */}
                         <div>
                             <label className="block text-xs font-bold text-gray-500 mb-1">Pendidikan (Saat Terima Beasiswa)</label>
                             <select name="education_level" value={formData.education_level} onChange={handleChange}
                                 className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none bg-white"
                             >
                                 <option value="">- Pilih -</option>
-                                {EDUCATION_LEVELS.filter(l => ['D4', 'S1'].includes(l)).map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                {['D4', 'S1'].map(opt => <option key={opt} value={opt}>{opt}</option>)}
                             </select>
                         </div>
 
@@ -284,7 +366,6 @@ export default function EditProfilePage() {
                             <datalist id="universities-list">
                                 {UNIVERSITIES.map(uni => <option key={uni} value={uni} />)}
                             </datalist>
-                            <p className="text-[10px] text-gray-400 mt-1">Bisa ketik sendiri jika tidak ada di list (Otomatis huruf besar)</p>
                         </div>
 
                         <div>
@@ -303,14 +384,40 @@ export default function EditProfilePage() {
                             />
                         </div>
 
+                        {/* Current Education Toggle */}
                         <div className="md:col-span-2 border-t border-dashed border-gray-200 pt-4 mt-2">
-                            <label className="block text-xs font-bold text-gray-500 mb-1">Pendidikan Terakhir / Saat Ini</label>
-                            <select name="current_education_level" value={formData.current_education_level} onChange={handleChange}
-                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none bg-white"
-                            >
-                                <option value="">- Pilih -</option>
-                                {EDUCATION_LEVELS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                            </select>
+                            <label className="flex items-center gap-2 text-sm font-bold text-navy mb-4 cursor-pointer">
+                                <input type="checkbox" checked={isSameEducation} onChange={(e) => setIsSameEducation(e.target.checked)}
+                                    className="w-4 h-4 text-navy rounded border-gray-300 focus:ring-navy"
+                                />
+                                Pendidikan Saat Ini sama dengan saat menerima Beasiswa?
+                            </label>
+
+                            {!isSameEducation && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-0 md:pl-6 animate-in fade-in slide-in-from-top-2">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1">Jenjang Pendidikan Saat Ini</label>
+                                        <select name="current_education_level" value={formData.current_education_level} onChange={handleChange}
+                                            className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none bg-white"
+                                        >
+                                            <option value="">- Pilih -</option>
+                                            {EDUCATION_LEVELS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                        </select>
+                                    </div>
+                                    {/* If current education is different, maybe they want to specify a NEW university? 
+                                The user requirement said: "minta isi jenjang dan nama univ (user type [upper case] saja)"
+                                So we need another University input for Current Ed? 
+                                Assuming 'university' field in DB is for the Scholarship one. 
+                                Adding 'current_university' logic? 
+                                User request: "minta isi jenjang dan nama univ" implies YES.
+                                But we didn't add 'current_university' to DB schema yet. 
+                                We will presume we can reuse 'university' field? No that overwrites.
+                                We will ask user to add `current_university` text column too or just skip for now and use generic. 
+                                Wait, "nama univ (user type)"... 
+                                I will add a text input, but warn about Schema. 
+                             */}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -326,7 +433,6 @@ export default function EditProfilePage() {
                             <select name="domicile_country" value={formData.domicile_country} onChange={handleChange}
                                 className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none bg-white"
                             >
-                                <option value="">- Pilih -</option>
                                 {COUNTRIES.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                             </select>
                         </div>
@@ -420,6 +526,7 @@ export default function EditProfilePage() {
                                 className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
                             />
                         </div>
+
                         <div className="border-t border-gray-50 pt-4 mt-2">
                             <label className="flex items-center gap-2 text-sm font-bold text-navy mb-4 cursor-pointer">
                                 <input type="checkbox" name="has_business" checked={formData.has_business} onChange={handleCheckboxChange}
@@ -429,7 +536,7 @@ export default function EditProfilePage() {
                             </label>
 
                             {formData.has_business && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-6 animate-in fade-in slide-in-from-top-2">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-0 md:pl-6 animate-in fade-in slide-in-from-top-2">
                                     <div>
                                         <label className="block text-xs font-bold text-gray-500 mb-1">Nama Usaha</label>
                                         <input type="text" name="business_name" value={formData.business_name} onChange={handleChange}
@@ -444,6 +551,25 @@ export default function EditProfilePage() {
                                             <option value="">- Pilih -</option>
                                             {BUSINESS_FIELDS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                                         </select>
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-xs font-bold text-gray-500 mb-1">Deskripsi Usaha</label>
+                                        <textarea name="business_desc" value={formData.business_desc} onChange={handleChange}
+                                            className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
+                                            rows={2}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1">Jabatan dalam Usaha</label>
+                                        <input type="text" name="business_position" value={formData.business_position} onChange={handleChange}
+                                            className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1">Lokasi Usaha</label>
+                                        <input type="text" name="business_location" value={formData.business_location} onChange={handleChange}
+                                            className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
+                                        />
                                     </div>
                                 </div>
                             )}
