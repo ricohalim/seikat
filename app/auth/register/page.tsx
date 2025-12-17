@@ -544,15 +544,13 @@ export default function RegisterPage() {
                                     </div>
                                 </section>
 
-                                </section>
-
                                 {/* TnC Checkbox */}
                                 <div className="pt-4 border-t">
                                     <div className="flex items-start gap-3 mb-6">
                                         <div className="relative flex items-center">
-                                            <input 
-                                                type="checkbox" 
-                                                id="tnc" 
+                                            <input
+                                                type="checkbox"
+                                                id="tnc"
                                                 checked={tncAccepted}
                                                 onChange={(e) => setTncAccepted(e.target.checked)}
                                                 className="w-5 h-5 rounded border-gray-300 text-navy focus:ring-navy cursor-pointer mt-0.5"
@@ -579,7 +577,7 @@ export default function RegisterPage() {
                 </div>
             </div>
 
-    <style jsx>{`
+            <style jsx>{`
                 .label {
                     display: block;
                     font-size: 0.70rem;
