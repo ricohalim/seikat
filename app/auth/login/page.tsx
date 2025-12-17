@@ -19,7 +19,7 @@ export default function LoginPage() {
         setError(null)
 
         try {
-            const { data, error } = await supabase.auth.signInWithPassword({
+            const { error } = await supabase.auth.signInWithPassword({
                 email,
                 password,
             })
@@ -27,8 +27,12 @@ export default function LoginPage() {
             if (error) throw error
 
             router.push('/dashboard')
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err) {
+            if (err instanceof Error) {
+                setError(err.message)
+            } else {
+                setError('Terjadi kesalahan saat login')
+            }
         } finally {
             setLoading(false)
         }
