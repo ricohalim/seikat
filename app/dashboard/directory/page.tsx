@@ -28,22 +28,31 @@ export default function DirectoryPage() {
     const [isAuthorized, setIsAuthorized] = useState(false)
     const [isUserLoading, setIsUserLoading] = useState(true)
 
+    // Hydration Mismatch Fix: Start with a "mounting" state or ensure loading matches server
+    const [authLoading, setAuthLoading] = useState(true)
+
     // Check Authorization First
     useEffect(() => {
         async function checkAccess() {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) return // Auth middleware handles redirect typically
+            try {
+                const { data: { user } } = await supabase.auth.getUser()
+                if (!user) return // Auth middleware handles redirect typically
 
-            // Fetch MY profile
-            const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+                // Fetch MY profile
+                const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
 
-            if (profile) {
-                const percent = calculateProfileCompleteness(profile)
-                if (percent >= 90) {
-                    setIsAuthorized(true)
+                if (profile) {
+                    const percent = calculateProfileCompleteness(profile)
+                    if (percent >= 90) {
+                        setIsAuthorized(true)
+                    }
                 }
+            } catch (error) {
+                console.error("Error checking access:", error)
+            } finally {
+                setIsUserLoading(false)
+                setAuthLoading(false)
             }
-            setIsUserLoading(false)
         }
         checkAccess()
     }, [])
@@ -76,7 +85,7 @@ export default function DirectoryPage() {
         }
     }, [isAuthorized, isUserLoading])
 
-    if (isUserLoading) return <div className="p-8 text-center text-gray-500">Memeriksa akses...</div>
+    if (authLoading || isUserLoading) return <div className="p-8 text-center text-gray-500">Memeriksa akses...</div>
 
     if (!isAuthorized) {
         return (

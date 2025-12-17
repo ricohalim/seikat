@@ -22,16 +22,20 @@ import { Lock, AlertCircle } from 'lucide-react'
 export default function EventsPage() {
     const [events, setEvents] = useState<Event[]>([])
     const [loading, setLoading] = useState(true)
+    const [registeredEventIds, setRegisteredEventIds] = useState<string[]>([])
+    const [registeringId, setRegisteringId] = useState<string | null>(null)
 
     // Authorization State
     const [isAuthorized, setIsAuthorized] = useState(false)
     const [isUserLoading, setIsUserLoading] = useState(true)
+    const [currentUser, setCurrentUser] = useState<any>(null)
 
     // Check Authorization First
     useEffect(() => {
         async function checkAccess() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) return
+            setCurrentUser(user)
 
             const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
 
@@ -49,24 +53,55 @@ export default function EventsPage() {
     useEffect(() => {
         if (!isAuthorized || isUserLoading) return
 
-        async function fetchEvents() {
-            const { data, error } = await supabase
+        async function fetchData() {
+            // Fetch Events
+            const { data: eventsData, error: eventsError } = await supabase
                 .from('events')
                 .select('*')
-                .order('date_start', { ascending: false }) // Newest first
+                .neq('status', 'Draft')
+                .order('date_start', { ascending: false })
 
-            if (error) {
-                console.error('Error fetching events:', error)
-            } else {
-                setEvents(data || [])
+            if (eventsData) setEvents(eventsData)
+
+            // Fetch My Registrations
+            if (currentUser) {
+                const { data: registrations } = await supabase
+                    .from('event_participants')
+                    .select('event_id')
+                    .eq('user_id', currentUser.id)
+
+                if (registrations) {
+                    setRegisteredEventIds(registrations.map(r => r.event_id))
+                }
             }
             setLoading(false)
         }
 
         if (isAuthorized) {
-            fetchEvents()
+            fetchData()
         }
-    }, [isAuthorized, isUserLoading])
+    }, [isAuthorized, isUserLoading, currentUser])
+
+    const handleRegister = async (eventId: string) => {
+        if (!confirm('Apakah Anda yakin ingin mendaftar kegiatan ini?')) return
+        setRegisteringId(eventId)
+
+        try {
+            const { error } = await supabase.from('event_participants').insert({
+                event_id: eventId,
+                user_id: currentUser.id
+            })
+
+            if (error) throw error
+
+            setRegisteredEventIds(prev => [...prev, eventId])
+            alert('Berhasil mendaftar kegiatan!')
+        } catch (error) {
+            alert('Gagal mendaftar. Anda mungkin sudah terdaftar.')
+        } finally {
+            setRegisteringId(null)
+        }
+    }
 
     if (isUserLoading) return <div className="p-8 text-center text-gray-500">Memeriksa akses...</div>
 
@@ -119,56 +154,71 @@ export default function EventsPage() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {events.map((event) => (
-                        <div key={event.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition flex flex-col">
-                            <div className="h-2 bg-gradient-to-r from-orange to-red-500"></div>
-                            <div className="p-6 flex-1 flex flex-col">
-                                <div className="flex justify-between items-start mb-4">
-                                    <h3 className="text-xl font-bold text-navy line-clamp-2">{event.title}</h3>
-                                    <span className={`text-xs font-bold px-2 py-1 rounded-full uppercase ${event.status === 'Open' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                                        }`}>
-                                        {event.status}
-                                    </span>
-                                </div>
+                    {events.map((event) => {
+                        const isRegistered = registeredEventIds.includes(event.id)
+                        const isClosed = event.status !== 'Open'
 
-                                <p className="text-gray-600 text-sm mb-6 line-clamp-3">
-                                    {event.description || 'Tidak ada deskripsi.'}
-                                </p>
+                        return (
+                            <div key={event.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition flex flex-col">
+                                <div className={`h-2 ${isClosed ? 'bg-gray-300' : 'bg-gradient-to-r from-orange to-red-500'}`}></div>
+                                <div className="p-6 flex-1 flex flex-col">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <h3 className="text-xl font-bold text-navy line-clamp-2">{event.title}</h3>
+                                        <span className={`text-xs font-bold px-2 py-1 rounded-full uppercase ${isRegistered ? 'bg-green-100 text-green-700' :
+                                                isClosed ? 'bg-gray-100 text-gray-500' : 'bg-blue-50 text-blue-600'
+                                            }`}>
+                                            {isRegistered ? 'Terdaftar' : event.status}
+                                        </span>
+                                    </div>
 
-                                <div className="mt-auto space-y-3 pt-6 border-t border-gray-50 text-sm text-gray-500">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-azure">
-                                            <Calendar size={16} />
+                                    <p className="text-gray-600 text-sm mb-6 line-clamp-3">
+                                        {event.description || 'Tidak ada deskripsi.'}
+                                    </p>
+
+                                    <div className="mt-auto space-y-3 pt-6 border-t border-gray-50 text-sm text-gray-500">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-azure">
+                                                <Calendar size={16} />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] uppercase font-bold text-gray-400">Tanggal</span>
+                                                <span className="font-medium text-gray-700">
+                                                    {event.date_start ? new Date(event.date_start).toLocaleDateString('id-ID', {
+                                                        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+                                                    }) : '-'}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-[10px] uppercase font-bold text-gray-400">Tanggal</span>
-                                            <span className="font-medium text-gray-700">
-                                                {event.date_start ? new Date(event.date_start).toLocaleDateString('id-ID', {
-                                                    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-                                                }) : '-'}
-                                            </span>
+
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-orange/10 flex items-center justify-center text-orange">
+                                                <MapPin size={16} />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] uppercase font-bold text-gray-400">Lokasi</span>
+                                                <span className="font-medium text-gray-700">{event.location || 'Online'}</span>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-orange/10 flex items-center justify-center text-orange">
-                                            <MapPin size={16} />
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-[10px] uppercase font-bold text-gray-400">Lokasi</span>
-                                            <span className="font-medium text-gray-700">{event.location || 'Online'}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {event.status === 'Open' && (
-                                    <button className="w-full mt-6 bg-navy text-white font-bold py-2 rounded-lg hover:bg-navy/90 transition text-sm">
-                                        Daftar Kegiatan
+                                    <button
+                                        onClick={() => handleRegister(event.id)}
+                                        disabled={isRegistered || isClosed || registeringId === event.id}
+                                        className={`w-full mt-6 font-bold py-2 rounded-lg transition text-sm ${isRegistered
+                                                ? 'bg-green-100 text-green-700 cursor-default'
+                                                : isClosed
+                                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                    : 'bg-navy text-white hover:bg-navy/90'
+                                            }`}
+                                    >
+                                        {registeringId === event.id ? 'Mendaftarkan...' :
+                                            isRegistered ? 'Anda Telah Terdaftar' :
+                                                isClosed ? 'Pendaftaran Ditutup' : 'Daftar Kegiatan'}
                                     </button>
-                                )}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        )
+                    })}
                 </div>
             )}
         </div>

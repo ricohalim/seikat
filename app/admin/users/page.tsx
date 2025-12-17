@@ -9,6 +9,7 @@ export default function UserManagementPage() {
     const [loading, setLoading] = useState(true)
     const [filter, setFilter] = useState('')
     const [currentUserRole, setCurrentUserRole] = useState('')
+    const [authLoading, setAuthLoading] = useState(true)
 
     // Pagination
     const [page, setPage] = useState(0)
@@ -20,18 +21,26 @@ export default function UserManagementPage() {
 
     useEffect(() => {
         const checkRole = async () => {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (user) {
-                const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-                setCurrentUserRole(profile?.role || 'member')
+            try {
+                const { data: { user } } = await supabase.auth.getUser()
+                if (user) {
+                    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+                    setCurrentUserRole(profile?.role || 'member')
+                }
+            } catch (error) {
+                console.error("Error checking role:", error)
+            } finally {
+                setAuthLoading(false)
             }
         }
         checkRole()
     }, [])
 
     useEffect(() => {
-        fetchUsers()
-    }, [page, filter]) // Refetch on page or filter change
+        if (!authLoading && currentUserRole === 'superadmin') {
+            fetchUsers()
+        }
+    }, [page, filter, authLoading, currentUserRole]) // Refetch on page or filter change
 
     const fetchUsers = async () => {
         setLoading(true)
@@ -70,7 +79,7 @@ export default function UserManagementPage() {
         if (!confirm(`Ubah role user ini menjadi ${newRole}?`)) return
         try {
             await supabase.from('profiles').update({ role: newRole }).eq('id', userId)
-            setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u))
+            setUsers(prev => prev.map(u => u.id === users.find(u => u.id === userId)?.id ? { ...u, role: newRole } : u)) // Safer update
             alert('Role berhasil diubah.')
         } catch (err) {
             alert('Gagal mengubah role.')
@@ -79,6 +88,14 @@ export default function UserManagementPage() {
 
     const handleResetPassword = async (email: string) => {
         alert("Fitur Reset Password User lain memerlukan Backend Function (Supabase Admin API). \n\nSilahkan minta user reset sendiri via 'Lupa Password' atau gunakan Dashboard Supabase.")
+    }
+
+    if (authLoading) {
+        return (
+            <div className="flex h-[50vh] items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-navy"></div>
+            </div>
+        )
     }
 
     const maxPage = Math.ceil(totalItems / ITEMS_PER_PAGE)
@@ -146,8 +163,8 @@ export default function UserManagementPage() {
                                             value={u.role || 'member'}
                                             onChange={(e) => handleRoleChange(u.id, e.target.value)}
                                             className={`px-2 py-1 rounded text-xs font-bold border-none outline-none cursor-pointer ${u.role === 'superadmin' ? 'bg-purple-100 text-purple-700' :
-                                                    u.role === 'admin' ? 'bg-blue-100 text-blue-700' :
-                                                        'bg-gray-100 text-gray-600'
+                                                u.role === 'admin' ? 'bg-blue-100 text-blue-700' :
+                                                    'bg-gray-100 text-gray-600'
                                                 }`}
                                         >
                                             <option value="member">Member</option>
