@@ -63,11 +63,10 @@ export default function DirectoryPage() {
 
         async function fetchMembers() {
             const { data, error } = await supabase
-                .from('profiles')
+                .from('public_profiles_view' as any) // Typecast as view might not be generated in types yet
                 .select(`
                   id, full_name, generation, photo_url, linkedin_url
                 `)
-                .neq('account_status', 'Pending') // Ideally show only Active
                 .order('full_name', { ascending: true })
 
             if (error) {
