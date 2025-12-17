@@ -90,6 +90,10 @@ export default function DirectoryPage() {
         }
     }, [isAuthorized, isUserLoading])
 
+    // Pagination State
+    const [page, setPage] = useState(0)
+    const ITEMS_PER_PAGE = 12
+
     // Search Logic (MOVED UP to prevent Hook Error #310)
     useEffect(() => {
         const query = searchQuery.toLowerCase()
@@ -101,7 +105,19 @@ export default function DirectoryPage() {
         })
 
         setFilteredMembers(results)
+        setPage(0) // Reset to first page on search
     }, [searchQuery, members])
+
+    // Pagination Logic
+    const totalPages = Math.ceil(filteredMembers.length / ITEMS_PER_PAGE)
+    const paginatedMembers = filteredMembers.slice(
+        page * ITEMS_PER_PAGE,
+        (page + 1) * ITEMS_PER_PAGE
+    )
+
+    const scrollToTop = () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
 
     if (authLoading || isUserLoading) return <div className="p-8 text-center text-gray-500">Memeriksa akses...</div>
 
@@ -138,8 +154,6 @@ export default function DirectoryPage() {
         )
     }
 
-
-
     // Helper for images
     const getOptimizedImageUrl = (url: string) => {
         if (!url) return null;
@@ -151,7 +165,7 @@ export default function DirectoryPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-20"> {/* Added pb-20 for bottom spacing on mobile */}
             <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4">
                 <div>
                     <h2 className="text-2xl font-bold text-navy">Alumni Directory</h2>
@@ -194,8 +208,8 @@ export default function DirectoryPage() {
                 </div>
             ) : (
                 <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {filteredMembers.map((member) => (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6"> {/* Squeezed gap on mobile */}
+                        {paginatedMembers.map((member) => ( /* CHANGED to paginatedMembers */
                             <div key={member.id} className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition border border-gray-100 group relative">
                                 <div className="h-24 bg-gradient-to-r from-gray-100 to-gray-200 relative">
                                     <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] font-bold text-navy shadow-sm">
@@ -242,19 +256,44 @@ export default function DirectoryPage() {
                         ))}
                     </div>
 
-                    {!loading && members.length === 0 && (
+                    {filteredMembers.length === 0 && (
                         <div className="text-center py-20 text-gray-400">
-                            <div className="bg-gray-50 inline-block p-4 rounded-full mb-4">
-                                <Search size={24} className="opacity-50" />
-                            </div>
-                            <p>Belum ada data alumni yang aktif di sistem.</p>
+                            {members.length === 0 ? (
+                                <>
+                                    <div className="bg-gray-50 inline-block p-4 rounded-full mb-4">
+                                        <Search size={24} className="opacity-50" />
+                                    </div>
+                                    <p>Belum ada data alumni yang aktif di sistem.</p>
+                                </>
+                            ) : (
+                                <>
+                                    <p>Tidak ada alumni yang cocok dengan pencarian "{searchQuery}"</p>
+                                    <button onClick={() => setSearchQuery('')} className="text-navy font-bold hover:underline mt-2">Reset Pencarian</button>
+                                </>
+                            )}
                         </div>
                     )}
 
-                    {!loading && members.length > 0 && filteredMembers.length === 0 && (
-                        <div className="text-center py-20 text-gray-400">
-                            <p>Tidak ada alumni yang cocok dengan pencarian "{searchQuery}"</p>
-                            <button onClick={() => setSearchQuery('')} className="text-navy font-bold hover:underline mt-2">Reset Pencarian</button>
+                    {/* Pagination Controls */}
+                    {filteredMembers.length > ITEMS_PER_PAGE && (
+                        <div className="flex items-center justify-center gap-4 pt-8 border-t border-gray-100 mt-8">
+                            <button
+                                onClick={() => { setPage(p => Math.max(0, p - 1)); scrollToTop(); }}
+                                disabled={page === 0}
+                                className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 transition"
+                            >
+                                Sebelumnya
+                            </button>
+                            <span className="text-sm font-medium text-gray-500">
+                                Halaman <span className="text-navy font-bold">{page + 1}</span> dari {totalPages}
+                            </span>
+                            <button
+                                onClick={() => { setPage(p => Math.min(totalPages - 1, p + 1)); scrollToTop(); }}
+                                disabled={page >= totalPages - 1}
+                                className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 transition"
+                            >
+                                Selanjutnya
+                            </button>
                         </div>
                     )}
                 </>
