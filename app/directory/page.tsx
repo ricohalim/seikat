@@ -1,11 +1,14 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Search, MapPin, Building2, GraduationCap, Briefcase } from 'lucide-react'
-
+// import { Search, MapPin, Building2, GraduationCap, Briefcase } from 'lucide-react' // Commented out for debugging
+import Link from 'next/link'
 
 export default function AlumniDirectoryPage() {
+    // Hydration check
+    const [isMounted, setIsMounted] = useState(false)
+
     const [alumni, setAlumni] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [filter, setFilter] = useState('')
@@ -15,56 +18,58 @@ export default function AlumniDirectoryPage() {
     const [generationFilter, setGenerationFilter] = useState('')
     const [universityFilter, setUniversityFilter] = useState('')
 
-    const fetchAlumni = useCallback(async () => {
-        setLoading(true)
-        try {
-            let query = supabase
-                .from('profiles')
-                .select('id, full_name, generation, university, major, job_position, company_name, domicile_city, photo_url, role')
-                .eq('account_status', 'Active') // ONLY Verified Members
-                .order('full_name', { ascending: true })
-                .range(page * 12, (page + 1) * 12 - 1)
-
-            if (filter) {
-                query = query.ilike('full_name', `%${filter}%`)
-            }
-            if (generationFilter) {
-                query = query.eq('generation', generationFilter)
-            }
-            if (universityFilter) {
-                query = query.ilike('university', `%${universityFilter}%`)
-            }
-
-            const { data, error } = await query
-
-            if (data) setAlumni(data)
-            if (error) console.error(error)
-        } catch (err) {
-            console.error(err)
-        } finally {
-            setLoading(false)
-        }
-    }, [page, filter, generationFilter, universityFilter])
+    useEffect(() => {
+        setIsMounted(true)
+    }, [])
 
     useEffect(() => {
+        if (!isMounted) return
+
+        const fetchAlumni = async () => {
+            setLoading(true)
+            try {
+                let query = supabase
+                    .from('profiles')
+                    .select('id, full_name, generation, university, major, job_position, company_name, domicile_city, photo_url, role')
+                    .eq('account_status', 'Active')
+                    .order('full_name', { ascending: true })
+                    .range(page * 12, (page + 1) * 12 - 1)
+
+                if (filter) query = query.ilike('full_name', `%${filter}%`)
+                if (generationFilter) query = query.eq('generation', generationFilter)
+                if (universityFilter) query = query.ilike('university', `%${universityFilter}%`)
+
+                const { data, error } = await query
+
+                if (data) setAlumni(data)
+                if (error) console.error(error)
+            } catch (err) {
+                console.error(err)
+            } finally {
+                setLoading(false)
+            }
+        }
+
         fetchAlumni()
-    }, [fetchAlumni])
+    }, [isMounted, page, filter, generationFilter, universityFilter])
+
+    if (!isMounted) return null // Prevent hydration mismatch
 
     return (
-        <div className="max-w-7xl mx-auto space-y-8">
+        <div className="max-w-7xl mx-auto space-y-8 p-4">
             <header className="text-center space-y-4">
                 <h1 className="text-3xl font-bold text-navy">Direktori Alumni</h1>
                 <p className="text-gray-500 max-w-2xl mx-auto">Temukan dan terkoneksi dengan ribuan alumni Beswan Djarum dari berbagai angkatan dan universitas.</p>
 
                 {/* Search Bar */}
                 <div className="max-w-xl mx-auto relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                    {/* <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} /> */}
                     <input
                         type="text"
                         placeholder="Cari nama alumni..."
                         value={filter}
                         onChange={(e) => setFilter(e.target.value)}
-                        className="w-full pl-12 pr-6 py-4 rounded-full border border-gray-200 shadow-sm focus:border-navy focus:ring-2 focus:ring-navy/20 outline-none text-lg transition"
+                        className="w-full px-6 py-4 rounded-full border border-gray-200 shadow-sm focus:border-navy focus:ring-2 focus:ring-navy/20 outline-none text-lg transition"
                     />
                 </div>
 
@@ -95,8 +100,8 @@ export default function AlumniDirectoryPage() {
                         <div key={i} className="h-64 bg-gray-100 rounded-2xl animate-pulse"></div>
                     ))
                 ) : alumni.map((a) => (
-                    <div key={a.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition group text-center relative overflow-hidden">
-                        <div className="w-24 h-24 mx-auto rounded-full bg-gray-200 mb-4 overflow-hidden border-4 border-white shadow-sm group-hover:scale-105 transition">
+                    <div key={a.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition text-center overflow-hidden">
+                        <div className="w-24 h-24 mx-auto rounded-full bg-gray-200 mb-4 overflow-hidden border-4 border-white shadow-sm">
                             {a.photo_url ? (
                                 <img src={a.photo_url} alt={a.full_name} className="w-full h-full object-cover" />
                             ) : (
@@ -111,25 +116,22 @@ export default function AlumniDirectoryPage() {
 
                         <div className="space-y-2 text-sm text-gray-600 text-left bg-gray-50 p-4 rounded-xl">
                             <div className="flex items-start gap-2">
-                                <Building2 size={14} className="shrink-0 mt-0.5 text-gray-400" />
+                                <span className="font-bold text-gray-400 text-xs uppercase w-4 flex-shrink-0">Univ</span>
                                 <span className="truncate">{a.university}</span>
                             </div>
                             <div className="flex items-start gap-2">
-                                <GraduationCap size={14} className="shrink-0 mt-0.5 text-gray-400" />
+                                <span className="font-bold text-gray-400 text-xs uppercase w-4 flex-shrink-0">Major</span>
                                 <span className="truncate">{a.major}</span>
                             </div>
                             <div className="flex items-start gap-2">
-                                <Briefcase size={14} className="shrink-0 mt-0.5 text-gray-400" />
+                                <span className="font-bold text-gray-400 text-xs uppercase w-4 flex-shrink-0">Job</span>
                                 <span className="truncate">{a.company_name ? `${a.job_position} @ ${a.company_name}` : '-'}</span>
                             </div>
                             <div className="flex items-start gap-2">
-                                <MapPin size={14} className="shrink-0 mt-0.5 text-gray-400" />
+                                <span className="font-bold text-gray-400 text-xs uppercase w-4 flex-shrink-0">City</span>
                                 <span className="truncate">{a.domicile_city || '-'}</span>
                             </div>
                         </div>
-
-                        {/* View Profile Button (Future) */}
-                        {/* <Link href={`/profile/${a.id}`} className="absolute inset-0 z-10" /> */}
                     </div>
                 ))}
             </div>
