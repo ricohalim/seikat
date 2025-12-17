@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import { ArrowRight, ArrowLeft, User, Briefcase, MapPin, GraduationCap, Heart, CheckCircle, AlertCircle, Info, Loader2 } from 'lucide-react'
 import {
-    GENDERS, GENERATIONS, EDUCATION_LEVELS, COUNTRIES, PROVINCES,
+    GENDERS, GENERATIONS, COUNTRIES, PROVINCES,
     UNIVERSITIES, FACULTIES, JOB_TYPES, BUSINESS_FIELDS, INDUSTRY_SECTORS
 } from '@/lib/constants'
 
@@ -168,6 +168,7 @@ export default function RegisterPage() {
     // Triggered by "Saya Mengerti & Setuju" inside TnC
     const onAgreeTnC = () => {
         setShowTnC(false)
+        setTncAccepted(true)
         // Call the actual submit function passed as an event or call it directly
         // We need to create a synthetic event or refactor handleSubmit to not need one
         handleSubmitActual()
