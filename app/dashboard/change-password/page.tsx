@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Lock, Save, AlertCircle, CheckCircle } from 'lucide-react'
 
 export default function ChangePasswordPage() {
+    const [oldPassword, setOldPassword] = useState('')
     const [password, setPassword] = useState('')
     const [confirm, setConfirm] = useState('')
     const [loading, setLoading] = useState(false)
@@ -27,8 +28,23 @@ export default function ChangePasswordPage() {
         setMsg(null)
 
         try {
-            const { error } = await supabase.auth.updateUser({ password })
-            if (error) throw error
+            // Get current user email
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user || !user.email) throw new Error('User tidak ditemukan.')
+
+            // 1. Verify Old Password by attempting re-login
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email: user.email,
+                password: oldPassword
+            })
+
+            if (signInError) {
+                throw new Error('Password lama salah.')
+            }
+
+            // 2. Update to New Password
+            const { error: updateError } = await supabase.auth.updateUser({ password })
+            if (updateError) throw updateError
 
             setMsg({ type: 'success', text: 'Password berhasil diperbarui.' })
             setTimeout(() => {
@@ -61,6 +77,17 @@ export default function ChangePasswordPage() {
                 )}
 
                 <form onSubmit={handleUpdate} className="space-y-5">
+                    <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Password Lama</label>
+                        <input
+                            type="password"
+                            required
+                            value={oldPassword}
+                            onChange={(e) => setOldPassword(e.target.value)}
+                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-navy focus:ring-2 focus:ring-navy/20 outline-none transition"
+                            placeholder="••••••••"
+                        />
+                    </div>
                     <div>
                         <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Password Baru</label>
                         <input

@@ -73,9 +73,6 @@ export default function LoginPage() {
                         <div className="space-y-1">
                             <div className="flex justify-between items-center">
                                 <label className="text-xs font-bold text-navy uppercase tracking-wide">Password</label>
-                                <Link href="#" className="text-[10px] font-bold text-azure hover:underline">
-                                    Lupa Password?
-                                </Link>
                             </div>
                             <input
                                 type="password"
