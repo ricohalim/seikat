@@ -62,6 +62,7 @@ export default function RegisterPage() {
 
     const [linkedinUsername, setLinkedinUsername] = useState('')
     const [isSameEducation, setIsSameEducation] = useState(true)
+    const [tncAccepted, setTncAccepted] = useState(false)
 
     // UI States
     const [loading, setLoading] = useState(false)
@@ -543,11 +544,29 @@ export default function RegisterPage() {
                                     </div>
                                 </section>
 
+                                </section>
+
+                                {/* TnC Checkbox */}
                                 <div className="pt-4 border-t">
+                                    <div className="flex items-start gap-3 mb-6">
+                                        <div className="relative flex items-center">
+                                            <input 
+                                                type="checkbox" 
+                                                id="tnc" 
+                                                checked={tncAccepted}
+                                                onChange={(e) => setTncAccepted(e.target.checked)}
+                                                className="w-5 h-5 rounded border-gray-300 text-navy focus:ring-navy cursor-pointer mt-0.5"
+                                            />
+                                        </div>
+                                        <label htmlFor="tnc" className="text-sm text-gray-600 leading-snug cursor-pointer select-none">
+                                            Saya telah membaca dan menyetujui <span onClick={(e) => { e.preventDefault(); setShowTnC(true); }} className="font-bold text-navy hover:underline cursor-pointer">Syarat & Ketentuan</span> serta kebijakan privasi data IKADBP.
+                                        </label>
+                                    </div>
+
                                     <button
                                         type="submit"
-                                        disabled={loading}
-                                        className="w-full bg-navy text-white py-4 rounded-xl font-bold text-lg hover:bg-navy/90 transition shadow-lg shadow-navy/20 flex items-center justify-center gap-2"
+                                        disabled={loading || !tncAccepted}
+                                        className="w-full bg-navy text-white py-4 rounded-xl font-bold text-lg hover:bg-navy/90 transition shadow-lg shadow-navy/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         {loading ? <Loader2 className="animate-spin" /> : (
                                             <>Daftar Sekarang <CheckCircle size={20} /></>
@@ -560,7 +579,7 @@ export default function RegisterPage() {
                 </div>
             </div>
 
-            <style jsx>{`
+    <style jsx>{`
                 .label {
                     display: block;
                     font-size: 0.70rem;
@@ -582,6 +601,6 @@ export default function RegisterPage() {
                     box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.1);
                 }
             `}</style>
-        </div>
+        </div >
     )
 }
