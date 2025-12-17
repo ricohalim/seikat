@@ -33,11 +33,21 @@ export default function CheckAccountPage() {
 
             if (!profileError && profileList && profileList.length > 0) {
                 const profile = profileList[0]
-                setResult({
-                    status: 'found_active',
-                    message: 'Status: DITERIMA / AKTIF',
-                    data: profile
-                })
+
+                // Check if profile is actually active
+                if (profile.account_status === 'Pending') {
+                    setResult({
+                        status: 'found_pending',
+                        message: 'Status: MENUNGGU VERIFIKASI',
+                        data: profile
+                    })
+                } else {
+                    setResult({
+                        status: 'found_active',
+                        message: 'Status: DITERIMA / AKTIF',
+                        data: profile
+                    })
+                }
                 setLoading(false)
                 return
             }
@@ -128,24 +138,24 @@ export default function CheckAccountPage() {
                     {/* Result */}
                     {result && (
                         <div className={`mt-6 p-4 rounded-xl text-left animate-in fade-in slide-in-from-bottom-2 ${result.status === 'found_active'
-                                ? 'bg-blue-50 border border-blue-200'
-                                : result.status === 'found_pending'
-                                    ? 'bg-orange/10 border border-orange/20'
-                                    : result.status === 'not_found'
-                                        ? 'bg-gray-100 border border-gray-200'
-                                        : 'bg-red-50 border border-red-200'
+                            ? 'bg-blue-50 border border-blue-200'
+                            : result.status === 'found_pending'
+                                ? 'bg-orange/10 border border-orange/20'
+                                : result.status === 'not_found'
+                                    ? 'bg-gray-100 border border-gray-200'
+                                    : 'bg-red-50 border border-red-200'
                             }`}>
                             <div className="flex items-start gap-3">
                                 <div className={`mt-1 p-1 rounded-full ${result.status === 'found_active' ? 'bg-blue-100 text-blue-600' :
-                                        result.status === 'found_pending' ? 'bg-orange/20 text-orange' :
-                                            'bg-gray-200 text-gray-500'
+                                    result.status === 'found_pending' ? 'bg-orange/20 text-orange' :
+                                        'bg-gray-200 text-gray-500'
                                     }`}>
                                     {result.status === 'found_active' ? <CheckCircle size={20} /> :
                                         result.status === 'found_pending' ? <Clock size={20} /> : <AlertCircle size={20} />}
                                 </div>
                                 <div className="flex-1">
                                     <h4 className={`font-bold ${result.status === 'found_active' ? 'text-blue-700' :
-                                            result.status === 'found_pending' ? 'text-orange' : 'text-gray-700'
+                                        result.status === 'found_pending' ? 'text-orange' : 'text-gray-700'
                                         }`}>
                                         {result.message}
                                     </h4>

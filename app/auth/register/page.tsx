@@ -98,7 +98,24 @@ export default function RegisterPage() {
         setCheckResult(null)
 
         try {
-            // Check temp_registrations
+            // 1. Check profiles table first (Active Members)
+            const { data: profileList, error: profileError } = await supabase
+                .from('profiles')
+                .select('account_status')
+                .ilike('email', email)
+
+            if (profileList && profileList.length > 0) {
+                const profile = profileList[0]
+                if (profile.account_status === 'Active' || profile.account_status === 'Approved') {
+                    setCheckResult({ status: 'approved', message: 'Email sudah terdaftar sebagai anggota aktif. Silahkan Login.' })
+                    return
+                } else if (profile.account_status === 'Pending') {
+                    setCheckResult({ status: 'pending', message: 'Email sedang dalam proses verifikasi pendaftaran.' })
+                    return
+                }
+            }
+
+            // 2. Check temp_registrations (Recent Signups)
             const { data: tempList, error: tempError } = await supabase
                 .from('temp_registrations')
                 .select('status')
