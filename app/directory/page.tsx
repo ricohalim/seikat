@@ -16,39 +16,39 @@ export default function AlumniDirectoryPage() {
     const [universityFilter, setUniversityFilter] = useState('')
 
     useEffect(() => {
+        const fetchAlumni = async () => {
+            setLoading(true)
+            try {
+                let query = supabase
+                    .from('profiles')
+                    .select('id, full_name, generation, university, major, job_position, company_name, domicile_city, photo_url, role')
+                    .eq('account_status', 'Active') // ONLY Verified Members
+                    .order('full_name', { ascending: true })
+                    .range(page * 12, (page + 1) * 12 - 1)
+
+                if (filter) {
+                    query = query.ilike('full_name', `%${filter}%`)
+                }
+                if (generationFilter) {
+                    query = query.eq('generation', generationFilter)
+                }
+                if (universityFilter) {
+                    query = query.ilike('university', `%${universityFilter}%`)
+                }
+
+                const { data, error } = await query
+
+                if (data) setAlumni(data)
+                if (error) console.error(error)
+            } catch (err) {
+                console.error(err)
+            } finally {
+                setLoading(false)
+            }
+        }
+
         fetchAlumni()
     }, [page, filter, generationFilter, universityFilter])
-
-    const fetchAlumni = async () => {
-        setLoading(true)
-        try {
-            let query = supabase
-                .from('profiles')
-                .select('id, full_name, generation, university, major, job_position, company_name, domicile_city, photo_url, role')
-                .eq('account_status', 'Active') // ONLY Verified Members
-                .order('full_name', { ascending: true })
-                .range(page * 12, (page + 1) * 12 - 1)
-
-            if (filter) {
-                query = query.ilike('full_name', `%${filter}%`)
-            }
-            if (generationFilter) {
-                query = query.eq('generation', generationFilter)
-            }
-            if (universityFilter) {
-                query = query.ilike('university', `%${universityFilter}%`)
-            }
-
-            const { data, error } = await query
-
-            if (data) setAlumni(data)
-            if (error) console.error(error)
-        } catch (err) {
-            console.error(err)
-        } finally {
-            setLoading(false)
-        }
-    }
 
     return (
         <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
