@@ -27,6 +27,8 @@ export default function DirectoryPage() {
     // Authorization State
     const [isAuthorized, setIsAuthorized] = useState(false)
     const [isUserLoading, setIsUserLoading] = useState(true)
+    const [completenessScore, setCompletenessScore] = useState(0)
+    const [checkError, setCheckError] = useState<string | null>(null)
 
     // Hydration Mismatch Fix: Start with a "mounting" state or ensure loading matches server
     const [authLoading, setAuthLoading] = useState(true)
@@ -39,16 +41,24 @@ export default function DirectoryPage() {
                 if (!user) return // Auth middleware handles redirect typically
 
                 // Fetch MY profile
-                const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+                const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+
+                if (error) {
+                    console.error("Error fetching profile:", error)
+                    setCheckError(error.message)
+                    return
+                }
 
                 if (profile) {
                     const percent = calculateProfileCompleteness(profile)
+                    setCompletenessScore(percent)
                     if (percent >= 90) {
                         setIsAuthorized(true)
                     }
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Error checking access:", error)
+                setCheckError(error.message || "Unknown error")
             } finally {
                 setIsUserLoading(false)
                 setAuthLoading(false)
@@ -66,6 +76,7 @@ export default function DirectoryPage() {
 
             if (error) {
                 console.error('Error fetching directory:', error)
+                setCheckError(`Directory Fetch Error: ${error.message}`)
             } else {
                 setMembers(data || [])
                 setFilteredMembers(data || [])
@@ -89,8 +100,16 @@ export default function DirectoryPage() {
                 </div>
                 <div>
                     <h2 className="text-2xl font-bold text-navy">Akses Terkunci</h2>
+                    {checkError && (
+                        <div className="bg-red-50 text-red-600 p-3 rounded mb-4 text-xs max-w-md mx-auto">
+                            Error: {checkError}
+                        </div>
+                    )}
                     <p className="text-gray-500 max-w-md mx-auto mt-2">
-                        Fitur Direktori Alumni hanya dapat diakses oleh anggota yang telah melengkapi profil mereka (Verified Badge).
+                        Fitur Direktori Alumni hanya dapat diakses oleh anggota yang telah melengkapi profil mereka.
+                    </p>
+                    <p className="text-xl font-bold text-navy mt-2">
+                        Kelengkapan Anda: {completenessScore}%
                     </p>
                 </div>
                 <div className="bg-orange/5 border border-orange/20 p-4 rounded-xl max-w-md text-left flex items-start gap-3">
