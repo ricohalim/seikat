@@ -45,28 +45,35 @@ export default function UserManagementPage() {
     const fetchUsers = async () => {
         setLoading(true)
         try {
-            // Build Query
-            let query = supabase
-                .from('profiles')
-                .select('*', { count: 'exact' }) // Select ALL columns for Super Admin
-                .order('created_at', { ascending: false })
-
-            // Apply Filter
-            if (filter) {
-                query = query.or(`full_name.ilike.%${filter}%,email.ilike.%${filter}%`)
-            }
-
-            // Apply Pagination
-            const from = page * ITEMS_PER_PAGE
-            const to = from + ITEMS_PER_PAGE - 1
-            query = query.range(from, to)
-
-            const { data, count, error } = await query
+            // Fetch via RPC (Bypass RLS)
+            const { data, error } = await supabase.rpc('get_all_profiles_for_admin')
 
             if (error) throw error
+
             if (data) {
-                setUsers(data)
-                setTotalItems(count || 0)
+                // Client-side Filter & Pagination (RPC returns all)
+                let filteredData = data
+
+                if (filter) {
+                    const term = filter.toLowerCase()
+                    filteredData = data.filter((u: any) =>
+                        (u.full_name && u.full_name.toLowerCase().includes(term)) ||
+                        (u.email && u.email.toLowerCase().includes(term))
+                    )
+                }
+
+                setTotalItems(filteredData.length)
+
+                // Sort
+                filteredData.sort((a: any, b: any) =>
+                    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                )
+
+                // Paginate
+                const from = page * ITEMS_PER_PAGE
+                const paginatedData = filteredData.slice(from, from + ITEMS_PER_PAGE)
+
+                setUsers(paginatedData)
             }
         } catch (err) {
             console.error('Error fetching users:', err)
