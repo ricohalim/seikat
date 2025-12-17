@@ -16,6 +16,9 @@ export default function Home() {
             <Link href="/check-account" className="text-sm font-semibold text-navy hover:text-azure transition flex items-center gap-2">
               Cek Akun
             </Link>
+            <Link href="/auth/register" className="text-sm font-semibold text-navy hover:text-azure transition flex items-center gap-2">
+              Daftar
+            </Link>
             <Link href="/auth/login" className="bg-navy text-white text-sm font-bold px-4 py-2 rounded-full hover:bg-navy/90 transition shadow-sm">
               Masuk
             </Link>
@@ -34,8 +37,7 @@ export default function Home() {
             </div>
 
             <h1 className="text-5xl md:text-6xl font-extrabold text-navy leading-tight mb-6">
-              Terhubung Kembali dengan <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-azure to-blue-400">Keluarga Beswan Djarum</span>
+              Terhubung Kembali dengan <span className="text-transparent bg-clip-text bg-gradient-to-r from-azure to-blue-400">Keluarga Beswan Djarum</span>
             </h1>
 
             <p className="text-lg text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
