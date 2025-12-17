@@ -5,8 +5,12 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import {
     Building2, MapPin, GraduationCap, Mail, Phone,
-    Linkedin, Calendar, User as UserIcon, Eye, EyeOff
+    Linkedin, Calendar, User as UserIcon, Eye, EyeOff,
+    AlertCircle, CheckCircle, X
 } from 'lucide-react'
+import QRCode from 'react-qr-code'
+import { calculateProfileCompleteness } from '@/lib/utils'
+import Link from 'next/link'
 
 // Define Profile Interface
 interface Profile {
@@ -33,11 +37,6 @@ interface Profile {
     linkedin_url: string
     account_status: string
 }
-
-import QRCode from 'react-qr-code'
-import { calculateProfileCompleteness } from '@/lib/utils'
-import Link from 'next/link'
-import { AlertCircle, CheckCircle, X } from 'lucide-react'
 
 // ...
 
