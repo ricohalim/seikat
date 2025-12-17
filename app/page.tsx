@@ -13,11 +13,11 @@ export default function Home() {
             <span className="text-2xl font-bold text-navy tracking-tight">SEIKAT</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/auth/login" className="text-sm font-semibold text-navy hover:text-azure transition">
-              Masuk
+            <Link href="/check-account" className="text-sm font-semibold text-navy hover:text-azure transition flex items-center gap-2">
+              Cek Akun
             </Link>
             <Link href="/auth/login" className="bg-navy text-white text-sm font-bold px-4 py-2 rounded-full hover:bg-navy/90 transition shadow-sm">
-              Daftar
+              Masuk
             </Link>
           </div>
         </div>
@@ -50,16 +50,16 @@ export default function Home() {
                 Masuk ke Portal
                 <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
               </Link>
-              <a href="#" className="text-navy font-semibold hover:text-azure transition px-6">
-                Tentang Kami
-              </a>
+              <Link href="/check-account" className="text-navy font-semibold hover:text-azure transition px-6">
+                Cek Status Akun
+              </Link>
             </div>
           </div>
         </section>
 
         {/* Feature Grid */}
         <section className="bg-white py-20 border-t border-gray-50">
-          <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
+          <div className="max-w-4xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12">
             <div className="text-center">
               <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-azure mx-auto mb-6">
                 <Users size={32} />
@@ -76,15 +76,6 @@ export default function Home() {
               <h3 className="text-xl font-bold text-navy mb-3">Agenda Kegiatan</h3>
               <p className="text-gray-500 leading-relaxed">
                 Jangan lewatkan reuni, seminar, dan kegiatan sosial eksklusif untuk anggota IKADBP.
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 mx-auto mb-6">
-                <Award size={32} />
-              </div>
-              <h3 className="text-xl font-bold text-navy mb-3">Pengembangan Diri</h3>
-              <p className="text-gray-500 leading-relaxed">
-                Akses materi, lowongan kerja, dan peluang kolaborasi bisnis antar alumni.
               </p>
             </div>
           </div>
