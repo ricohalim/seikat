@@ -21,6 +21,7 @@ interface ProfileData {
     education_level: string // Saat Beasiswa
     // For 'current' education logic
     current_education_level: string
+    current_university: string // Added
     university: string
     faculty: string
     major: string
@@ -70,6 +71,7 @@ export default function EditProfilePage() {
         generation: '',
         education_level: '',
         current_education_level: '',
+        current_university: '',
         university: '',
         faculty: '',
         major: '',
@@ -128,6 +130,7 @@ export default function EditProfilePage() {
                     generation: data.generation || '',
                     education_level: data.education_level || '',
                     current_education_level: data.current_education_level || '',
+                    current_university: data.current_university || '',
                     university: data.university || '',
                     faculty: data.faculty || '',
                     major: data.major || '',
@@ -416,6 +419,14 @@ export default function EditProfilePage() {
                                 Wait, "nama univ (user type)"... 
                                 I will add a text input, but warn about Schema. 
                              */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1">Universitas Saat Ini</label>
+                                        <input type="text" name="current_university" value={formData.current_university} onChange={handleChange}
+                                            className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
+                                            placeholder="Ketik nama universitas..."
+                                        />
+                                        <p className="text-[10px] text-gray-400 mt-1">Otomatis HURUF BESAR</p>
+                                    </div>
                                 </div>
                             )}
                         </div>
