@@ -181,6 +181,21 @@ export default function DashboardPage() {
                             ID Member
                         </button>
                     </div>
+
+                    <div className="absolute top-4 right-4 md:static md:hidden">
+                        {/* Mobile extra actions if needed */}
+                    </div>
+                </div>
+
+                {/* Secondary Actions Row */}
+                <div className="px-8 pb-4 flex justify-end">
+                    <Link
+                        href="/dashboard/change-password"
+                        className="text-xs font-semibold text-gray-500 hover:text-navy hover:underline flex items-center gap-1 transition-colors"
+                    >
+                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
+                        Ganti Password
+                    </Link>
                 </div>
             </div>
 
