@@ -246,8 +246,11 @@ export default function EditProfilePage() {
         if (error) {
             setMessage({ type: 'error', text: 'Gagal menyimpan: ' + error.message })
         } else {
+            // Success Feedback
+            alert('Profil berhasil diperbarui!')
             setMessage({ type: 'success', text: 'Profil berhasil diperbarui!' })
             router.refresh()
+            router.push('/dashboard') // Redirect back to see changes
         }
         setSaving(false)
     }
