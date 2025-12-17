@@ -179,7 +179,7 @@ export default function RegisterPage() {
                 // Upsert Profile
                 const { error: profileError } = await supabase.from('profiles').upsert({
                     id: authData.user.id,
-                    // email: email, // If email col exists
+                    email: email, // Save email for searchability
                     ...profilePayload
                 })
 
@@ -278,8 +278,8 @@ export default function RegisterPage() {
 
                             {checkResult && (
                                 <div className={`p-4 rounded-xl mb-6 text-sm flex gap-3 items-start ${checkResult.status === 'approved'
-                                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                        : 'bg-orange/10 text-orange border border-orange/20'
+                                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                    : 'bg-orange/10 text-orange border border-orange/20'
                                     }`}>
                                     <Info size={20} className="shrink-0 mt-0.5" />
                                     <div>

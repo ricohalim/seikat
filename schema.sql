@@ -2,6 +2,7 @@
 create table if not exists profiles (
   id uuid references auth.users on delete cascade primary key,
   member_id text unique, -- "ID Anggota"
+  email text,            -- "Email" (Added for search)
   full_name text,        -- "Nama Lengkap"
   generation text,       -- "Angkatan"
   phone text,            -- "Nomor Whatsapp"

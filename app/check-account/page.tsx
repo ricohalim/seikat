@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
-import { Search, Loader2, CheckCircle, AlertCircle, ArrowLeft, Clock } from 'lucide-react'
+import { CheckCircle, AlertCircle, Clock, Loader2 } from 'lucide-react'
 import QRCode from 'react-qr-code'
 
 export default function CheckAccountPage() {
@@ -23,11 +23,26 @@ export default function CheckAccountPage() {
         setResult(null)
 
         try {
-            // Strategy:
-            // 1. Check temp_registrations first (It has email column guaranteed)
-            //    - If status 'Pending' -> Show Pending
-            //    - If status 'Approved' -> Show Active (Found)
+            // Priority 1: Check Active Profiles (Alumni Lama / Approved)
+            // Note: This requires the 'email' column to be added to 'profiles' table via migration.
+            const { data: profileList, error: profileError } = await supabase
+                .from('profiles')
+                .select('*')
+                .ilike('email', email)
+                .limit(1)
 
+            if (!profileError && profileList && profileList.length > 0) {
+                const profile = profileList[0]
+                setResult({
+                    status: 'found_active',
+                    message: 'Status: DITERIMA / AKTIF',
+                    data: profile
+                })
+                setLoading(false)
+                return
+            }
+
+            // Priority 2: Check Temp Registrations (Pending)
             const { data: tempList, error: tempError } = await supabase
                 .from('temp_registrations')
                 .select('*')
@@ -47,6 +62,7 @@ export default function CheckAccountPage() {
                     })
                     return // Stop here
                 } else if (latestTemp.status === 'Approved') {
+                    // Fallback if not found in profiles but marked approved in temp
                     setResult({
                         status: 'found_active',
                         message: 'Status: DITERIMA / AKTIF',
@@ -63,8 +79,6 @@ export default function CheckAccountPage() {
                 }
             }
 
-            // 2. Fallback: If not found in temp, just show Not Found.
-            // (Since profiles table might not have email col, we skip it to avoid errors)
             setResult({ status: 'not_found', message: 'Data tidak ditemukan.' })
 
         } catch (err: any) {
