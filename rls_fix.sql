@@ -35,7 +35,7 @@ as $$
     id, full_name, generation, photo_url, linkedin_url,
     university, major, company_name, job_position
   from profiles
-  where account_status = 'Active'
+  -- where account_status = 'Active' -- Commented out to debug empty directory
   order by full_name asc;
 $$;
 
