@@ -151,17 +151,31 @@ export default function RegisterPage() {
         }
     }
 
-    // STEP 2: Full Submit
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setLoading(true)
-        setError(null)
+    // TnC Handler
+    const [showTnC, setShowTnC] = useState(false)
 
+    // Triggered by "Daftar Sekarang" button
+    const handleRegisterClick = (e: React.FormEvent) => {
+        e.preventDefault()
         if (password !== confirmPassword) {
             setError('Password tidak sama')
-            setLoading(false)
             return
         }
+        setShowTnC(true)
+    }
+
+    // Triggered by "Saya Mengerti & Setuju" inside TnC
+    const onAgreeTnC = () => {
+        setShowTnC(false)
+        // Call the actual submit function passed as an event or call it directly
+        // We need to create a synthetic event or refactor handleSubmit to not need one
+        handleSubmitActual()
+    }
+
+    // STEP 2: Full Submit (Refactored)
+    const handleSubmitActual = async () => {
+        setLoading(true)
+        setError(null)
 
         try {
             const phoneClean = formData.phone.startsWith('62') || formData.phone.startsWith('+')
@@ -214,10 +228,6 @@ export default function RegisterPage() {
                     raw_data: profilePayload
                 })
 
-                if (profileError) {
-                    console.error('Profile Error:', profileError)
-                }
-
                 setSuccess(true)
             }
 
@@ -226,6 +236,16 @@ export default function RegisterPage() {
         } finally {
             setLoading(false)
         }
+    }
+
+    // Original submit handler kept for form validity check but redirected
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault()
+        if (password !== confirmPassword) {
+            setError('Password tidak sama')
+            return
+        }
+        setShowTnC(true)
     }
 
     if (success) {
@@ -238,7 +258,7 @@ export default function RegisterPage() {
                     <h2 className="text-3xl font-bold text-navy mb-2">Pendaftaran Berhasil!</h2>
                     <p className="text-gray-600 mb-8">
                         Data Anda telah kami terima. Mohon tunggu proses verifikasi admin kami.
-                        Silakan cek email Anda untuk verifikasi akun (jika ada).
+                        Silakan login untuk memantau status Anda.
                     </p>
                     <Link href="/auth/login" className="block w-full bg-navy text-white py-4 rounded-xl font-bold text-lg hover:bg-navy/90 transition shadow-lg shadow-navy/20">
                         Kembali ke Login
@@ -250,7 +270,80 @@ export default function RegisterPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 animate-in fade-in duration-500">
-            <div className="max-w-4xl w-full bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 flex flex-col md:flex-row">
+            {/* TnC Modal */}
+            {showTnC && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <h3 className="text-xl font-bold text-navy">Syarat dan Ketentuan Perlindungan Data</h3>
+                            <button onClick={() => setShowTnC(false)} className="text-gray-400 hover:text-red-500 transition">
+                                <span className="text-2xl">×</span>
+                            </button>
+                        </div>
+                        <div className="p-6 overflow-y-auto text-sm text-gray-600 space-y-4 leading-relaxed">
+                            <p className="font-medium text-navy">Terima kasih telah menjadi bagian dari Ikatan Alumni Djarum Beasiswa Plus (IKADBP).</p>
+                            <p>Sebagai anggota IKADBP, Anda menyetujui syarat dan ketentuan berikut terkait perlindungan data pribadi Anda sesuai dengan Undang-Undang Nomor 27 Tahun 2022 tentang Perlindungan Data Pribadi (UU PDP):</p>
+
+                            <div className="space-y-1">
+                                <h4 className="font-bold text-navy">1. Pengumpulan Data Pribadi</h4>
+                                <p>IKADBP mengumpulkan data pribadi Anda yang diperlukan untuk keperluan administratif dan operasional organisasi, termasuk namun tidak terbatas pada nama, alamat email, nomor telepon, alamat domisili, dan informasi kontak lainnya.</p>
+                            </div>
+                            <div className="space-y-1">
+                                <h4 className="font-bold text-navy">2. Tujuan Pengolahan Data Pribadi</h4>
+                                <p>Data pribadi Anda digunakan untuk keperluan manajemen keanggotaan, komunikasi internal, serta pelaksanaan kegiatan dan program IKADBP. Data ini juga dapat digunakan untuk mengirimkan pembaruan, undangan, atau informasi lain yang relevan dengan Anda sebagai anggota.</p>
+                            </div>
+                            <div className="space-y-1">
+                                <h4 className="font-bold text-navy">3. Dasar Hukum Pengolahan</h4>
+                                <p>Pengolahan data pribadi Anda didasarkan pada persetujuan Anda sebagai subjek data, sesuai dengan ketentuan UU PDP.</p>
+                            </div>
+                            <div className="space-y-1">
+                                <h4 className="font-bold text-navy">4. Perlindungan dan Keamanan Data Pribadi</h4>
+                                <p>IKADBP berkomitmen untuk menjaga keamanan dan kerahasiaan data pribadi Anda. Kami menerapkan langkah-langkah teknis dan organisatoris yang sesuai untuk melindungi data pribadi Anda dari akses, pengungkapan, perubahan, atau penghapusan yang tidak sah.</p>
+                            </div>
+                            <div className="space-y-1">
+                                <h4 className="font-bold text-navy">5. Pengungkapan kepada Pihak Ketiga</h4>
+                                <p>IKADBP tidak akan mengungkapkan atau memberikan data pribadi Anda kepada pihak ketiga tanpa persetujuan tertulis dari Anda, kecuali jika diwajibkan oleh peraturan perundang-undangan yang berlaku.</p>
+                            </div>
+                            <div className="space-y-1">
+                                <h4 className="font-bold text-navy">6. Hak Anda sebagai Subjek Data</h4>
+                                <p>Anda memiliki hak-hak berikut terkait data pribadi Anda: Hak Akses, Hak Perbaikan, Hak Penghapusan.</p>
+                            </div>
+                            <div className="space-y-1">
+                                <h4 className="font-bold text-navy">7. Retensi Data Pribadi</h4>
+                                <p>Data pribadi Anda akan disimpan selama diperlukan untuk memenuhi tujuan pengumpulannya atau selama diwajibkan oleh peraturan perundang-undangan yang berlaku.</p>
+                            </div>
+                            <div className="space-y-1">
+                                <h4 className="font-bold text-navy">8. Perubahan pada Syarat dan Ketentuan</h4>
+                                <p>IKADBP berhak untuk mengubah atau memperbarui syarat dan ketentuan ini dari waktu ke waktu.</p>
+                            </div>
+                            <div className="space-y-1">
+                                <h4 className="font-bold text-navy">9. Kontak dan Pengaduan</h4>
+                                <p>Jika Anda memiliki pertanyaan, kekhawatiran, atau keluhan mengenai syarat dan ketentuan ini atau pengolahan data pribadi Anda, silakan hubungi kami melalui email di sekretariat.ikadbp@gmail.com.</p>
+                            </div>
+                            <div className="space-y-1">
+                                <h4 className="font-bold text-navy">10. Hukum yang Berlaku</h4>
+                                <p>Syarat dan ketentuan ini diatur dan ditafsirkan sesuai dengan hukum yang berlaku di Republik Indonesia, termasuk UU PDP.</p>
+                            </div>
+                        </div>
+                        <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowTnC(false)}
+                                className="px-6 py-2.5 rounded-lg font-bold text-gray-500 hover:bg-gray-200 transition text-sm"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                onClick={onAgreeTnC}
+                                className="px-6 py-2.5 rounded-lg font-bold bg-navy text-white hover:bg-navy/90 transition shadow-lg shadow-navy/20 text-sm flex items-center gap-2"
+                            >
+                                <CheckCircle size={16} /> Saya Mengerti & Setuju
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="max-w-4xl w-full bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 flex flex-col md:flex-row shadow-lg">
 
                 {/* Visual Side (Left) */}
                 <div className="hidden md:flex md:w-1/3 bg-navy text-white p-8 flex-col justify-between relative overflow-hidden">
