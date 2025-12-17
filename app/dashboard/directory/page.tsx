@@ -90,6 +90,19 @@ export default function DirectoryPage() {
         }
     }, [isAuthorized, isUserLoading])
 
+    // Search Logic (MOVED UP to prevent Hook Error #310)
+    useEffect(() => {
+        const query = searchQuery.toLowerCase()
+
+        const results = members.filter(member => {
+            const name = member.full_name?.toLowerCase() || ''
+            const batch = member.generation?.toString().toLowerCase() || ''
+            return name.includes(query) || batch.includes(query)
+        })
+
+        setFilteredMembers(results)
+    }, [searchQuery, members])
+
     if (authLoading || isUserLoading) return <div className="p-8 text-center text-gray-500">Memeriksa akses...</div>
 
     if (!isAuthorized) {
@@ -125,18 +138,7 @@ export default function DirectoryPage() {
         )
     }
 
-    // Search Logic
-    useEffect(() => {
-        const query = searchQuery.toLowerCase()
 
-        const results = members.filter(member => {
-            const name = member.full_name?.toLowerCase() || ''
-            const batch = member.generation?.toString().toLowerCase() || ''
-            return name.includes(query) || batch.includes(query)
-        })
-
-        setFilteredMembers(results)
-    }, [searchQuery, members])
 
     // Helper for images
     const getOptimizedImageUrl = (url: string) => {
