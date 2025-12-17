@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Search, MapPin, Building2, GraduationCap, Briefcase } from 'lucide-react'
-import Link from 'next/link'
+
 
 export default function AlumniDirectoryPage() {
     const [alumni, setAlumni] = useState<any[]>([])
@@ -15,43 +15,43 @@ export default function AlumniDirectoryPage() {
     const [generationFilter, setGenerationFilter] = useState('')
     const [universityFilter, setUniversityFilter] = useState('')
 
-    useEffect(() => {
-        const fetchAlumni = async () => {
-            setLoading(true)
-            try {
-                let query = supabase
-                    .from('profiles')
-                    .select('id, full_name, generation, university, major, job_position, company_name, domicile_city, photo_url, role')
-                    .eq('account_status', 'Active') // ONLY Verified Members
-                    .order('full_name', { ascending: true })
-                    .range(page * 12, (page + 1) * 12 - 1)
+    const fetchAlumni = useCallback(async () => {
+        setLoading(true)
+        try {
+            let query = supabase
+                .from('profiles')
+                .select('id, full_name, generation, university, major, job_position, company_name, domicile_city, photo_url, role')
+                .eq('account_status', 'Active') // ONLY Verified Members
+                .order('full_name', { ascending: true })
+                .range(page * 12, (page + 1) * 12 - 1)
 
-                if (filter) {
-                    query = query.ilike('full_name', `%${filter}%`)
-                }
-                if (generationFilter) {
-                    query = query.eq('generation', generationFilter)
-                }
-                if (universityFilter) {
-                    query = query.ilike('university', `%${universityFilter}%`)
-                }
-
-                const { data, error } = await query
-
-                if (data) setAlumni(data)
-                if (error) console.error(error)
-            } catch (err) {
-                console.error(err)
-            } finally {
-                setLoading(false)
+            if (filter) {
+                query = query.ilike('full_name', `%${filter}%`)
             }
-        }
+            if (generationFilter) {
+                query = query.eq('generation', generationFilter)
+            }
+            if (universityFilter) {
+                query = query.ilike('university', `%${universityFilter}%`)
+            }
 
-        fetchAlumni()
+            const { data, error } = await query
+
+            if (data) setAlumni(data)
+            if (error) console.error(error)
+        } catch (err) {
+            console.error(err)
+        } finally {
+            setLoading(false)
+        }
     }, [page, filter, generationFilter, universityFilter])
 
+    useEffect(() => {
+        fetchAlumni()
+    }, [fetchAlumni])
+
     return (
-        <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+        <div className="max-w-7xl mx-auto space-y-8">
             <header className="text-center space-y-4">
                 <h1 className="text-3xl font-bold text-navy">Direktori Alumni</h1>
                 <p className="text-gray-500 max-w-2xl mx-auto">Temukan dan terkoneksi dengan ribuan alumni Beswan Djarum dari berbagai angkatan dan universitas.</p>
