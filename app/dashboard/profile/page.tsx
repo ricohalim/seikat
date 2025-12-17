@@ -277,7 +277,10 @@ export default function EditProfilePage() {
 
                     <ProfileImageUpload
                         currentUrl={formData.photo_url}
-                        onUploadComplete={(url) => setFormData(p => ({ ...p, photo_url: url }))}
+                        onUploadComplete={(url) => {
+                            setFormData(p => ({ ...p, photo_url: url }))
+                            setMessage({ type: 'success', text: 'Foto terupload! Jangan lupa klik "Simpan Perubahan" di bawah.' })
+                        }}
                     />
 
                     <div className="space-y-4 mt-6">

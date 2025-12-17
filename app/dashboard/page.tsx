@@ -127,11 +127,6 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
-                    <div className="pb-2">
-                        <button className="bg-navy text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm hover:bg-navy/90 transition">
-                            Edit Profil
-                        </button>
-                    </div>
                 </div>
             </div>
 
