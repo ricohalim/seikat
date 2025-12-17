@@ -87,6 +87,16 @@ export default function LoginPage() {
                             />
                         </div>
 
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                id="remember"
+                                className="w-4 h-4 rounded border-gray-300 text-navy focus:ring-navy"
+                                defaultChecked
+                            />
+                            <label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer select-none">Ingat Saya</label>
+                        </div>
+
                         <button
                             type="submit"
                             disabled={loading}

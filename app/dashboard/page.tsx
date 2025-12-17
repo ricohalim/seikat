@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import {
     Building2, MapPin, GraduationCap, Mail, Phone,
-    Linkedin, Calendar, User as UserIcon
+    Linkedin, Calendar, User as UserIcon, Eye, EyeOff
 } from 'lucide-react'
 
 // Define Profile Interface
@@ -45,6 +45,7 @@ export default function DashboardPage() {
     const [profile, setProfile] = useState<Profile | null>(null)
     const [loading, setLoading] = useState(true)
     const [showQR, setShowQR] = useState(false) // State for QR Modal
+    const [isPrivacyMode, setIsPrivacyMode] = useState(false) // State for Privacy Mode
     const router = useRouter()
 
     useEffect(() => {
@@ -132,14 +133,21 @@ export default function DashboardPage() {
                             )}
                         </div>
                         {isVerified && (
-                            <div className="absolute bottom-2 right-2 bg-blue-500 text-white p-1.5 rounded-full border-2 border-white shadow-sm" title="Verified Member">
-                                <CheckCircle size={14} fill="white" className="text-blue-500" />
+                            <div className="absolute bottom-2 right-2 bg-gradient-to-br from-blue-500 to-blue-600 text-white p-2 rounded-full border-4 border-white shadow-lg z-10" title="Verified Member">
+                                <CheckCircle size={20} fill="white" className="text-blue-600" />
                             </div>
                         )}
                     </div>
 
                     <div className="flex-1 pb-2">
-                        <h2 className="text-3xl font-bold text-navy mb-1">{profile.full_name}</h2>
+                        <div className="flex items-center gap-2 mb-1">
+                            <h2 className="text-3xl font-bold text-navy">{profile.full_name}</h2>
+                            {isVerified && (
+                                <span className="flex items-center gap-1 bg-blue-50 border border-blue-100 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                    Verified
+                                </span>
+                            )}
+                        </div>
                         <div className="flex flex-wrap gap-3 text-gray-600 text-sm">
                             <span className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded">
                                 <GraduationCap size={16} className="text-orange" />
@@ -152,7 +160,19 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
-                    <div className="pb-2">
+                    <div className="pb-2 flex gap-3">
+                        <button
+                            onClick={() => setIsPrivacyMode(!isPrivacyMode)}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition ${isPrivacyMode
+                                ? 'bg-navy text-white hover:bg-navy/90 border border-navy'
+                                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                                }`}
+                            title={isPrivacyMode ? "Nonaktifkan Mode Privasi" : "Aktifkan Mode Privasi"}
+                        >
+                            {isPrivacyMode ? <EyeOff size={18} /> : <Eye size={18} />}
+                            <span className="hidden md:inline">{isPrivacyMode ? 'Privasi On' : 'Privasi Off'}</span>
+                        </button>
+
                         <button
                             onClick={() => setShowQR(true)}
                             className="bg-white border border-gray-200 text-navy px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-gray-50 transition flex items-center gap-2"
@@ -170,9 +190,9 @@ export default function DashboardPage() {
 
                 {/* Left Col: Contact & Personal */}
                 <div className="space-y-6">
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
                         <h3 className="font-bold text-navy mb-4 border-b border-gray-100 pb-2">Informasi Kontak</h3>
-                        <div className="space-y-4">
+                        <div className={`space-y-4 transition-all duration-300 ${isPrivacyMode ? 'filter blur-sm select-none' : ''}`}>
                             <div className="flex items-start gap-3">
                                 <Mail size={18} className="text-gray-400 mt-1" />
                                 <div>
@@ -208,6 +228,14 @@ export default function DashboardPage() {
                                 </div>
                             )}
                         </div>
+                        {isPrivacyMode && (
+                            <div className="absolute inset-0 flex items-center justify-center z-10">
+                                <div className="bg-white/80 px-3 py-1 rounded-full border border-gray-200 shadow-sm flex items-center gap-2">
+                                    <EyeOff size={14} className="text-gray-500" />
+                                    <span className="text-xs font-bold text-gray-500">Disembunyikan</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -215,12 +243,12 @@ export default function DashboardPage() {
                 <div className="md:col-span-2 space-y-6">
 
                     {/* Career Section */}
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
                         <h3 className="font-bold text-navy mb-4 border-b border-gray-100 pb-2 flex items-center gap-2">
                             <Building2 size={20} className="text-orange" />
                             Pekerjaan & Karir
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 transition-all duration-300 ${isPrivacyMode ? 'filter blur-sm select-none' : ''}`}>
                             <div>
                                 <p className="text-xs text-gray-400">Posisi / Jabatan</p>
                                 <p className="text-base font-semibold text-gray-800">{profile.job_position || '-'}</p>
@@ -236,15 +264,23 @@ export default function DashboardPage() {
                                 </span>
                             </div>
                         </div>
+                        {isPrivacyMode && (
+                            <div className="absolute inset-0 flex items-center justify-center z-10">
+                                <div className="bg-white/80 px-3 py-1 rounded-full border border-gray-200 shadow-sm flex items-center gap-2">
+                                    <EyeOff size={14} className="text-gray-500" />
+                                    <span className="text-xs font-bold text-gray-500">Disembunyikan</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Bio Section */}
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
                         <h3 className="font-bold text-navy mb-4 border-b border-gray-100 pb-2 flex items-center gap-2">
                             <UserIcon size={20} className="text-azure" />
                             Biodata Diri
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 transition-all duration-300 ${isPrivacyMode ? 'filter blur-sm select-none' : ''}`}>
                             <div>
                                 <p className="text-xs text-gray-400">Tempat, Tanggal Lahir</p>
                                 <p className="text-sm font-medium text-gray-700">
@@ -261,6 +297,14 @@ export default function DashboardPage() {
                                 <p className="text-sm font-medium text-gray-700">{profile.major || '-'}</p>
                             </div>
                         </div>
+                        {isPrivacyMode && (
+                            <div className="absolute inset-0 flex items-center justify-center z-10">
+                                <div className="bg-white/80 px-3 py-1 rounded-full border border-gray-200 shadow-sm flex items-center gap-2">
+                                    <EyeOff size={14} className="text-gray-500" />
+                                    <span className="text-xs font-bold text-gray-500">Disembunyikan</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                 </div>
