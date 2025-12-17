@@ -1,8 +1,16 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Palet Warna User - Corporate Djarum Theme */
+  --c-navy: #162B52;     /* Dominan */
+  --c-azure: #0068C7;    /* Aksen 1 */
+  --c-orange: #FF8817;   /* Aksen 2 */
+  --c-red: #EE1C25;      /* Alert */
+
+  --background: #FFFFFF;
+  --foreground: #333333;
 }
 
 @theme inline {
