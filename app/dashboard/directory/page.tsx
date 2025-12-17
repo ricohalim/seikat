@@ -155,7 +155,12 @@ export default function DirectoryPage() {
             <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4">
                 <div>
                     <h2 className="text-2xl font-bold text-navy">Alumni Directory</h2>
-                    <p className="text-gray-500 text-sm">Jelajahi profil rekan-rekan Beswan Djarum dari berbagai angkatan.</p>
+                    <p className="text-gray-500 text-sm">
+                        Jelajahi profil rekan-rekan Beswan Djarum dari berbagai angkatan.
+                        <span className="text-xs bg-gray-100 px-2 py-0.5 rounded ml-2 text-gray-400">
+                            Total: {members.length} Alumni
+                        </span>
+                    </p>
                 </div>
 
                 {/* Search Bar */}
@@ -237,9 +242,19 @@ export default function DirectoryPage() {
                         ))}
                     </div>
 
-                    {filteredMembers.length === 0 && (
+                    {!loading && members.length === 0 && (
+                        <div className="text-center py-20 text-gray-400">
+                            <div className="bg-gray-50 inline-block p-4 rounded-full mb-4">
+                                <Search size={24} className="opacity-50" />
+                            </div>
+                            <p>Belum ada data alumni yang aktif di sistem.</p>
+                        </div>
+                    )}
+
+                    {!loading && members.length > 0 && filteredMembers.length === 0 && (
                         <div className="text-center py-20 text-gray-400">
                             <p>Tidak ada alumni yang cocok dengan pencarian "{searchQuery}"</p>
+                            <button onClick={() => setSearchQuery('')} className="text-navy font-bold hover:underline mt-2">Reset Pencarian</button>
                         </div>
                     )}
                 </>
