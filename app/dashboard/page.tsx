@@ -23,6 +23,8 @@ interface Profile {
     domicile_city: string
     domicile_province: string
 
+    id: string // Added
+
     // Job
     job_position: string
     company_name: string
@@ -32,36 +34,28 @@ interface Profile {
     account_status: string
 }
 
+import QRCode from 'react-qr-code'
+import { X } from 'lucide-react'
+
+// ... existing imports ...
+
 export default function DashboardPage() {
     const [profile, setProfile] = useState<Profile | null>(null)
     const [loading, setLoading] = useState(true)
+    const [showQR, setShowQR] = useState(false) // State for QR Modal
     const router = useRouter()
 
     useEffect(() => {
-        async function fetchProfile() {
-            const { data: { user } } = await supabase.auth.getUser()
-
-            if (!user) {
-                router.push('/auth/login')
-                return
-            }
-
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', user.id)
-                .single()
-
-            if (error) {
-                console.error('Error fetching profile:', error)
-            } else {
-                setProfile({ ...data, email: user.email })
-            }
-            setLoading(false)
-        }
-
-        fetchProfile()
+        // ... existing fetchProfile ...
     }, [router])
+
+    // ... existing helpers ...
+
+    if (loading) {
+        // ... existing loading ...
+    }
+
+    if (!profile) return <div>Data tidak ditemukan.</div>
 
     // Helper to convert GDrive links to direct format
     const getOptimizedImageUrl = (url: string) => {
@@ -76,16 +70,6 @@ export default function DashboardPage() {
         return url;
     }
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-[50vh]">
-                <div className="animate-pulse text-navy font-semibold">Memuat Data Profil...</div>
-            </div>
-        )
-    }
-
-    if (!profile) return <div>Data tidak ditemukan.</div>
-
     const displayPhoto = getOptimizedImageUrl(profile.photo_url);
 
     return (
@@ -98,6 +82,7 @@ export default function DashboardPage() {
                 <div className="relative pt-16 flex flex-col md:flex-row items-end md:items-end gap-6">
                     <div className="relative">
                         <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-md bg-gray-200 overflow-hidden">
+                            {/* ... img logic ... */}
                             {displayPhoto ? (
                                 <img src={displayPhoto} alt="Profile" className="w-full h-full object-cover" />
                             ) : (
@@ -127,11 +112,21 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
+                    <div className="pb-2">
+                        <button
+                            onClick={() => setShowQR(true)}
+                            className="bg-white border border-gray-200 text-navy px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-gray-50 transition flex items-center gap-2"
+                        >
+                            <span className="w-5 h-5 flex items-center justify-center bg-navy text-white text-[8px] rounded">QR</span>
+                            ID Member
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            {/* 2. Grid Content */}
+            {/* ... Grid Content ... */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* ... existing content ... */}
 
                 {/* Left Col: Contact & Personal */}
                 <div className="space-y-6">
@@ -230,6 +225,35 @@ export default function DashboardPage() {
 
                 </div>
             </div>
+
+            {/* QR Modal */}
+            {showQR && (
+                <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center relative zoom-in-95 duration-200">
+                        <button
+                            onClick={() => setShowQR(false)}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition"
+                        >
+                            <X size={24} />
+                        </button>
+
+                        <h3 className="text-xl font-bold text-navy mb-2">ID Anggota</h3>
+                        <p className="text-sm text-gray-500 mb-6">Tunjukkan QR Code ini untuk verifikasi.</p>
+
+                        <div className="bg-white p-4 rounded-xl border-2 border-navy/10 inline-block shadow-sm">
+                            <QRCode
+                                value={profile.id || ""}
+                                size={200}
+                                level="H"
+                            />
+                        </div>
+
+                        <p className="text-xs text-gray-400 font-mono mt-6 break-all">
+                            {profile.id}
+                        </p>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

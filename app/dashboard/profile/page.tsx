@@ -13,8 +13,9 @@ import ProfileImageUpload from '@/app/components/ProfileImageUpload'
 interface ProfileData {
     full_name: string
     phone: string
-    birth_place: string
     gender: string
+    birth_place: string
+    birth_date: string
 
     // Academic
     generation: string
@@ -36,12 +37,12 @@ interface ProfileData {
     job_position: string
     company_name: string
     industry_sector: string
-    linkedin_url: string // Stores FULL URL for DB, but used as Username in UI? No, store full URL for standard. UI input takes username.
+    linkedin_url: string
 
     // Business & Interests
     hobbies: string
     interests: string
-    communities: string // Added back
+    communities: string
     has_business: boolean
     business_name: string
     business_desc: string
@@ -67,6 +68,7 @@ export default function EditProfilePage() {
         full_name: '',
         phone: '',
         birth_place: '',
+        birth_date: '',
         gender: '',
         generation: '',
         education_level: '',
@@ -126,6 +128,7 @@ export default function EditProfilePage() {
                     full_name: data.full_name || '',
                     phone: data.phone || '',
                     birth_place: data.birth_place || '',
+                    birth_date: data.birth_date || '',
                     gender: data.gender || '',
                     generation: data.generation || '',
                     education_level: data.education_level || '',
@@ -238,9 +241,15 @@ export default function EditProfilePage() {
             formData.current_education_level = formData.education_level
         }
 
+        // Prepare Payload
+        const payload = {
+            ...formData,
+            birth_date: formData.birth_date || null
+        }
+
         const { error } = await supabase
             .from('profiles')
-            .update(formData)
+            .update(payload)
             .eq('id', userId)
 
         if (error) {
@@ -337,6 +346,12 @@ export default function EditProfilePage() {
                         <div>
                             <label className="block text-xs font-bold text-gray-500 mb-1">Tempat Lahir</label>
                             <input type="text" name="birth_place" value={formData.birth_place} onChange={handleChange}
+                                className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Tanggal Lahir</label>
+                            <input type="date" name="birth_date" value={formData.birth_date} onChange={handleChange}
                                 className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
                             />
                         </div>
