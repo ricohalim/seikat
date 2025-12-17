@@ -62,12 +62,7 @@ export default function DirectoryPage() {
         if (!isAuthorized || isUserLoading) return
 
         async function fetchMembers() {
-            const { data, error } = await supabase
-                .from('public_profiles_view' as any) // Typecast as view might not be generated in types yet
-                .select(`
-                  id, full_name, generation, photo_url, linkedin_url
-                `)
-                .order('full_name', { ascending: true })
+            const { data, error } = await supabase.rpc('get_directory_members')
 
             if (error) {
                 console.error('Error fetching directory:', error)

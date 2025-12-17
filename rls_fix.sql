@@ -1,98 +1,61 @@
--- ROBUST RLS FIX (Security Definer Functions) + SECURE VIEW
--- This approach prevents "Infinite Recursion" AND protects sensitive data (PII).
+-- RPC FIX (Best Practice for Public Data vs RLS)
+-- Views still respect the underlying table's RLS. If we restrict table access to "Owner Only", the View becomes empty for others.
+-- SOLUTION: Use a Secure Function (RPC) to fetch directory data.
 
--- 1. Create Helper Functions (Bypass RLS)
-create or replace function public.get_my_role()
-returns text
+-- 1. Create the RPC Function
+create or replace function get_directory_members()
+returns table (
+  id uuid,
+  full_name text,
+  generation text,
+  photo_url text,
+  linkedin_url text,
+  university text,
+  major text,
+  company_name text,
+  job_position text
+) 
 language sql
-security definer
+security definer -- This runs with Admin privileges, BYPASSING RLS
 stable
 as $$
-  select role from public.profiles where id = auth.uid();
+  select 
+    id,
+    full_name,
+    generation,
+    photo_url,
+    linkedin_url,
+    university,
+    major,
+    company_name,
+    job_position
+  from profiles
+  where account_status = 'Active' -- Only show active members
+  order by full_name asc;
 $$;
 
-create or replace function public.is_super_admin()
-returns boolean
-language sql
-security definer
-stable
-as $$
-  select exists (
-    select 1 from public.profiles 
-    where id = auth.uid() 
-    and role = 'superadmin'
-  );
-$$;
+-- 2. Clean up previous attempts (Optional but good for hygiene)
+drop view if exists public_profiles_view;
 
-create or replace function public.is_admin()
-returns boolean
-language sql
-security definer
-stable
-as $$
-  select exists (
-    select 1 from public.profiles 
-    where id = auth.uid() 
-    and role in ('admin', 'superadmin')
-  );
-$$;
-
--- 2. Reset Policies on PROFILES (Restrictive)
+-- 3. Ensure Strict RLS on Profiles (Keep your data safe)
 alter table profiles enable row level security;
 
--- Drop all existing 'permissive' policies
+-- Remove old permissive policies
 drop policy if exists "Public profiles are viewable by everyone" on profiles;
-drop policy if exists "Users can view own profile" on profiles;
-drop policy if exists "Users can update own profile" on profiles;
-drop policy if exists "Super Admins can view all profiles" on profiles;
-drop policy if exists "Super Admin Access" on profiles;
 drop policy if exists "Members can view active profiles" on profiles;
 
--- STRICT POLICIES:
--- A. VIEW/UPDATE OWN (Users see EVERYTHING only for themselves)
+-- Ensure these 2 Main Policies exist:
+-- A. Users see only their own data
+drop policy if exists "Users can view own profile" on profiles;
 create policy "Users can view own profile"
 on profiles for select
 using ( auth.uid() = id );
 
-create policy "Users can update own profile"
-on profiles for update
-using ( auth.uid() = id );
-
--- B. ADMIN FULL ACCESS (Admins see EVERYTHING)
+-- B. Admins see everything
+drop policy if exists "Super Admin Access" on profiles;
 create policy "Super Admin Access"
 on profiles for all
-using ( public.is_admin() );
-
--- 3. Create SECURE VIEW for Directory (Hides PII like Phone/Email)
-drop view if exists public_profiles_view;
-
-create view public_profiles_view as
-select 
-  id,
-  full_name,
-  generation,
-  photo_url,
-  linkedin_url,
-  university,
-  major,
-  company_name,
-  job_position,
-  account_status
-from profiles
-where account_status = 'Active';
-
--- Grant access to the view
-grant select on public_profiles_view to authenticated;
-grant select on public_profiles_view to service_role;
-
--- 4. Temp Registration Policies (Admin View)
-drop policy if exists "Admins can view temp registrations" on temp_registrations;
-drop policy if exists "Admins can update temp registrations" on temp_registrations;
-
-create policy "Admins can view temp registrations"
-on temp_registrations for select
-using ( public.is_admin() );
-
-create policy "Admins can update temp registrations"
-on temp_registrations for update
-using ( public.is_admin() );
+using ( 
+  -- Check if user is admin/superadmin (using our helper function from before)
+  (select role from profiles where id = auth.uid()) in ('admin', 'superadmin')
+);
