@@ -91,10 +91,18 @@ alter table events enable row level security;
 alter table event_participants enable row level security;
 
 -- Events: Public Read, Admin Write
+drop policy if exists "Events Public Read" on events;
+drop policy if exists "Events Admin Write" on events;
+drop policy if exists "Events are viewable by everyone" on events; -- Drop old schema policy
+
 create policy "Events Public Read" on events for select using (true);
 create policy "Events Admin Write" on events for all using (public.is_admin_check() = true);
 
 -- Participants: 
+drop policy if exists "Participants Read Own or Admin" on event_participants;
+drop policy if exists "Participants Register Self" on event_participants;
+drop policy if exists "Participants Delete" on event_participants;
+
 -- Read: User Own OR Admin
 create policy "Participants Read Own or Admin" on event_participants 
 for select using ( auth.uid() = user_id or public.is_admin_check() = true );

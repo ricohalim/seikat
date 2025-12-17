@@ -39,6 +39,10 @@ export default function AdminAgendasPage() {
             `)
             .order('date_start', { ascending: false })
 
+        if (error) {
+            console.error('Error fetching events:', error)
+        }
+
         if (data) {
             setEvents(data)
         }
@@ -51,15 +55,18 @@ export default function AdminAgendasPage() {
 
         try {
             if (editingId) {
-                await supabase.from('events').update(formData).eq('id', editingId)
+                const { error } = await supabase.from('events').update(formData).eq('id', editingId)
+                if (error) throw error
             } else {
-                await supabase.from('events').insert([formData])
+                const { error } = await supabase.from('events').insert([formData])
+                if (error) throw error
             }
             fetchEvents()
             setIsModalOpen(false)
             resetForm()
-        } catch (error) {
-            alert('Gagal menyimpan agenda.')
+        } catch (error: any) {
+            console.error('Save Error:', error)
+            alert(`Gagal menyimpan agenda: ${error.message || 'Unknown error'}`)
         }
     }
 
