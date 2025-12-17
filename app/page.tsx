@@ -91,10 +91,18 @@ export default function Home() {
             <span className="text-2xl font-bold text-white tracking-tight block mb-2">SEIKAT</span>
             <p className="text-sm opacity-60">© 2025 Ikatan Alumni Djarum Beasiswa Plus. All rights reserved.</p>
           </div>
-          <div className="flex gap-6 text-sm font-medium">
-            <a href="#" className="hover:text-white transition">Privacy</a>
-            <a href="#" className="hover:text-white transition">Terms</a>
-            <a href="#" className="hover:text-white transition">Contact</a>
+          <div className="flex gap-6 text-sm font-medium items-center">
+            <a href="mailto:sekretariat.ikadbp@gmail.com" className="hover:text-white transition flex items-center gap-2">
+              Email Kami
+            </a>
+            <a
+              href="https://wa.me/6282398243245?text=Halo%20saya%20ingin%20bertanya%20terkait%20IKADBP"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full hover:bg-white/20"
+            >
+              WhatsApp
+            </a>
           </div>
         </div>
       </footer>
