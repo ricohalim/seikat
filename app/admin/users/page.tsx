@@ -177,8 +177,8 @@ export default function UserManagementPage() {
         }
     }
 
-    // EDIT MODAL COMPONENT
-    const EditModal = () => (
+    // EDIT MODAL RENDERER
+    const renderEditModal = () => (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
@@ -438,7 +438,7 @@ export default function UserManagementPage() {
             </div>
 
             {/* EDIT MODAL */}
-            {editingUser && <EditModal />}
+            {editingUser && renderEditModal()}
 
             {/* DETAIL MODAL */}
             {selectedUser && (
