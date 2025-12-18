@@ -26,7 +26,7 @@ export default function CheckAccountPage() {
             // Use RPC to check status securely (Bypasses RLS issues)
             const cleanEmail = email.trim()
             const { data: rpcResult, error } = await supabase.rpc('check_email_status', {
-                check_email: cleanEmail
+                email_input: cleanEmail
             })
 
             if (error) {
