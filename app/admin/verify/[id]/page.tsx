@@ -23,7 +23,7 @@ export default function VerifyDetailPage({ params }: { params: { id: string } })
                 .single()
 
             if (error || !data) {
-                alert('Data tidak ditemukan')
+                alert('Data tidak ditemukan. ID: ' + params.id)
                 router.push('/admin/verify')
                 return
             }

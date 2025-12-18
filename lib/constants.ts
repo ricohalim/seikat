@@ -21,7 +21,7 @@ export const generateGenerations = () => {
         const nextYear = year + 1
         generations.push(`${gen} (${year}/${nextYear})`)
     }
-    return generations.reverse() // Newest first
+    return generations // Ascending order
 }
 
 export const GENDERS = ['LAKI-LAKI', 'PEREMPUAN']

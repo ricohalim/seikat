@@ -99,46 +99,30 @@ export default function RegisterPage() {
         setCheckResult(null)
 
         try {
-            // 1. Check profiles table first (Active Members)
-            const { data: profileList, error: profileError } = await supabase
-                .from('profiles')
-                .select('account_status')
-                .ilike('email', email)
+            // Unified Check via RPC
+            const { data: result, error: checkError } = await supabase.rpc('check_email_status', {
+                email_input: email
+            })
 
-            if (profileList && profileList.length > 0) {
-                if (profileList && profileList.length > 0) {
-                    const profile = profileList[0]
+            if (checkError) throw checkError
 
-                    // STRICT CHECK: If any profile exists with this email, we BLOCK it.
-                    if (profile.account_status === 'Pending') {
-                        setCheckResult({ status: 'pending', message: 'Email sedang dalam proses verifikasi pendaftaran.' })
-                    } else {
-                        setCheckResult({ status: 'approved', message: 'Email sudah terdaftar sebagai anggota. Silahkan Login.' })
-                    }
-                    return
+            if (result.source === 'profile') {
+                if (result.status === 'Pending') {
+                    setCheckResult({ status: 'pending', message: 'Email sedang dalam proses verifikasi pendaftaran.' })
+                } else {
+                    setCheckResult({ status: 'approved', message: 'Email sudah terdaftar sebagai anggota. Silahkan Login.' })
                 }
+                return
             }
 
-            // 2. Check temp_registrations (Recent Signups)
-            const { data: tempList, error: tempError } = await supabase
-                .from('temp_registrations')
-                .select('status')
-                .ilike('email', email)
-                .order('submitted_at', { ascending: false }) // Check latest submission
-
-            if (tempError) throw tempError
-
-            if (tempList && tempList.length > 0) {
-                const tempUser = tempList[0]
-
-                if (tempUser.status === 'Pending') {
+            if (result.source === 'temp') {
+                if (result.status === 'Pending') {
                     setCheckResult({ status: 'pending', message: 'Email sedang dalam proses verifikasi pendaftaran. Mohon tunggu informasi selanjutnya.' })
                     return
-                } else if (tempUser.status === 'Approved') {
+                } else if (result.status === 'Approved') {
                     setCheckResult({ status: 'approved', message: 'Email sudah terdaftar sebagai anggota aktif. Silahkan Login.' })
                     return
                 }
-                // If Rejected, we might allow re-registration, so we don't return here.
             }
 
             // Valid -> Proceed to Step 2

@@ -180,10 +180,69 @@ create policy "Participants Delete" on event_participants
 for delete using ( auth.uid() = user_id or public.is_admin_check() = true );
 
 -- ==========================================
--- 8. GRANTS
+-- 8. TABLE: TEMP REGISTRATIONS (New Signups)
+-- ==========================================
+alter table temp_registrations enable row level security;
+
+drop policy if exists "Temp Insert Public" on temp_registrations;
+drop policy if exists "Temp Admin Full" on temp_registrations;
+
+-- Allow Public/Anon to Insert (Registration)
+create policy "Temp Insert Public" on temp_registrations 
+for insert with check (true);
+
+-- Admin Full Access
+create policy "Temp Admin Full" on temp_registrations
+for all using (public.is_admin_check() = true);
+
+-- ==========================================
+-- 9. RPC: CHECK EMAIL STATUS (Unified Check)
+-- ==========================================
+create or replace function public.check_email_status(email_input text)
+returns jsonb
+language plpgsql
+security definer
+stable
+as $$
+declare
+  profile_status text;
+  temp_status text;
+begin
+  -- 1. Check Profiles
+  select account_status::text into profile_status
+  from profiles
+  where email ilike email_input
+  limit 1;
+
+  if profile_status is not null then
+    return jsonb_build_object('source', 'profile', 'status', profile_status);
+  end if;
+
+  -- 2. Check Temp Registrations
+  select status::text into temp_status
+  from temp_registrations
+  where email ilike email_input
+  order by submitted_at desc
+  limit 1;
+
+  if temp_status is not null then
+    return jsonb_build_object('source', 'temp', 'status', temp_status);
+  end if;
+
+  -- 3. Not Found
+  return jsonb_build_object('source', 'none', 'status', null);
+end;
+$$;
+
+-- ==========================================
+-- 10. GRANTS
 -- ==========================================
 grant select, update on table profiles to authenticated;
 grant execute on function public.get_directory_members to authenticated;
 grant execute on function public.get_all_profiles_for_admin to authenticated;
 grant execute on function public.admin_update_profile to authenticated;
 grant execute on function public.get_event_participants to authenticated;
+grant execute on function public.check_email_status to anon, authenticated;
+grant insert on table temp_registrations to anon, authenticated;
+grant all on table temp_registrations to authenticated; -- For Admin
+
