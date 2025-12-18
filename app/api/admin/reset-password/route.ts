@@ -66,7 +66,7 @@ export async function POST(request: Request) {
             }
         )
 
-        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+        const { data: updatedUser, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
             targetUserId,
             { password: newPassword }
         )
@@ -79,7 +79,10 @@ export async function POST(request: Request) {
         // We can use the existing RPC via the client or let the trigger handle implementation
         // Since this is key security event, we manually log via RPC if possible or just rely on success return
 
-        return NextResponse.json({ success: true, message: 'Password updated successfully' })
+        return NextResponse.json({
+            success: true,
+            message: `Password untuk ${updatedUser.user?.email} berhasil direset.`
+        })
 
     } catch (error: any) {
         console.error('Reset Password Error:', error)
