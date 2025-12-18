@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, User, Calendar, Users, LogOut, LayoutDashboard, X } from 'lucide-react'
+import { Home, User, Calendar, Users, LogOut, LayoutDashboard, X, Lock } from 'lucide-react'
 import { clsx } from 'clsx'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
@@ -12,6 +12,7 @@ const menuItems = [
     { name: 'My Profile', href: '/dashboard/profile', icon: User },
     { name: 'Events', href: '/dashboard/events', icon: Calendar },
     { name: 'Alumni Directory', href: '/dashboard/directory', icon: Users },
+    { name: 'Ganti Password', href: '/dashboard/change-password', icon: Lock },
 ]
 
 interface SidebarProps {
