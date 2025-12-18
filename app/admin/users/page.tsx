@@ -97,6 +97,136 @@ export default function UserManagementPage() {
         alert("Fitur Reset Password User lain memerlukan Backend Function (Supabase Admin API). \n\nSilahkan minta user reset sendiri via 'Lupa Password' atau gunakan Dashboard Supabase.")
     }
 
+    // STATE & HANDLERS FOR EDIT MODAL
+    const [editingUser, setEditingUser] = useState<any>(null)
+    const [editForm, setEditForm] = useState<any>({})
+    const [saveLoading, setSaveLoading] = useState(false)
+
+    const handleEditClick = (user: any) => {
+        setEditingUser(user)
+        setEditForm({
+            full_name: user.full_name,
+            phone: user.phone,
+            generation: user.generation,
+            university: user.university,
+            company_name: user.company_name,
+            job_position: user.job_position,
+            role: user.role,
+            account_status: user.account_status
+        })
+    }
+
+    const handleSaveUser = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!confirm('Simpan perubahan data user ini?')) return
+
+        setSaveLoading(true)
+        try {
+            const { error } = await supabase.rpc('admin_update_profile', {
+                target_user_id: editingUser.id,
+                new_data: editForm
+            })
+
+            if (error) throw error
+
+            // Update Local State
+            setUsers(prev => prev.map(u => u.id === editingUser.id ? { ...u, ...editForm } : u))
+            alert('Data user berhasil diperbarui!')
+            setEditingUser(null)
+        } catch (err: any) {
+            console.error('Update failed:', err)
+            alert('Gagal update user: ' + err.message)
+        } finally {
+            setSaveLoading(false)
+        }
+    }
+
+    // EDIT MODAL COMPONENT
+    const EditModal = () => (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
+                <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
+                    <h3 className="text-xl font-bold text-navy">Edit Data User</h3>
+                    <button onClick={() => setEditingUser(null)} className="text-gray-400 hover:text-red-500 transition">
+                        <X size={24} />
+                    </button>
+                </div>
+
+                <form onSubmit={handleSaveUser} className="p-6 space-y-4">
+                    <div className="bg-blue-50 p-3 rounded-lg text-xs text-blue-800 border border-blue-100 mb-2">
+                        <span className="font-bold">User:</span> {editingUser.email}
+                    </div>
+
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Nama Lengkap</label>
+                        <input type="text" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-navy/20 outline-none"
+                            value={editForm.full_name || ''} onChange={e => setEditForm({ ...editForm, full_name: e.target.value })} />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">No. HP</label>
+                            <input type="text" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-navy/20 outline-none"
+                                value={editForm.phone || ''} onChange={e => setEditForm({ ...editForm, phone: e.target.value })} />
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Angkatan</label>
+                            <input type="text" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-navy/20 outline-none"
+                                value={editForm.generation || ''} onChange={e => setEditForm({ ...editForm, generation: e.target.value })} />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Universitas</label>
+                        <input type="text" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-navy/20 outline-none"
+                            value={editForm.university || ''} onChange={e => setEditForm({ ...editForm, university: e.target.value })} />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Perusahaan</label>
+                            <input type="text" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-navy/20 outline-none"
+                                value={editForm.company_name || ''} onChange={e => setEditForm({ ...editForm, company_name: e.target.value })} />
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Jabatan</label>
+                            <input type="text" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-navy/20 outline-none"
+                                value={editForm.job_position || ''} onChange={e => setEditForm({ ...editForm, job_position: e.target.value })} />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-100">
+                        <div>
+                            <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Role</label>
+                            <select className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-navy/20 outline-none bg-white"
+                                value={editForm.role || 'member'} onChange={e => setEditForm({ ...editForm, role: e.target.value })}>
+                                <option value="member">Member</option>
+                                <option value="admin">Verifikator</option>
+                                <option value="superadmin">Superadmin</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Status</label>
+                            <select className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-navy/20 outline-none bg-white"
+                                value={editForm.account_status || 'Pending'} onChange={e => setEditForm({ ...editForm, account_status: e.target.value })}>
+                                <option value="Pending">Pending</option>
+                                <option value="Active">Active</option>
+                                <option value="Blocked">Blocked</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-4 border-t">
+                        <button type="button" onClick={() => setEditingUser(null)} className="px-6 py-2.5 rounded-xl font-bold text-gray-500 hover:bg-gray-100 transition">Batal</button>
+                        <button type="submit" disabled={saveLoading} className="px-6 py-2.5 rounded-xl font-bold bg-navy text-white hover:bg-navy/90 transition shadow-lg shadow-navy/20">
+                            {saveLoading ? 'Menyimpan...' : 'Simpan'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    )
+
     if (authLoading) {
         return (
             <div className="flex h-[50vh] items-center justify-center">
@@ -192,6 +322,13 @@ export default function UserManagementPage() {
                                             Detail
                                         </button>
                                         <button
+                                            onClick={() => handleEditClick(u)}
+                                            className="px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded hover:bg-green-700 transition"
+                                            title="Edit Data User"
+                                        >
+                                            Edit
+                                        </button>
+                                        <button
                                             onClick={() => handleResetPassword(u.email)}
                                             title="Reset Password"
                                             className="p-1.5 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded transition"
@@ -228,6 +365,9 @@ export default function UserManagementPage() {
                     </button>
                 </div>
             </div>
+
+            {/* EDIT MODAL */}
+            {editingUser && <EditModal />}
 
             {/* DETAIL MODAL */}
             {selectedUser && (
