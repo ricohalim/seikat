@@ -246,3 +246,140 @@ grant execute on function public.check_email_status to anon, authenticated;
 grant insert on table temp_registrations to anon, authenticated;
 grant all on table temp_registrations to authenticated; -- For Admin
 
+
+-- ==========================================
+-- 6. ACTIVITY LOGGING SYSTEM (TRACEABILITY)
+-- ==========================================
+
+-- 6.1. Create Logs Table
+create table if not exists public.activity_logs (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references public.profiles(id) on delete set null,
+  action text not null,
+  details jsonb default '{}'::jsonb,
+  ip_address text,
+  user_agent text,
+  created_at timestamptz default now()
+);
+
+-- 6.2. RLS for Logs (SUPERADMIN ONLY)
+alter table public.activity_logs enable row level security;
+
+create policy "Superadmin View Logs"
+  on public.activity_logs for select
+  using ( public.is_superadmin() );
+
+-- Allow System/Server to Insert (for triggers & rpc)
+create policy "System Insert Logs"
+  on public.activity_logs for insert
+  with check ( true ); 
+
+-- 6.3. Helper Function to Log Activity
+create or replace function public.log_activity(
+  p_user_id uuid,
+  p_action text,
+  p_details jsonb default '{}'::jsonb
+)
+returns void
+language plpgsql
+security definer -- Runs as admin to ensure write access
+as $$
+begin
+  insert into public.activity_logs (user_id, action, details)
+  values (p_user_id, p_action, p_details);
+end;
+$$;
+
+-- 6.4. Triggers for Automatic Logging
+
+-- Trigger 1: Profile Changes (Update)
+create or replace function public.trigger_log_profile_changes()
+returns trigger
+language plpgsql
+security definer
+as $$
+begin
+  if TG_OP = 'UPDATE' then
+    perform public.log_activity(
+      auth.uid(), 
+      'UPDATE_PROFILE', 
+      jsonb_build_object(
+        'target_user', new.email,
+        'changes', (to_jsonb(new) - 'updated_at' - 'created_at') - (to_jsonb(old) - 'updated_at' - 'created_at')
+      )
+    );
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_profile_update_log on public.profiles;
+create trigger on_profile_update_log
+  after update on public.profiles
+  for each row
+  execute function public.trigger_log_profile_changes();
+
+-- Trigger 2: Registration Status Changes (Approve/Reject)
+create or replace function public.trigger_log_registration_status()
+returns trigger
+language plpgsql
+security definer
+as $$
+begin
+  if (old.status is distinct from new.status) then
+    perform public.log_activity(
+      auth.uid(), 
+      'VERIFY_REGISTRATION', 
+      jsonb_build_object(
+        'target_email', new.email,
+        'old_status', old.status,
+        'new_status', new.status
+      )
+    );
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_registration_status_log on public.temp_registrations;
+create trigger on_registration_status_log
+  after update on public.temp_registrations
+  for each row
+  execute function public.trigger_log_registration_status();
+
+-- 6.5. RPC for Admin UI to Fetch Logs
+create or replace function public.get_activity_logs()
+returns table (
+  id uuid,
+  action text,
+  actor_name text,
+  actor_email text,
+  details jsonb,
+  created_at timestamptz
+)
+language plpgsql
+security definer
+as $$
+begin
+  -- Check Superadmin
+  if not public.is_superadmin() then
+    raise exception 'Access Denied: Superadmin Only';
+  end if;
+
+  return query
+  select 
+    l.id,
+    l.action,
+    p.full_name as actor_name,
+    p.email as actor_email,
+    l.details,
+    l.created_at
+  from public.activity_logs l
+  left join public.profiles p on l.user_id = p.id
+  order by l.created_at desc
+  limit 100; -- Limit last 100 logs for performance
+end;
+$$;
+
+grant execute on function public.get_activity_logs to authenticated;
+
