@@ -366,6 +366,9 @@ create trigger on_registration_status_log
   execute function public.trigger_log_registration_status();
 
 -- 6.5. RPC for Admin UI to Fetch Logs
+drop function if exists public.get_activity_logs(); -- Drop old version
+drop function if exists public.get_activity_logs(text); -- Drop new version
+
 create or replace function public.get_activity_logs(
   search_text text default null
 )
