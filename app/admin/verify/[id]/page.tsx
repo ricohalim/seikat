@@ -2,11 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, CheckCircle, XCircle, AlertTriangle, User, GraduationCap, Briefcase } from 'lucide-react'
 
-export default function VerifyDetailPage({ params }: { params: { id: string } }) {
+export default function VerifyDetailPage() {
+    const params = useParams()
+    const id = params?.id as string
+
     const [registrant, setRegistrant] = useState<any>(null)
     const [duplicates, setDuplicates] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
@@ -14,16 +17,18 @@ export default function VerifyDetailPage({ params }: { params: { id: string } })
     const router = useRouter()
 
     useEffect(() => {
+        if (!id) return
+
         const fetchData = async () => {
             // 1. Fetch Registrant Data
             const { data, error } = await supabase
                 .from('temp_registrations')
                 .select('*')
-                .eq('id', params.id)
+                .eq('id', id)
                 .single()
 
             if (error || !data) {
-                alert('Data tidak ditemukan. ID: ' + params.id)
+                alert('Data tidak ditemukan. ID: ' + id)
                 router.push('/admin/verify')
                 return
             }
@@ -50,7 +55,7 @@ export default function VerifyDetailPage({ params }: { params: { id: string } })
         }
 
         fetchData()
-    }, [params.id, router])
+    }, [id, router])
 
     const handleApprove = async () => {
         if (!confirm('Apakah Anda yakin data ini valid dan ingin menyetujui pendaftaran ini?')) return
