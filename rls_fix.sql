@@ -320,7 +320,8 @@ begin
       'UPDATE_PROFILE', 
       jsonb_build_object(
         'target_user', new.email,
-        'changes', (to_jsonb(new) - 'updated_at' - 'created_at') - (to_jsonb(old) - 'updated_at' - 'created_at')
+        'old_data', to_jsonb(old),
+        'new_data', to_jsonb(new)
       )
     );
   end if;
