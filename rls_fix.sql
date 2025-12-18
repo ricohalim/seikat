@@ -18,6 +18,21 @@ as $$
   );
 $$;
 
+-- 1a. HELPER: SUPERADMIN CHECK (Separate from Admin)
+create or replace function public.is_superadmin()
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.profiles 
+    where id = auth.uid() 
+    and lower(role) = 'superadmin'
+  );
+$$;
+
 -- ==========================================
 -- 2. RPC: PUBLIC DIRECTORY (Bypass RLS, Safe Data)
 -- ==========================================
