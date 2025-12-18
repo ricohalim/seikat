@@ -24,6 +24,7 @@ export default function EventsPage() {
     const [loading, setLoading] = useState(true)
     const [registeredEventIds, setRegisteredEventIds] = useState<string[]>([])
     const [registeringId, setRegisteringId] = useState<string | null>(null)
+    const [staffEventIds, setStaffEventIds] = useState<string[]>([])
 
     // Authorization State
     const [isAuthorized, setIsAuthorized] = useState(false)
@@ -65,6 +66,7 @@ export default function EventsPage() {
 
             // Fetch My Registrations
             if (currentUser) {
+                // 1. Registrations
                 const { data: registrations } = await supabase
                     .from('event_participants')
                     .select('event_id')
@@ -72,6 +74,16 @@ export default function EventsPage() {
 
                 if (registrations) {
                     setRegisteredEventIds(registrations.map(r => r.event_id))
+                }
+
+                // 2. Staff Assignments
+                const { data: staffAssignments } = await supabase
+                    .from('event_staff')
+                    .select('event_id')
+                    .eq('user_id', currentUser.id)
+
+                if (staffAssignments) {
+                    setStaffEventIds(staffAssignments.map(s => s.event_id))
                 }
             }
             setLoading(false)
@@ -165,7 +177,7 @@ export default function EventsPage() {
                                     <div className="flex justify-between items-start mb-4">
                                         <h3 className="text-xl font-bold text-navy line-clamp-2">{event.title}</h3>
                                         <span className={`text-xs font-bold px-2 py-1 rounded-full uppercase ${isRegistered ? 'bg-green-100 text-green-700' :
-                                                isClosed ? 'bg-gray-100 text-gray-500' : 'bg-blue-50 text-blue-600'
+                                            isClosed ? 'bg-gray-100 text-gray-500' : 'bg-blue-50 text-blue-600'
                                             }`}>
                                             {isRegistered ? 'Terdaftar' : event.status}
                                         </span>
@@ -205,16 +217,27 @@ export default function EventsPage() {
                                         onClick={() => handleRegister(event.id)}
                                         disabled={isRegistered || isClosed || registeringId === event.id}
                                         className={`w-full mt-6 font-bold py-2 rounded-lg transition text-sm ${isRegistered
-                                                ? 'bg-green-100 text-green-700 cursor-default'
-                                                : isClosed
-                                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                    : 'bg-navy text-white hover:bg-navy/90'
+                                            ? 'bg-green-100 text-green-700 cursor-default'
+                                            : isClosed
+                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                : 'bg-navy text-white hover:bg-navy/90'
                                             }`}
                                     >
                                         {registeringId === event.id ? 'Mendaftarkan...' :
                                             isRegistered ? 'Anda Telah Terdaftar' :
                                                 isClosed ? 'Pendaftaran Ditutup' : 'Daftar Kegiatan'}
                                     </button>
+
+                                    {staffEventIds.includes(event.id) && (
+                                        <Link
+                                            href={`/dashboard/events/${event.id}/staff`}
+                                            className="w-full mt-2 block text-center bg-orange text-white font-bold py-2 rounded-lg transition text-sm hover:bg-orange/90 shadow-sm"
+                                        >
+                                            <span className="flex items-center justify-center gap-2">
+                                                🛡️ Console Panitia
+                                            </span>
+                                        </Link>
+                                    )}
                                 </div>
                             </div>
                         )
