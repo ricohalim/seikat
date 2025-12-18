@@ -94,6 +94,33 @@ end;
 $$;
 
 -- ==========================================
+-- 4.5. RPC: GET EVENT PARTICIPANTS (Bypass RLS for Admin View)
+-- ==========================================
+create or replace function public.get_event_participants(target_event_id uuid)
+returns table (
+  user_id uuid,
+  full_name text,
+  email text,
+  generation text,
+  phone text
+)
+language sql
+security definer
+stable
+as $$
+  select 
+    p.id as user_id,
+    p.full_name,
+    p.email,
+    p.generation,
+    p.phone
+  from event_participants ep
+  join profiles p on ep.user_id = p.id
+  where ep.event_id = target_event_id
+  and public.is_admin_check() = true; -- Guard: Only Admins
+$$;
+
+-- ==========================================
 -- 5. TABLE: PROFILES (Strict RLS)
 -- ==========================================
 alter table profiles enable row level security;
@@ -159,3 +186,4 @@ grant select, update on table profiles to authenticated;
 grant execute on function public.get_directory_members to authenticated;
 grant execute on function public.get_all_profiles_for_admin to authenticated;
 grant execute on function public.admin_update_profile to authenticated;
+grant execute on function public.get_event_participants to authenticated;

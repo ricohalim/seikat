@@ -91,6 +91,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             <Users size={18} /> User Management
                         </Link>
                     )}
+                    <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium mt-auto text-blue-200 hover:text-white">
+                        <LogOut size={18} className="rotate-180" /> Kembali ke App
+                    </Link>
                 </nav>
 
                 <div className="p-4 border-t border-white/10 bg-black/20">

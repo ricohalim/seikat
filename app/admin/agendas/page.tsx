@@ -129,14 +129,17 @@ export default function AdminAgendasPage() {
         setLoadingParticipants(true)
         setIsParticipantModalOpen(true)
 
-        const { data } = await supabase
-            .from('event_participants')
-            .select('user:profiles(full_name, email, generation, phone)')
-            .eq('event_id', eventId)
+        const { data, error } = await supabase.rpc('get_event_participants', {
+            target_event_id: eventId
+        })
+
+        if (error) {
+            console.error('Error fetching participants:', error)
+            alert('Gagal memuat peserta: ' + error.message)
+        }
 
         if (data) {
-            // Flatten the structure
-            setParticipants(data.map((item: any) => item.user))
+            setParticipants(data)
         }
         setLoadingParticipants(false)
     }
