@@ -366,7 +366,9 @@ create trigger on_registration_status_log
   execute function public.trigger_log_registration_status();
 
 -- 6.5. RPC for Admin UI to Fetch Logs
-create or replace function public.get_activity_logs()
+create or replace function public.get_activity_logs(
+  search_text text default null
+)
 returns table (
   id uuid,
   action text,
@@ -394,6 +396,13 @@ begin
     l.created_at
   from public.activity_logs l
   left join public.profiles p on l.user_id = p.id
+  where 
+    case 
+      when search_text is not null and search_text <> '' then
+        p.full_name ilike '%' || search_text || '%' 
+        or p.email ilike '%' || search_text || '%'
+      else true
+    end
   order by l.created_at desc
   limit 100; -- Limit last 100 logs for performance
 end;

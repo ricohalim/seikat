@@ -9,12 +9,21 @@ import Link from 'next/link'
 export default function ActivityLogsPage() {
     const [logs, setLogs] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
+    const [searchQuery, setSearchQuery] = useState('')
     const [isSuperAdmin, setIsSuperAdmin] = useState(false)
     const router = useRouter()
 
     useEffect(() => {
         checkAccessAndFetch()
-    }, [])
+    }, []) // Initial load
+
+    // Debounce Search
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            if (isSuperAdmin) checkAccessAndFetch()
+        }, 500)
+        return () => clearTimeout(timeout)
+    }, [searchQuery])
 
     const checkAccessAndFetch = async () => {
         setLoading(true)
@@ -23,20 +32,17 @@ export default function ActivityLogsPage() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) return router.push('/login')
 
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('id', user.id)
-                .single()
-
-            if (profile?.role !== 'superadmin') {
-                return // Access Denied UI will show
+            // Optimisation: Skip role check if already confirmed
+            if (!isSuperAdmin) {
+                const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+                if (profile?.role !== 'superadmin') return
+                setIsSuperAdmin(true)
             }
 
-            setIsSuperAdmin(true)
-
-            // 2. Fetch Logs (RPC)
-            const { data, error } = await supabase.rpc('get_activity_logs')
+            // 2. Fetch Logs (RPC with Search)
+            const { data, error } = await supabase.rpc('get_activity_logs', {
+                search_text: searchQuery || null
+            })
             if (error) throw error
             setLogs(data || [])
 
@@ -67,16 +73,29 @@ export default function ActivityLogsPage() {
 
     return (
         <div className="max-w-7xl mx-auto pb-20 animate-in fade-in duration-500">
-            <div className="flex items-center gap-4 mb-8">
-                <Link href="/dashboard" className="p-2 hover:bg-gray-100 rounded-lg transition text-gray-400 hover:text-navy">
-                    <ArrowLeft size={24} />
-                </Link>
-                <div>
-                    <h1 className="text-2xl font-bold text-navy flex items-center gap-3">
-                        <Clock className="text-navy" size={28} />
-                        Activity Logs
-                    </h1>
-                    <p className="text-gray-500 text-sm">Audit trail aktivitas user dan admin (100 Terakhir)</p>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                <div className="flex items-center gap-4">
+                    <Link href="/dashboard" className="p-2 hover:bg-gray-100 rounded-lg transition text-gray-400 hover:text-navy">
+                        <ArrowLeft size={24} />
+                    </Link>
+                    <div>
+                        <h1 className="text-2xl font-bold text-navy flex items-center gap-3">
+                            <Clock className="text-navy" size={28} />
+                            Activity Logs
+                        </h1>
+                        <p className="text-gray-500 text-sm">Audit trail aktivitas user dan admin (100 Terakhir)</p>
+                    </div>
+                </div>
+
+                <div className="relative w-full md:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <input
+                        type="text"
+                        placeholder="Cari Actor (Nama / Email)..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:border-navy focus:ring-2 focus:ring-navy/20 outline-none text-sm transition-all"
+                    />
                 </div>
             </div>
 
@@ -107,9 +126,9 @@ export default function ActivityLogsPage() {
                                     </td>
                                     <td className="p-4">
                                         <span className={`px-2 py-1 rounded text-[10px] font-bold tracking-wide uppercase ${log.action.includes('UPDATE') ? 'bg-blue-50 text-blue-600' :
-                                                log.action.includes('VERIFY') ? 'bg-purple-50 text-purple-600' :
-                                                    log.action.includes('INSERT') ? 'bg-green-50 text-green-600' :
-                                                        'bg-gray-100 text-gray-600'
+                                            log.action.includes('VERIFY') ? 'bg-purple-50 text-purple-600' :
+                                                log.action.includes('INSERT') ? 'bg-green-50 text-green-600' :
+                                                    'bg-gray-100 text-gray-600'
                                             }`}>
                                             {log.action}
                                         </span>
