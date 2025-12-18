@@ -280,11 +280,13 @@ create table if not exists public.activity_logs (
 -- 6.2. RLS for Logs (SUPERADMIN ONLY)
 alter table public.activity_logs enable row level security;
 
+drop policy if exists "Superadmin View Logs" on public.activity_logs;
 create policy "Superadmin View Logs"
   on public.activity_logs for select
   using ( public.is_superadmin() );
 
 -- Allow System/Server to Insert (for triggers & rpc)
+drop policy if exists "System Insert Logs" on public.activity_logs;
 create policy "System Insert Logs"
   on public.activity_logs for insert
   with check ( true ); 
