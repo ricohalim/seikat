@@ -3,13 +3,14 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { Shield, Clock, Search, ArrowLeft } from 'lucide-react'
+import { Shield, Clock, Search, ArrowLeft, Eye, X } from 'lucide-react'
 import Link from 'next/link'
 
 export default function ActivityLogsPage() {
     const [logs, setLogs] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState('')
+    const [selectedLog, setSelectedLog] = useState<any>(null)
     const [isSuperAdmin, setIsSuperAdmin] = useState(false)
     const router = useRouter()
 
@@ -134,9 +135,12 @@ export default function ActivityLogsPage() {
                                         </span>
                                     </td>
                                     <td className="p-4">
-                                        <pre className="text-[10px] bg-gray-50 p-2 rounded border border-gray-100 overflow-x-auto max-w-sm font-mono text-gray-600">
-                                            {JSON.stringify(log.details, null, 2)}
-                                        </pre>
+                                        <button
+                                            onClick={() => setSelectedLog(log)}
+                                            className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-navy hover:text-white text-gray-600 text-xs font-bold rounded-lg transition"
+                                        >
+                                            <Eye size={14} /> Lihat Detail
+                                        </button>
                                     </td>
                                 </tr>
                             ))}
@@ -144,6 +148,53 @@ export default function ActivityLogsPage() {
                     </table>
                 </div>
             </div>
+
+            {/* DETAIL MODAL */}
+            {selectedLog && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <div>
+                                <h3 className="text-lg font-bold text-navy flex items-center gap-2">
+                                    <Clock size={18} /> Detail Aktivitas
+                                </h3>
+                                <p className="text-xs text-gray-500 font-mono mt-1">{selectedLog.id}</p>
+                            </div>
+                            <button onClick={() => setSelectedLog(null)} className="text-gray-400 hover:text-red-500 transition">
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <div className="p-6 overflow-y-auto space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Actor</label>
+                                    <p className="font-bold text-navy">{selectedLog.actor_name || 'System'}</p>
+                                    <p className="text-xs text-gray-500">{selectedLog.actor_email}</p>
+                                </div>
+                                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Action & Time</label>
+                                    <p className="font-bold text-navy">{selectedLog.action}</p>
+                                    <p className="text-xs text-gray-500">{new Date(selectedLog.created_at).toLocaleString()}</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Technical Details (JSON)</label>
+                                <pre className="bg-slate-900 text-slate-50 p-4 rounded-xl text-xs font-mono overflow-x-auto shadow-inner">
+                                    {JSON.stringify(selectedLog.details, null, 2)}
+                                </pre>
+                            </div>
+                        </div>
+
+                        <div className="p-4 border-t border-gray-100 bg-gray-50 text-right">
+                            <button onClick={() => setSelectedLog(null)} className="px-5 py-2 bg-white border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-100 text-sm transition">
+                                Tutup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
