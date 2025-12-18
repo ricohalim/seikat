@@ -71,6 +71,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                                         : 'text-gray-600 hover:bg-gray-50 hover:text-navy'
                                 )}
                             >
+                                {/* @ts-ignore */}
                                 <Icon size={18} />
                                 {item.name}
                             </Link>
