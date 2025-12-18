@@ -25,7 +25,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
     const handleLogout = async () => {
         await supabase.auth.signOut()
-        router.push('/auth/login')
+        router.push('/')
     }
 
     return (

@@ -112,7 +112,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         </div>
                     </div>
                     <button
-                        onClick={() => supabase.auth.signOut().then(() => router.replace('/auth/login'))}
+                        onClick={() => supabase.auth.signOut().then(() => router.replace('/'))}
                         className="w-full flex items-center justify-center gap-2 bg-red-500/20 text-red-200 py-2 rounded-lg hover:bg-red-500/30 transition text-xs font-bold"
                     >
                         <LogOut size={14} /> Keluar

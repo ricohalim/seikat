@@ -23,75 +23,48 @@ export default function CheckAccountPage() {
         setResult(null)
 
         try {
-            // Priority 1: Check Active Profiles (Alumni Lama / Approved)
-            // Note: This requires the 'email' column to be added to 'profiles' table via migration.
-            const { data: profileList, error: profileError } = await supabase
-                .from('profiles')
-                .select('*')
-                .ilike('email', email)
-                .limit(1)
+            // Use RPC to check status securely (Bypasses RLS issues)
+            const cleanEmail = email.trim()
+            const { data: rpcResult, error } = await supabase.rpc('check_email_status', {
+                check_email: cleanEmail
+            })
 
-            if (!profileError && profileList && profileList.length > 0) {
-                const profile = profileList[0]
-
-                // Check if profile is actually active
-                if (profile.account_status === 'Pending') {
-                    setResult({
-                        status: 'found_pending',
-                        message: 'Status: MENUNGGU VERIFIKASI',
-                        data: profile
-                    })
-                } else {
-                    setResult({
-                        status: 'found_active',
-                        message: 'Status: DITERIMA / AKTIF',
-                        data: profile
-                    })
-                }
-                setLoading(false)
-                return
+            if (error) {
+                alert(`Error: ${error.message}`)
+                throw error
             }
 
-            // Priority 2: Check Temp Registrations (Pending)
-            const { data: tempList, error: tempError } = await supabase
-                .from('temp_registrations')
-                .select('*')
-                .ilike('email', email)
-                .order('submitted_at', { ascending: false }) // Get latest
+            const status = rpcResult?.status?.toLowerCase()
 
-            if (tempError) throw tempError
-
-            const latestTemp = tempList?.[0]
-
-            if (latestTemp) {
-                if (latestTemp.status === 'Pending') {
-                    setResult({
-                        status: 'found_pending',
-                        message: 'Status: MENUNGGU VERIFIKASI',
-                        data: latestTemp
-                    })
-                    return // Stop here
-                } else if (latestTemp.status === 'Approved') {
-                    // Fallback if not found in profiles but marked approved in temp
-                    setResult({
-                        status: 'found_active',
-                        message: 'Status: DITERIMA / AKTIF',
-                        data: latestTemp
-                    })
-                    return // Stop here
-                } else if (latestTemp.status === 'Rejected') {
-                    setResult({
-                        status: 'error',
-                        message: 'Status: DITOLAK',
-                        data: latestTemp
-                    })
-                    return
-                }
+            // Map RPC result to UI state
+            if (status === 'active' || status === 'aktif' || status === 'approved') {
+                setResult({
+                    status: 'found_active',
+                    message: 'Status: DITERIMA / AKTIF',
+                    data: { email: cleanEmail, full_name: 'Member Terdaftar' }
+                })
+            } else if (status === 'pending') {
+                setResult({
+                    status: 'found_pending',
+                    message: 'Status: MENUNGGU VERIFIKASI',
+                    data: { email: cleanEmail, full_name: 'Pendaftar' }
+                })
+            } else if (status === 'rejected') {
+                setResult({
+                    status: 'error',
+                    message: 'Status: DITOLAK',
+                    data: { email: cleanEmail, full_name: 'Pendaftar' }
+                })
+            } else {
+                setResult({
+                    status: 'not_found',
+                    message: 'Data tidak ditemukan.',
+                    data: { email: cleanEmail, debug: JSON.stringify(rpcResult) }
+                })
             }
-
-            setResult({ status: 'not_found', message: 'Data tidak ditemukan.' })
 
         } catch (err: any) {
+            console.error('Check error:', err)
             setResult({ status: 'error', message: err.message || 'Terjadi kesalahan' })
         } finally {
             setLoading(false)
@@ -175,10 +148,14 @@ export default function CheckAccountPage() {
 
                                     {result.status === 'not_found' && (
                                         <div className="mt-2">
-                                            <p className="text-sm text-gray-600 mb-2">Email belum terdaftar.</p>
+                                            <p className="text-sm text-gray-600 mb-2">Email <strong>{result.data?.email}</strong> belum terdaftar.</p>
                                             <Link href="/auth/register" className="text-sm font-bold text-navy hover:underline">
                                                 Daftar Disini
                                             </Link>
+                                            {/* DEBUG INFO */}
+                                            <p className="text-[10px] text-gray-400 mt-2 font-mono border-t pt-2">
+                                                Debug: {result.data?.debug || 'No RPC response'}
+                                            </p>
                                         </div>
                                     )}
                                 </div>

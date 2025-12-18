@@ -93,14 +93,16 @@ export default function UserManagementPage() {
         }
     }
 
-    const handleResetPassword = async (email: string) => {
-        alert("Fitur Reset Password User lain memerlukan Backend Function (Supabase Admin API). \n\nSilahkan minta user reset sendiri via 'Lupa Password' atau gunakan Dashboard Supabase.")
-    }
 
-    // STATE & HANDLERS FOR EDIT MODAL
+
     const [editingUser, setEditingUser] = useState<any>(null)
     const [editForm, setEditForm] = useState<any>({})
     const [saveLoading, setSaveLoading] = useState(false)
+
+    // Reset Password State
+    const [newPassword, setNewPassword] = useState('')
+    const [resetLoading, setResetLoading] = useState(false)
+    const [showResetInput, setShowResetInput] = useState(false)
 
     const handleEditClick = (user: any) => {
         setEditingUser(user)
@@ -114,6 +116,40 @@ export default function UserManagementPage() {
             role: user.role,
             account_status: user.account_status
         })
+    }
+
+    const handleResetPassword = async () => {
+        if (!newPassword || newPassword.length < 6) return alert('Password minimal 6 karakter!')
+        if (!confirm('Yakin ingin mereset password user ini?')) return
+
+        setResetLoading(true)
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) throw new Error('No active session')
+
+            const res = await fetch('/api/admin/reset-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({
+                    targetUserId: editingUser.id,
+                    newPassword: newPassword
+                })
+            })
+
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error || 'Gagal reset password')
+
+            alert('Password berhasil direset!')
+            setShowResetInput(false)
+            setNewPassword('')
+        } catch (err: any) {
+            alert('Error: ' + err.message)
+        } finally {
+            setResetLoading(false)
+        }
     }
 
     const handleSaveUser = async (e: React.FormEvent) => {
@@ -214,6 +250,47 @@ export default function UserManagementPage() {
                                 <option value="Blocked">Blocked</option>
                             </select>
                         </div>
+                    </div>
+
+                    {/* RESET PASSWORD SECTION */}
+                    <div className="pt-4 border-t border-gray-100">
+                        {!showResetInput ? (
+                            <button
+                                type="button"
+                                onClick={() => setShowResetInput(true)}
+                                className="text-xs font-bold text-red-500 hover:bg-red-50 px-3 py-2 rounded-lg transition flex items-center gap-2"
+                            >
+                                <Lock size={14} /> Reset Password User Ini
+                            </button>
+                        ) : (
+                            <div className="bg-red-50 p-4 rounded-xl border border-red-100 animate-in fade-in slide-in-from-top-2">
+                                <label className="text-xs font-bold text-red-800 uppercase mb-2 block">Set Password Baru</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="Min. 6 Karakter"
+                                        className="flex-1 p-2 text-sm border border-red-200 rounded-lg focus:ring-2 focus:ring-red-200 outline-none text-red-900 placeholder:text-red-300"
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleResetPassword}
+                                        disabled={resetLoading}
+                                        className="bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-red-700 disabled:opacity-70"
+                                    >
+                                        {resetLoading ? '...' : 'Reset'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowResetInput(false)}
+                                        className="text-red-500 p-2 hover:bg-red-100 rounded-lg"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex justify-end gap-3 pt-4 border-t">
@@ -328,13 +405,7 @@ export default function UserManagementPage() {
                                         >
                                             Edit
                                         </button>
-                                        <button
-                                            onClick={() => handleResetPassword(u.email)}
-                                            title="Reset Password"
-                                            className="p-1.5 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded transition"
-                                        >
-                                            <Lock size={14} />
-                                        </button>
+
                                     </div>
                                 </td>
                             </tr>
