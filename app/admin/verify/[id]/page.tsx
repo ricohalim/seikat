@@ -171,46 +171,48 @@ export default function VerifyDetailPage() {
             </header>
 
             {/* DUPLICATE WARNING */}
-            {duplicates.length > 0 && (
-                <div className="bg-orange/10 border border-orange/20 rounded-2xl p-6 animate-in slide-in-from-top-4">
-                    <div className="flex items-start gap-4">
-                        <div className="p-3 bg-white rounded-full text-orange shadow-sm">
-                            <AlertTriangle size={24} />
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="text-lg font-bold text-navy mb-1">Potensi Duplikat Ditemukan!</h3>
-                            <p className="text-gray-600 text-sm mb-4">Sistem menemukan {duplicates.length} alumni yang memiliki kemiripan nama di database.</p>
+            {
+                duplicates.length > 0 && (
+                    <div className="bg-orange/10 border border-orange/20 rounded-2xl p-6 animate-in slide-in-from-top-4">
+                        <div className="flex items-start gap-4">
+                            <div className="p-3 bg-white rounded-full text-orange shadow-sm">
+                                <AlertTriangle size={24} />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-lg font-bold text-navy mb-1">Potensi Duplikat Ditemukan!</h3>
+                                <p className="text-gray-600 text-sm mb-4">Sistem menemukan {duplicates.length} alumni yang memiliki kemiripan nama di database.</p>
 
-                            <div className="bg-white rounded-xl border border-orange/20 overflow-hidden">
-                                <table className="w-full text-sm text-left">
-                                    <thead className="bg-orange/5 text-orange font-bold uppercase text-xs">
-                                        <tr>
-                                            <th className="p-3">Nama Lengkap</th>
-                                            <th className="p-3">Angkatan</th>
-                                            <th className="p-3">Kampus</th>
-                                            <th className="p-3">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-100">
-                                        {duplicates.map(d => (
-                                            <tr key={d.id} className="hover:bg-gray-50">
-                                                <td className="p-3 font-semibold text-navy">{d.full_name}</td>
-                                                <td className="p-3 text-gray-500">{d.generation}</td>
-                                                <td className="p-3 text-gray-500">{d.university}</td>
-                                                <td className="p-3">
-                                                    <span className={`px-2 py-0.5 rounded text-xs font-bold ${d.account_status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                                                        {d.account_status}
-                                                    </span>
-                                                </td>
+                                <div className="bg-white rounded-xl border border-orange/20 overflow-hidden">
+                                    <table className="w-full text-sm text-left">
+                                        <thead className="bg-orange/5 text-orange font-bold uppercase text-xs">
+                                            <tr>
+                                                <th className="p-3">Nama Lengkap</th>
+                                                <th className="p-3">Angkatan</th>
+                                                <th className="p-3">Kampus</th>
+                                                <th className="p-3">Status</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {duplicates.map(d => (
+                                                <tr key={d.id} className="hover:bg-gray-50">
+                                                    <td className="p-3 font-semibold text-navy">{d.full_name}</td>
+                                                    <td className="p-3 text-gray-500">{d.generation}</td>
+                                                    <td className="p-3 text-gray-500">{d.university}</td>
+                                                    <td className="p-3">
+                                                        <span className={`px-2 py-0.5 rounded text-xs font-bold ${d.account_status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                                                            {d.account_status}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* DATA VIEW - LIMITED BASED ON ROLE CONSTRAINTS */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -270,6 +272,6 @@ export default function VerifyDetailPage() {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     )
 }
