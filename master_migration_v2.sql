@@ -89,11 +89,13 @@ create policy "Users can update own profile" on profiles for update using ( auth
 
 -- 3.2 EVENT STAFF POLICIES
 alter table event_staff enable row level security;
-drop policy if exists "Admins/Staff manage event staff" on event_staff;
+drop policy if exists "Admins/Staff manage event staff" on event_staff; -- cleanup old
+drop policy if exists "Admins manage event staff" on event_staff;
 
 create policy "Admins manage event staff" on event_staff
   using (public.is_admin_check() = true);
 
+drop policy if exists "Staff view own assignments" on event_staff;
 create policy "Staff view own assignments" on event_staff
   for select using (user_id = auth.uid());
 
@@ -105,6 +107,8 @@ drop policy if exists "Participants Delete" on event_participants;
 drop policy if exists "Staff Update Participants" on event_participants;
 
 -- Read: User, Admin, OR Event Staff
+-- Read: User, Admin, OR Event Staff
+drop policy if exists "Read Participants" on event_participants;
 create policy "Read Participants" on event_participants 
 for select using ( 
   auth.uid() = user_id 
@@ -113,6 +117,7 @@ for select using (
 );
 
 -- Write (Check-in): Admin OR Event Staff
+drop policy if exists "Staff Check-in Participants" on event_participants;
 create policy "Staff Check-in Participants" on event_participants
 for update using (
   public.is_admin_check() = true 
@@ -160,6 +165,7 @@ $$;
 -- (Truncated for brevity, assuming USER ran their block separately or we append it)
 
 -- Insert the User's Check Email Function
+drop function if exists public.check_email_status(text);
 create or replace function public.check_email_status(email_input text)
 returns jsonb
 language plpgsql

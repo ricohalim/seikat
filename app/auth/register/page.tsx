@@ -462,7 +462,7 @@ export default function RegisterPage() {
                                         </div>
                                         <div>
                                             <label className="label">Nomor Whatsapp</label>
-                                            <input type="tel" name="phone" required value={formData.phone} onChange={handlePhoneChange} className="input-field" placeholder="08xxx (Wajib Aktif)" />
+                                            <input type="tel" name="phone" required value={formData.phone} onChange={handlePhoneChange} className="input-field" placeholder="628xxx (Wajib Aktif)" />
                                         </div>
                                         <div>
                                             <label className="label">Jenis Kelamin</label>
