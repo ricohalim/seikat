@@ -213,7 +213,8 @@ for all using (public.is_admin_check() = true);
 -- ==========================================
 -- 9. RPC: CHECK EMAIL STATUS (Unified Check)
 -- ==========================================
-create or replace function public.check_email_status(email_input text)
+drop function if exists public.check_email_status(text);
+create or replace function public.check_email_status(check_email text)
 returns jsonb
 language plpgsql
 security definer
@@ -226,7 +227,7 @@ begin
   -- 1. Check Profiles
   select account_status::text into profile_status
   from profiles
-  where email ilike email_input
+  where email ilike check_email
   limit 1;
 
   if profile_status is not null then
@@ -236,7 +237,7 @@ begin
   -- 2. Check Temp Registrations
   select status::text into temp_status
   from temp_registrations
-  where email ilike email_input
+  where email ilike check_email
   order by submitted_at desc
   limit 1;
 
