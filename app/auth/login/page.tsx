@@ -19,12 +19,29 @@ export default function LoginPage() {
         setError(null)
 
         try {
-            const { error } = await supabase.auth.signInWithPassword({
+            const { data, error } = await supabase.auth.signInWithPassword({
                 email,
                 password,
             })
 
             if (error) throw error
+
+            // LOG ACTIVITY (Client-side hook)
+            if (data.user) {
+                try {
+                    await supabase.rpc('log_activity', {
+                        p_user_id: data.user.id,
+                        p_action: 'LOGIN',
+                        p_details: {
+                            method: 'email_password',
+                            timestamp: new Date().toISOString()
+                        }
+                    })
+                } catch (logErr) {
+                    console.error('Login logging failed:', logErr)
+                    // Non-blocking
+                }
+            }
 
             router.push('/dashboard')
         } catch (err) {
