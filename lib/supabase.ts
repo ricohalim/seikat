@@ -8,4 +8,7 @@ if (!supabaseUrl || !supabaseKey) {
     console.warn('⚠️ Missing Supabase environment variables! Check your .env or Vercel Settings.')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey)
+export const supabase = createClient(
+    supabaseUrl || 'https://placeholder.supabase.co',
+    supabaseKey || 'placeholder'
+)
