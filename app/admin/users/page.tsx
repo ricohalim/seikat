@@ -363,6 +363,11 @@ export default function UserManagementPage() {
                             <tr key={u.id} className="hover:bg-gray-50 transition group">
                                 <td className="p-4">
                                     <div className="font-bold text-navy text-base">{u.full_name}</div>
+                                    {u.member_id && (
+                                        <div className="text-[10px] font-mono font-bold text-blue-600 bg-blue-50 inline-block px-1.5 rounded mb-1 border border-blue-100">
+                                            {u.member_id}
+                                        </div>
+                                    )}
                                     <div className="text-xs text-gray-400 font-mono mb-1">{u.email}</div>
                                     <div className="text-[10px] text-gray-400">{u.phone || '-'}</div>
                                 </td>
