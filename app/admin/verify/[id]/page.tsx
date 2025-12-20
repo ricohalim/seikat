@@ -43,6 +43,7 @@ export default function VerifyDetailPage() {
                     .from('profiles')
                     .select('id, full_name, generation, university, major, email, account_status')
                     .or(`full_name.ilike.%${data.full_name}%`) // Basic name match
+                    .neq('account_status', 'Pending') // Exclude self (which is Pending)
                     .limit(5)
 
                 if (dupes) {

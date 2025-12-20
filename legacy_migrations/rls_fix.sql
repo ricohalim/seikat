@@ -140,17 +140,43 @@ $$;
 -- ==========================================
 alter table profiles enable row level security;
 
--- Hapus policy lama yang berpotensi konflik
+-- Hapus policy lama yang berpotensi konflik (Robust Drop)
 drop policy if exists "Public profiles are viewable by everyone" on profiles;
 drop policy if exists "Members can view active profiles" on profiles;
 drop policy if exists "Super Admin Access" on profiles;
 drop policy if exists "Users can view own profile" on profiles;
 drop policy if exists "Users can update own profile" on profiles;
+drop policy if exists "Users can insert own profile" on profiles;
 drop policy if exists "Admins can update users" on profiles;
 
--- Policy: User HANYA bisa lihat/edit diri sendiri (Strict)
-create policy "Users can view own profile" on profiles for select using ( auth.uid() = id );
-create policy "Users can update own profile" on profiles for update using ( auth.uid() = id );
+-- Policy 1: Lihat Profile (Diri Sendiri ATAU Admin)
+create policy "Users can view own profile" on profiles 
+for select using ( auth.uid() = id or public.is_admin_check() = true );
+
+-- Policy 2: Update Profile (Diri Sendiri ATAU Admin)
+create policy "Users can update own profile" on profiles 
+for update using ( auth.uid() = id or public.is_admin_check() = true );
+
+-- Policy 3: Insert Profile (Critical for Registration)
+create policy "Users can insert own profile" on profiles 
+for insert with check ( auth.uid() = id );
+
+-- ==========================================
+-- 5.5 REPAIR DATA (Auto-Fix Missing Profiles)
+-- ==========================================
+-- Block ini akan otomatis memperbaiki data user yg 'nyangkut' setiap kali script ini dijalankan
+INSERT INTO public.profiles (id, email, full_name, account_status, role, created_at)
+SELECT 
+  au.id, 
+  tr.email, 
+  tr.full_name, 
+  'Pending', 
+  'member',
+  NOW()
+FROM auth.users au
+JOIN public.temp_registrations tr ON au.email = tr.email
+LEFT JOIN public.profiles p ON au.id = p.id
+WHERE p.id IS NULL;
 
 -- ==========================================
 -- 6. TABLE: EVENTS (Explicit RLS for Insert Fix)
@@ -214,7 +240,7 @@ for all using (public.is_admin_check() = true);
 -- 9. RPC: CHECK EMAIL STATUS (Unified Check)
 -- ==========================================
 drop function if exists public.check_email_status(text);
-create or replace function public.check_email_status(check_email text)
+create or replace function public.check_email_status(email_input text)
 returns jsonb
 language plpgsql
 security definer
@@ -227,7 +253,7 @@ begin
   -- 1. Check Profiles
   select account_status::text into profile_status
   from profiles
-  where email ilike check_email
+  where email ilike email_input
   limit 1;
 
   if profile_status is not null then
@@ -237,7 +263,7 @@ begin
   -- 2. Check Temp Registrations
   select status::text into temp_status
   from temp_registrations
-  where email ilike check_email
+  where email ilike email_input
   order by submitted_at desc
   limit 1;
 
@@ -414,3 +440,75 @@ $$;
 
 grant execute on function public.get_activity_logs to authenticated;
 
+-- FEATURE: AUTO MEMBER ID
+-- Script ini membuat Trigger untuk mengisi member_id secara otomatis
+-- Format: DBP + 8 Digit (Mulai dari DBP02000919)
+
+-- 1. Fungsi Generate ID
+CREATE OR REPLACE FUNCTION public.get_next_member_id()
+RETURNS text
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  last_id text;
+  last_num bigint;
+  next_id text;
+  min_start_num bigint := 2000918; -- "DBP02000918" (Latest Existing)
+BEGIN
+  -- A. Cari ID terakhir yang ada di database (Format DBPxxxx)
+  SELECT member_id INTO last_id
+  FROM profiles
+  WHERE member_id LIKE 'DBP%'
+  AND member_id ~ '^DBP\d+$' -- Hanya ambil yang valid angka
+  ORDER BY LENGTH(member_id) DESC, member_id DESC
+  LIMIT 1;
+
+  -- B. Tentukan Angka Terakhir
+  IF last_id IS NULL THEN
+    -- Jika database kosong (belum ada ID sama sekali), pakai angka minimum
+    last_num := min_start_num;
+  ELSE
+    -- Ambil angka dari string (remove 'DBP')
+    last_num := substring(last_id from 4)::bigint;
+    
+    -- Safety: Jika ID di database lebih kecil dari baseline, paksa naik ke baseline
+    IF last_num < min_start_num THEN
+      last_num := min_start_num;
+    END IF;
+  END IF;
+
+  -- C. Increment (+1)
+  -- Format: DBP + 8 digit padding
+  -- Contoh: 2000918 + 1 = 2000919 -> "DBP02000919"
+  next_id := 'DBP' || lpad((last_num + 1)::text, 8, '0');
+  
+  RETURN next_id;
+END;
+$$;
+
+-- 2. Fungsi Trigger
+CREATE OR REPLACE FUNCTION public.trigger_set_member_id()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Jalankan hanya jika Status berubah jadi 'Active' DAN member_id masih kosong
+  IF NEW.account_status = 'Active' 
+     AND (OLD.account_status IS DISTINCT FROM 'Active') 
+     AND NEW.member_id IS NULL 
+  THEN
+    NEW.member_id := public.get_next_member_id();
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+-- 3. Pasang Trigger ke Tabel Profiles
+DROP TRIGGER IF EXISTS on_profile_activated ON profiles;
+CREATE TRIGGER on_profile_activated
+  BEFORE UPDATE ON profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.trigger_set_member_id();
