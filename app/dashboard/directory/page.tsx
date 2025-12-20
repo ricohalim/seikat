@@ -92,7 +92,7 @@ export default function DirectoryPage() {
 
     // Pagination State
     const [page, setPage] = useState(0)
-    const ITEMS_PER_PAGE = 12
+    const ITEMS_PER_PAGE = 50
 
     // Search Logic (MOVED UP to prevent Hook Error #310)
     useEffect(() => {
