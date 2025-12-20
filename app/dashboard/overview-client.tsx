@@ -104,9 +104,16 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
                         )}
                     </div>
 
-                    <div className="flex-1 pb-2">
+                    <div className="flex-1 pb-2 md:pt-6"> {/* Added spacing to avoid overlap */}
                         <div className="flex flex-col md:flex-row md:items-center gap-2 mb-2">
                             <h2 className="text-3xl font-bold text-navy">{profile.full_name}</h2>
+
+                            {/* Verified Badge Restored */}
+                            {isVerified && (
+                                <span className="flex items-center gap-1 bg-blue-50 border border-blue-100 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                    Verified
+                                </span>
+                            )}
 
                             {/* Admin Badge - Only for admins */}
                             {['admin', 'superadmin'].includes(profile.role || '') && (
