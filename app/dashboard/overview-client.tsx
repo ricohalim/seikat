@@ -25,7 +25,8 @@ export interface Profile {
     domicile_city: string
     domicile_province: string
 
-    id: string // Added
+    id: string
+    member_id?: string // Added ID IKADBP
 
     // Job
     job_position: string
@@ -120,6 +121,16 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
                                 </Link>
                             )}
                         </div>
+
+                        {/* MEMBER ID DISPLAY */}
+                        {profile.member_id && (
+                            <div className="mb-3">
+                                <span className="text-sm font-mono font-bold text-navy/80 bg-navy/5 px-2 py-1 rounded border border-navy/10 tracking-widest">
+                                    {profile.member_id}
+                                </span>
+                            </div>
+                        )}
+
                         <div className="flex flex-wrap gap-3 text-gray-600 text-sm">
                             <span className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded">
                                 <GraduationCap size={16} className="text-orange" />
@@ -308,14 +319,17 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
 
                         <div className="bg-white p-4 rounded-xl border-2 border-navy/10 inline-block shadow-sm">
                             <QRCode
-                                value={profile.id || ""}
+                                value={profile.member_id || profile.id || ""}
                                 size={200}
                                 level="H"
                             />
                         </div>
 
-                        <p className="text-xs text-gray-400 font-mono mt-6 break-all">
-                            {profile.id}
+                        <p className="text-lg font-mono font-bold text-navy mt-6 tracking-widest break-all">
+                            {profile.member_id || '-'}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1 break-all">
+                            UID: {profile.id}
                         </p>
                     </div>
                 </div>

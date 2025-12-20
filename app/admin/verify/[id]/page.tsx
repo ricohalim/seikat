@@ -58,15 +58,13 @@ export default function VerifyDetailPage() {
         fetchData()
     }, [id, router])
 
-    const handleApprove = async () => {
-        if (!confirm('Apakah Anda yakin data ini valid dan ingin menyetujui pendaftaran ini?')) return
 
+
+    // 1. Create Profile (Move from temp to profiles) - HANDLED BY TRIGGER OR MANUAL HERE?
+    // Since we inserted into profiles during registration (with status 'Pending'), 
+    const handleApprove = async () => {
         setProcessing(true)
         try {
-            const meta = registrant.raw_data || {}
-
-            // 1. Create Profile (Move from temp to profiles) - HANDLED BY TRIGGER OR MANUAL HERE?
-            // Since we inserted into profiles during registration (with status 'Pending'), 
             // we mainly need to UPDATE the status in profiles table.
 
             // Find profile by email (secure search)
@@ -78,11 +76,37 @@ export default function VerifyDetailPage() {
 
             let profileId = profileList?.id
 
-            // Update Profile Status
+            // Update Profile Status AND Sync Data from Raw Data
             if (profileId) {
+                const r = registrant.raw_data || {}
+
                 const { error: updateError } = await supabase
                     .from('profiles')
-                    .update({ account_status: 'Active' })
+                    .update({
+                        account_status: 'Active',
+
+                        // Sync Data from Registration Form (Raw Data)
+                        full_name: registrant.full_name,
+                        phone: registrant.whatsapp,
+
+                        // Academic
+                        generation: r.generation,
+                        university: r.university,
+                        major: r.major,
+
+                        // Personal
+                        gender: r.gender,
+                        birth_place: r.birth_place,
+                        birth_date: r.birth_date,
+                        domicile_city: r.domicile_city,
+                        domicile_province: r.domicile_province,
+                        linkedin_url: r.linkedin_url,
+
+                        // Job
+                        job_position: r.job_position,
+                        company_name: r.company_name,
+                        industry_sector: r.industry_sector,
+                    })
                     .eq('id', profileId)
 
                 if (updateError) throw updateError
