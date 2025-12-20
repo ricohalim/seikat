@@ -15,7 +15,7 @@ SET
     -- Personal
     gender = t.raw_data->>'gender',
     birth_place = t.raw_data->>'birth_place',
-    birth_date = t.raw_data->>'birth_date',
+    birth_date = (NULLIF(t.raw_data->>'birth_date', ''))::date,
     domicile_city = t.raw_data->>'domicile_city',
     domicile_province = t.raw_data->>'domicile_province',
     linkedin_url = t.raw_data->>'linkedin_url',
