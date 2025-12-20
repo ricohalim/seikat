@@ -174,8 +174,16 @@ export default function EditProfilePage() {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
 
-        // University Uppercase
-        if (name === 'university') {
+        // HYBRID UPPERCASE LOGIC
+        // Fields to FORCE UPPERCASE
+        const upperFields = [
+            'full_name', 'birth_place', 'university', 'current_university', 'faculty', 'major',
+            'job_position', 'company_name', 'industry_sector',
+            'domicile_province', 'domicile_city', 'domicile_country',
+            'business_name', 'business_field', 'business_position', 'business_location'
+        ]
+
+        if (upperFields.includes(name)) {
             setFormData(prev => ({ ...prev, [name]: value.toUpperCase() }))
             return
         }
@@ -628,6 +636,25 @@ export default function EditProfilePage() {
                 </div>
 
             </form>
+
+            <style jsx>{`
+                /* Visual feedback for user */
+                input[name="full_name"],
+                input[name="birth_place"],
+                input[name="university"],
+                input[name="current_university"],
+                input[name="faculty"],
+                input[name="major"],
+                input[name="job_position"],
+                input[name="company_name"],
+                input[name="domicile_city"],
+                input[name="domicile_province"],
+                input[name="business_name"],
+                input[name="business_position"],
+                input[name="business_location"] {
+                    text-transform: uppercase;
+                }
+            `}</style>
         </div>
     )
 }

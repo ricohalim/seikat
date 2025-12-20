@@ -43,7 +43,12 @@ export default function LoginPage() {
                 }
             }
 
-            router.push('/dashboard')
+            // Router refresh to ensure middleware state is updated
+            router.refresh()
+
+            // Handle Redirect
+            const nextUrl = new URLSearchParams(window.location.search).get('next')
+            router.push(nextUrl || '/dashboard')
         } catch (err) {
             if (err instanceof Error) {
                 setError(err.message)

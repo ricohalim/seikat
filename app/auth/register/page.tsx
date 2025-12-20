@@ -73,7 +73,17 @@ export default function RegisterPage() {
     // Handlers
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
-        if (name === 'university') {
+
+        // HYBRID UPPERCASE LOGIC
+        // Fields to FORCE UPPERCASE
+        const upperFields = [
+            'full_name', 'birth_place', 'university', 'faculty', 'major',
+            'job_position', 'company_name', 'industry_sector',
+            'domicile_province', 'domicile_city', 'domicile_country',
+            'business_name', 'business_field', 'business_position', 'business_location'
+        ]
+
+        if (upperFields.includes(name)) {
             setFormData(prev => ({ ...prev, [name]: value.toUpperCase() }))
         } else {
             setFormData(prev => ({ ...prev, [name]: value }))
@@ -582,6 +592,21 @@ export default function RegisterPage() {
                 .input-field:focus {
                     border-color: #0F172A;
                     box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.1);
+                }
+                /* Visual feedback for user */
+                input[name="full_name"],
+                input[name="birth_place"],
+                input[name="university"],
+                input[name="faculty"],
+                input[name="major"],
+                input[name="job_position"],
+                input[name="company_name"],
+                input[name="domicile_city"],
+                input[name="domicile_province"],
+                input[name="business_name"],
+                input[name="business_position"],
+                input[name="business_location"] {
+                    text-transform: uppercase;
                 }
             `}</style>
         </div >
