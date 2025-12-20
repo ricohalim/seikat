@@ -26,8 +26,23 @@ export default function LoginPage() {
 
             if (error) throw error
 
-            // LOG ACTIVITY (Client-side hook)
             if (data.user) {
+                // GATEKEEPER CHECK
+                // Check if user is active
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('account_status')
+                    .eq('id', data.user.id)
+                    .single()
+
+                if (profile && profile.account_status === 'Pending') {
+                    // Force Logout
+                    await supabase.auth.signOut()
+                    // Redirect to Pending Page
+                    router.push('/auth/verification-pending')
+                    return
+                }
+
                 try {
                     await supabase.rpc('log_activity', {
                         p_user_id: data.user.id,

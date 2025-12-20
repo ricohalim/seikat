@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import Sidebar from '@/app/components/Sidebar'
 import { Menu } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 export default function DashboardLayout({
     children,
@@ -10,6 +13,27 @@ export default function DashboardLayout({
     children: React.ReactNode
 }) {
     const [sidebarOpen, setSidebarOpen] = useState(false)
+    const router = useRouter()
+
+    // DASHBOARD GUARD
+    useEffect(() => {
+        const checkStatus = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('account_status')
+                    .eq('id', user.id)
+                    .single()
+
+                if (profile && profile.account_status === 'Pending') {
+                    // Redirect to pending page if status is pending
+                    router.replace('/auth/verification-pending')
+                }
+            }
+        }
+        checkStatus()
+    }, [router])
 
     return (
         <div className="flex min-h-screen bg-gray-50">

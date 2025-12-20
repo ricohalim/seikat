@@ -47,7 +47,11 @@ export default function CheckAccountPage() {
                 setResult({
                     status: 'found_pending',
                     message: 'Status: MENUNGGU VERIFIKASI',
-                    data: { email: cleanEmail, full_name: 'Pendaftar' }
+                    data: {
+                        email: cleanEmail,
+                        full_name: 'Pendaftar',
+                        info: 'Data Anda sudah diterima dan sedang dalam antrian verifikasi Admin. Mohon cek email secara berkala.'
+                    }
                 })
             } else if (status === 'rejected') {
                 setResult({
@@ -137,6 +141,11 @@ export default function CheckAccountPage() {
                                         <div className="mt-2 text-sm text-gray-600 space-y-1">
                                             <p><span className="font-semibold">Nama:</span> {result.data.full_name}</p>
                                             <p><span className="font-semibold">Email:</span> {result.data.email}</p>
+                                            {result.data.info && (
+                                                <p className="mt-2 text-xs bg-white/50 p-2 rounded text-orange-700">
+                                                    {result.data.info}
+                                                </p>
+                                            )}
                                         </div>
                                     )}
 
