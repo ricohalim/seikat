@@ -105,31 +105,44 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
                     </div>
 
                     <div className="flex-1 pb-2">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex flex-col md:flex-row md:items-center gap-2 mb-2">
                             <h2 className="text-3xl font-bold text-navy">{profile.full_name}</h2>
-                            {isVerified && (
-                                <span className="flex items-center gap-1 bg-blue-50 border border-blue-100 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                    Verified
-                                </span>
-                            )}
+
+                            {/* Admin Badge - Only for admins */}
                             {['admin', 'superadmin'].includes(profile.role || '') && (
                                 <Link
                                     href="/admin"
-                                    className="flex items-center gap-1 bg-purple-50 border border-purple-100 text-purple-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider hover:bg-purple-100 transition"
+                                    className="hidden md:inline-flex items-center gap-1 bg-purple-50 border border-purple-100 text-purple-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider hover:bg-purple-100 transition"
                                 >
                                     Admin Portal
                                 </Link>
                             )}
                         </div>
 
-                        {/* MEMBER ID DISPLAY */}
-                        {profile.member_id && (
-                            <div className="mb-3">
-                                <span className="text-sm font-mono font-bold text-navy/80 bg-navy/5 px-2 py-1 rounded border border-navy/10 tracking-widest">
-                                    {profile.member_id}
+                        {/* MEMBER ID DISPLAY - CLEANER LOOK */}
+                        <div className="flex items-center gap-3 mb-4">
+                            {profile.member_id ? (
+                                <span className="text-sm font-medium text-gray-500 flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-navy/40"></span>
+                                    ID: <span className="font-mono text-navy font-bold tracking-wider">{profile.member_id}</span>
                                 </span>
-                            </div>
-                        )}
+                            ) : (
+                                <span className="text-sm font-medium text-gray-400 italic flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                                    No Member ID
+                                </span>
+                            )}
+
+                            {/* Mobile Admin Badge */}
+                            {['admin', 'superadmin'].includes(profile.role || '') && (
+                                <Link
+                                    href="/admin"
+                                    className="md:hidden inline-flex items-center gap-1 bg-purple-50 border border-purple-100 text-purple-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider hover:bg-purple-100 transition"
+                                >
+                                    Admin
+                                </Link>
+                            )}
+                        </div>
 
                         <div className="flex flex-wrap gap-3 text-gray-600 text-sm">
                             <span className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded">
@@ -168,13 +181,13 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
                     <div className="absolute top-4 right-4 md:static md:hidden">
                         {/* Mobile extra actions if needed */}
                     </div>
-                </div>
-            </div>
+                </div >
+            </div >
 
 
 
             {/* ... Grid Content ... */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            < div className="grid grid-cols-1 md:grid-cols-3 gap-6" >
                 {/* ... existing content ... */}
 
                 {/* Left Col: Contact & Personal */}
@@ -301,39 +314,41 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
 
 
                 </div>
-            </div>
+            </div >
 
             {/* QR Modal */}
-            {showQR && (
-                <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center relative zoom-in-95 duration-200">
-                        <button
-                            onClick={() => setShowQR(false)}
-                            className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition"
-                        >
-                            <X size={24} />
-                        </button>
+            {
+                showQR && (
+                    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 animate-in fade-in duration-200">
+                        <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center relative zoom-in-95 duration-200">
+                            <button
+                                onClick={() => setShowQR(false)}
+                                className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition"
+                            >
+                                <X size={24} />
+                            </button>
 
-                        <h3 className="text-xl font-bold text-navy mb-2">ID Anggota</h3>
-                        <p className="text-sm text-gray-500 mb-6">Tunjukkan QR Code ini untuk verifikasi.</p>
+                            <h3 className="text-xl font-bold text-navy mb-2">ID Anggota</h3>
+                            <p className="text-sm text-gray-500 mb-6">Tunjukkan QR Code ini untuk verifikasi.</p>
 
-                        <div className="bg-white p-4 rounded-xl border-2 border-navy/10 inline-block shadow-sm">
-                            <QRCode
-                                value={profile.member_id || profile.id || ""}
-                                size={200}
-                                level="H"
-                            />
+                            <div className="bg-white p-4 rounded-xl border-2 border-navy/10 inline-block shadow-sm">
+                                <QRCode
+                                    value={profile.member_id || profile.id || ""}
+                                    size={200}
+                                    level="H"
+                                />
+                            </div>
+
+                            <p className="text-lg font-mono font-bold text-navy mt-6 tracking-widest break-all">
+                                {profile.member_id || '-'}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1 break-all">
+                                UID: {profile.id}
+                            </p>
                         </div>
-
-                        <p className="text-lg font-mono font-bold text-navy mt-6 tracking-widest break-all">
-                            {profile.member_id || '-'}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1 break-all">
-                            UID: {profile.id}
-                        </p>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     )
 }
