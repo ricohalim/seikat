@@ -14,7 +14,7 @@ export const generateGenerations = () => {
     // Let's use `currentYear - 2` as the safety buffer for "Alumni Status".
 
     const currentYear = new Date().getFullYear()
-    const endYear = currentYear - 2 // Strict limit as per request
+    const endYear = currentYear - 1 // Adjusted to include Gen 40 (2024)
 
     for (let year = startYear; year <= endYear; year++) {
         const gen = startGen + (year - startYear)
