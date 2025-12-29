@@ -8,6 +8,9 @@ export default function UserManagementPage() {
     const [users, setUsers] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [filter, setFilter] = useState('')
+    const [filterGeneration, setFilterGeneration] = useState('')
+    const [filterGender, setFilterGender] = useState('')
+    const [availableGenerations, setAvailableGenerations] = useState<string[]>([])
     const [currentUserRole, setCurrentUserRole] = useState('')
     const [authLoading, setAuthLoading] = useState(true)
 
@@ -40,7 +43,7 @@ export default function UserManagementPage() {
         if (!authLoading && ['superadmin', 'admin'].includes(currentUserRole)) {
             fetchUsers()
         }
-    }, [page, filter, authLoading, currentUserRole]) // Refetch on page or filter change
+    }, [page, filter, filterGeneration, filterGender, authLoading, currentUserRole]) // Refetch on page or filter change
 
     const fetchUsers = async () => {
         setLoading(true)
@@ -54,12 +57,25 @@ export default function UserManagementPage() {
                 // Client-side Filter & Pagination (RPC returns all)
                 let filteredData = data
 
+                // Populate available generations (once or always?) - Always good to keep updated
+                const gens = Array.from(new Set(data.map((u: any) => u.generation).filter(Boolean))).sort() as string[]
+                setAvailableGenerations(gens)
+
+
                 if (filter) {
                     const term = filter.toLowerCase()
                     filteredData = data.filter((u: any) =>
                         (u.full_name && u.full_name.toLowerCase().includes(term)) ||
                         (u.email && u.email.toLowerCase().includes(term))
                     )
+                }
+
+                if (filterGeneration) {
+                    filteredData = filteredData.filter((u: any) => u.generation === filterGeneration)
+                }
+
+                if (filterGender) {
+                    filteredData = filteredData.filter((u: any) => u.gender === filterGender)
                 }
 
                 setTotalItems(filteredData.length)
@@ -343,6 +359,60 @@ export default function UserManagementPage() {
                     />
                 </div>
             </header>
+
+            {/* FILTERS */}
+            <div className="flex flex-wrap items-center gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-gray-500 uppercase">Filter:</span>
+                </div>
+
+                {/* Generation Filter */}
+                <div className="relative">
+                    <select
+                        value={filterGeneration}
+                        onChange={(e) => { setFilterGeneration(e.target.value); setPage(0); }}
+                        className="px-4 py-2 pr-8 rounded-lg border border-gray-200 focus:border-navy outline-none text-sm bg-white appearance-none min-w-[150px]"
+                    >
+                        <option value="">Semua Angkatan</option>
+                        {availableGenerations.map(gen => (
+                            <option key={gen} value={gen}>Beswan {gen}</option>
+                        ))}
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                    </div>
+                </div>
+
+                {/* Gender Filter */}
+                <div className="relative">
+                    <select
+                        value={filterGender}
+                        onChange={(e) => { setFilterGender(e.target.value); setPage(0); }}
+                        className="px-4 py-2 pr-8 rounded-lg border border-gray-200 focus:border-navy outline-none text-sm bg-white appearance-none min-w-[150px]"
+                    >
+                        <option value="">Semua Gender</option>
+                        <option value="Laki-laki">Laki-laki</option>
+                        <option value="Perempuan">Perempuan</option>
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                    </div>
+                </div>
+
+                {/* Clear Filters */}
+                {(filter || filterGeneration || filterGender) && (
+                    <button
+                        onClick={() => { setFilter(''); setFilterGeneration(''); setFilterGender(''); setPage(0); }}
+                        className="px-3 py-2 text-red-500 text-xs font-bold hover:bg-red-50 rounded-lg transition ml-auto"
+                    >
+                        Reset Filter
+                    </button>
+                )}
+            </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden select-none"> {/* Anti-Copy: select-none */}
                 <table className="w-full text-left border-collapse">
