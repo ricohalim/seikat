@@ -37,7 +37,7 @@ export default function UserManagementPage() {
     }, [])
 
     useEffect(() => {
-        if (!authLoading && currentUserRole === 'superadmin') {
+        if (!authLoading && ['superadmin', 'admin'].includes(currentUserRole)) {
             fetchUsers()
         }
     }, [page, filter, authLoading, currentUserRole]) // Refetch on page or filter change
@@ -314,12 +314,12 @@ export default function UserManagementPage() {
 
     const maxPage = Math.ceil(totalItems / ITEMS_PER_PAGE)
 
-    if (currentUserRole !== 'superadmin') {
+    if (!['superadmin', 'admin'].includes(currentUserRole)) {
         return (
             <div className="p-8 text-center bg-red-50 text-red-600 rounded-xl border border-red-200">
                 <Shield size={48} className="mx-auto mb-4 opacity-50" />
                 <h2 className="text-xl font-bold">Akses Ditolak</h2>
-                <p>Hanya Super Admin yang dapat mengakses halaman ini.</p>
+                <p>Hanya Admin dan Super Admin yang dapat mengakses halaman ini.</p>
             </div>
         )
     }
@@ -513,6 +513,20 @@ export default function UserManagementPage() {
                                             <p className="font-medium text-blue-600 truncate">{selectedUser.linkedin_url || '-'}</p>
                                         </div>
                                     </div>
+                                </div>
+
+                                <div className="col-span-2 border-t pt-4 mt-2">
+                                    <h4 className="font-bold text-navy mb-3 text-sm flex items-center gap-2"><Shield size={16} /> Verifikasi</h4>
+                                    {selectedUser.verification_photo_url ? (
+                                        <div className="relative w-full max-w-sm h-48 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 group cursor-pointer" onClick={() => window.open(selectedUser.verification_photo_url, '_blank')}>
+                                            <img src={selectedUser.verification_photo_url} alt="Verifikasi" className="w-full h-full object-cover group-hover:scale-105 transition" />
+                                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition text-white text-xs font-bold">
+                                                Klik untuk memperbesar
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="text-gray-500 text-sm italic">Tidak ada dokumen verifikasi.</p>
+                                    )}
                                 </div>
                             </div>
                         </div>

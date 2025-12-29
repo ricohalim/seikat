@@ -103,7 +103,9 @@ begin
         job_position = coalesce((new_data->>'job_position'), job_position),
         linkedin_url = coalesce((new_data->>'linkedin_url'), linkedin_url),
         role = coalesce((new_data->>'role'), role),
-        account_status = coalesce((new_data->>'account_status'), account_status)
+        role = coalesce((new_data->>'role'), role),
+        account_status = coalesce((new_data->>'account_status'), account_status),
+        verification_photo_url = coalesce((new_data->>'verification_photo_url'), verification_photo_url)
     where id = target_user_id;
 end;
 $$;
