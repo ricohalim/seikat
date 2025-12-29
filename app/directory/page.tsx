@@ -28,10 +28,9 @@ export default function AlumniDirectoryPage() {
         const fetchAlumni = async () => {
             setLoading(true)
             try {
+                // Use RPC to ensure 'Pending' users are excluded server-side
                 let query = supabase
-                    .from('profiles')
-                    .select('id, full_name, generation, university, major, job_position, company_name, domicile_city, photo_url, role')
-                    .eq('account_status', 'Active')
+                    .rpc('get_directory_members')
                     .order('full_name', { ascending: true })
                     .range(page * 12, (page + 1) * 12 - 1)
 

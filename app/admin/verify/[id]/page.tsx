@@ -254,6 +254,10 @@ export default function VerifyDetailPage() {
                         <p className="font-semibold text-navy text-lg">{meta.full_name}</p>
                     </div>
                     <div>
+                        <label className="text-xs text-gray-400 uppercase font-bold">Email</label>
+                        <p className="font-semibold text-navy">{registrant.email}</p>
+                    </div>
+                    <div>
                         <label className="text-xs text-gray-400 uppercase font-bold">Jenis Kelamin</label>
                         <p className="font-semibold text-navy">{meta.gender || '-'}</p>
                     </div>
