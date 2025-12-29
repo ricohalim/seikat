@@ -51,8 +51,8 @@ export default async function Home() {
             </h1>
 
             {/* Dynamic Stats Badge */}
-            <div className="inline-flex items-center gap-2 bg-blue-50/50 backdrop-blur-sm border border-blue-100 text-azure px-5 py-2.5 rounded-full text-base font-semibold shadow-sm mb-8 hover:bg-blue-50 transition cursor-default">
-              <Users size={18} />
+            <div className="inline-flex items-center gap-2 bg-blue-50/50 backdrop-blur-sm border border-blue-100 text-azure px-3 py-2 md:px-5 md:py-2.5 rounded-full text-sm md:text-base font-semibold shadow-sm mb-8 hover:bg-blue-50 transition cursor-default">
+              <Users size={16} className="md:w-[18px] md:h-[18px]" />
               <span>Bergabunglah dengan <span className="font-bold text-navy">{displayCount} Alumni</span> lainnya</span>
             </div>
 
