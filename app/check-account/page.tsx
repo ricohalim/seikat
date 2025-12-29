@@ -33,7 +33,7 @@ export default function CheckAccountPage() {
                 throw error
             }
 
-            const status = rpcResult?.status?.toLowerCase()
+            const status = rpcResult?.status?.toLowerCase().trim()
 
             // Map RPC result to UI state
             if (status === 'active' || status === 'aktif' || status === 'approved') {
@@ -42,7 +42,7 @@ export default function CheckAccountPage() {
                     message: 'Status: DITERIMA / AKTIF',
                     data: { email: cleanEmail, full_name: 'Member Terdaftar' }
                 })
-            } else if (status === 'on-hold') {
+            } else if (status === 'on-hold' || status === 'on hold' || status === 'ditunda') {
                 setResult({
                     status: 'found_on_hold',
                     message: 'Status: DITANGGUHKAN',
