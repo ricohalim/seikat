@@ -583,13 +583,7 @@ export default function RegisterPage() {
                                                     setLoading(false)
                                                 }
                                             }}
-                                            className="w-full text-sm text-gray-500
-                                                file:mr-4 file:py-2 file:px-4
-                                                file:rounded-full file:border-0
-                                                file:text-xs file:font-semibold
-                                                file:bg-navy/10 file:text-navy
-                                                hover:file:bg-navy/20
-                                            "
+                                            className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-navy/10 file:text-navy hover:file:bg-navy/20"
                                         />
                                         {formData.verification_photo_url && (
                                             <div className="mt-2 text-xs text-green-600 font-bold flex items-center gap-1">
