@@ -7,13 +7,10 @@ import { createClient } from '@/lib/supabase/server'
 export default async function Home() {
   const supabase = await createClient()
 
-  // Fetch Active Alumni Count
-  const { count: activeCount } = await supabase
-    .from('profiles')
-    .select('*', { count: 'exact', head: true })
-    .eq('account_status', 'Active')
+  // Fetch Active Alumni Count via RPC (bypassing RLS for public view)
+  const { data: activeCount } = await supabase.rpc('get_active_alumni_count')
 
-  // Default to a realistic number/placeholder if fetch fails or is 0 (though 0 is valid)
+  // Default to a realistic number/placeholder if fetch fails or is 0
   const displayCount = activeCount || 0
 
   return (
