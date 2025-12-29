@@ -13,7 +13,7 @@ export default function VerifyDetailPage() {
     const [registrant, setRegistrant] = useState<any>(null)
     const [duplicates, setDuplicates] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
-    const [processing, setProcessing] = useState(false)
+    const [processing, setProcessing] = useState<string | null>(null)
     const router = useRouter()
 
     useEffect(() => {
@@ -63,7 +63,7 @@ export default function VerifyDetailPage() {
     // 1. Create Profile (Move from temp to profiles) - HANDLED BY TRIGGER OR MANUAL HERE?
     // Since we inserted into profiles during registration (with status 'Pending'), 
     const handleApprove = async () => {
-        setProcessing(true)
+        setProcessing('approve')
         try {
             // we mainly need to UPDATE the status in profiles table.
 
@@ -132,7 +132,7 @@ export default function VerifyDetailPage() {
         } catch (err: any) {
             alert('Gagal memproses: ' + err.message)
         } finally {
-            setProcessing(false)
+            setProcessing(null)
         }
     }
 
@@ -140,7 +140,7 @@ export default function VerifyDetailPage() {
         const reason = prompt('Masukkan alasan penolakan:')
         if (!reason) return
 
-        setProcessing(true)
+        setProcessing('reject')
         try {
             await supabase
                 .from('temp_registrations')
@@ -166,7 +166,7 @@ export default function VerifyDetailPage() {
         const reason = prompt('Masukkan alasan penundaan (On-Hold):')
         if (!reason) return
 
-        setProcessing(true)
+        setProcessing('hold')
         try {
             // 1. Update Profile (if exists) -> On-Hold (so user knows if they login)
             if (registrant.email) {
@@ -188,7 +188,7 @@ export default function VerifyDetailPage() {
         } catch (err) {
             alert('Gagal mengubah status.')
         } finally {
-            setProcessing(false)
+            setProcessing(null)
         }
     }
 
@@ -207,8 +207,8 @@ export default function VerifyDetailPage() {
                     <div className="flex items-center gap-3 mb-1">
                         <h1 className="text-2xl font-bold text-navy">{registrant.full_name}</h1>
                         <span className={`px-3 py-1 text-xs font-bold rounded-full ${registrant.status === 'On-Hold'
-                                ? 'bg-yellow-100 text-yellow-700'
-                                : 'bg-orange/10 text-orange'
+                            ? 'bg-yellow-100 text-yellow-700'
+                            : 'bg-orange/10 text-orange'
                             }`}>
                             {registrant.status === 'On-Hold' ? 'On-Hold' : 'Pending Verification'}
                         </span>
@@ -218,24 +218,33 @@ export default function VerifyDetailPage() {
                 <div className="flex gap-3">
                     <button
                         onClick={handleReject}
-                        disabled={processing}
-                        className="px-6 py-2.5 rounded-xl font-bold bg-white text-red-600 border border-red-200 hover:bg-red-50 transition"
+                        disabled={!!processing}
+                        className="px-6 py-2.5 rounded-xl font-bold bg-white text-red-600 border border-red-200 hover:bg-red-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Tolak
+                        {processing === 'reject' ? 'Menolak...' : 'Tolak'}
                     </button>
                     <button
                         onClick={handleOnHold}
-                        disabled={processing}
-                        className="px-6 py-2.5 rounded-xl font-bold bg-yellow-50 text-yellow-700 border border-yellow-200 hover:bg-yellow-100 transition"
+                        disabled={!!processing}
+                        className="px-6 py-2.5 rounded-xl font-bold bg-yellow-50 text-yellow-700 border border-yellow-200 hover:bg-yellow-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Tunda (On-Hold)
+                        {processing === 'hold' ? 'Menunda...' : 'Tunda (On-Hold)'}
                     </button>
                     <button
                         onClick={handleApprove}
-                        disabled={processing}
-                        className="px-6 py-2.5 rounded-xl font-bold bg-navy text-white hover:bg-navy/90 transition shadow-lg shadow-navy/20 flex items-center gap-2"
+                        disabled={!!processing}
+                        className="px-6 py-2.5 rounded-xl font-bold bg-navy text-white hover:bg-navy/90 transition shadow-lg shadow-navy/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <CheckCircle size={18} /> Setujui Member
+                        {processing === 'approve' ? (
+                            <>
+                                <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                                Memproses...
+                            </>
+                        ) : (
+                            <>
+                                <CheckCircle size={18} /> Setujui Member
+                            </>
+                        )}
                     </button>
                 </div>
             </header>
