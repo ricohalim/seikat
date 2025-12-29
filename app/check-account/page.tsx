@@ -10,7 +10,7 @@ export default function CheckAccountPage() {
     const [email, setEmail] = useState('')
     const [loading, setLoading] = useState(false)
     const [result, setResult] = useState<{
-        status: 'found_active' | 'found_pending' | 'not_found' | 'error',
+        status: 'found_active' | 'found_pending' | 'found_on_hold' | 'not_found' | 'error',
         message: string,
         data?: any
     } | null>(null)
@@ -42,6 +42,16 @@ export default function CheckAccountPage() {
                     status: 'found_active',
                     message: 'Status: DITERIMA / AKTIF',
                     data: { email: cleanEmail, full_name: 'Member Terdaftar' }
+                })
+            } else if (status === 'on-hold') {
+                setResult({
+                    status: 'found_on_hold',
+                    message: 'Status: DITANGGUHKAN',
+                    data: {
+                        email: cleanEmail,
+                        full_name: 'Pendaftar',
+                        info: 'Harap hubungi Admin untuk informasi lebih lanjut mengenai status pendaftaran Anda.'
+                    }
                 })
             } else if (status === 'pending') {
                 setResult({
@@ -118,22 +128,32 @@ export default function CheckAccountPage() {
                             ? 'bg-blue-50 border border-blue-200'
                             : result.status === 'found_pending'
                                 ? 'bg-orange/10 border border-orange/20'
-                                : result.status === 'not_found'
-                                    ? 'bg-gray-100 border border-gray-200'
-                                    : 'bg-red-50 border border-red-200'
+                                : result.status === 'found_on_hold'
+                                    ? 'bg-yellow-50 border border-yellow-200'
+                                    : result.status === 'not_found'
+                                        ? 'bg-gray-100 border border-gray-200'
+                                        : 'bg-red-50 border border-red-200'
                             }`}>
                             <div className="flex items-start gap-3">
                                 <div className={`mt-1 p-1 rounded-full ${result.status === 'found_active' ? 'bg-blue-100 text-blue-600' :
                                     result.status === 'found_pending' ? 'bg-orange/20 text-orange' :
-                                        'bg-gray-200 text-gray-500'
+                                        result.status === 'found_on_hold' ? 'bg-yellow-100 text-yellow-600' :
+                                            'bg-gray-200 text-gray-500'
                                     }`}>
                                     {result.status === 'found_active' ? <CheckCircle size={20} /> :
-                                        result.status === 'found_pending' ? <Clock size={20} /> : <AlertCircle size={20} />}
+                                        result.status === 'found_pending' ? <Clock size={20} /> :
+                                            result.status === 'found_on_hold' ? <Clock size={20} /> :
+                                                <AlertCircle size={20} />}
                                 </div>
                                 <div className="flex-1">
                                     <h4 className={`font-bold ${result.status === 'found_active' ? 'text-blue-700' :
-                                        result.status === 'found_pending' ? 'text-orange' : 'text-gray-700'
+                                        result.status === 'found_pending' ? 'text-orange' :
+                                            result.status === 'found_on_hold' ? 'text-yellow-700' :
+                                                'text-gray-700'
                                         }`}>
+                                        result.status === 'found_on_hold' ? 'text-yellow-700' :
+                                        'text-gray-700'
+                                                    }`}>
                                         {result.message}
                                     </h4>
 
@@ -142,7 +162,7 @@ export default function CheckAccountPage() {
                                             <p><span className="font-semibold">Nama:</span> {result.data.full_name}</p>
                                             <p><span className="font-semibold">Email:</span> {result.data.email}</p>
                                             {result.data.info && (
-                                                <p className="mt-2 text-xs bg-white/50 p-2 rounded text-orange-700">
+                                                <p className={`mt-2 text-xs p-2 rounded ${result.status === 'found_on_hold' ? 'bg-yellow-100 text-yellow-800' : 'bg-white/50 text-orange-700'}`}>
                                                     {result.data.info}
                                                 </p>
                                             )}
@@ -153,31 +173,7 @@ export default function CheckAccountPage() {
                                         <Link href="/auth/login" className="inline-block mt-3 bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-blue-700 transition">
                                             Login Sekarang
                                         </Link>
-                                    )}
-
-                                    {result.status === 'not_found' && (
-                                        <div className="mt-2">
-                                            <p className="text-sm text-gray-600 mb-2">Email <strong>{result.data?.email}</strong> belum terdaftar.</p>
-                                            <Link href="/auth/register" className="text-sm font-bold text-navy hover:underline">
-                                                Daftar Disini
-                                            </Link>
-                                            {/* DEBUG INFO */}
-                                            <p className="text-[10px] text-gray-400 mt-2 font-mono border-t pt-2">
-                                                Debug: {result.data?.debug || 'No RPC response'}
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                </div>
-            </div>
-
-            <div className="fixed bottom-6 text-center w-full text-xs text-gray-400">
-                <Link href="/" className="hover:text-navy transition">← Kembali ke Beranda</Link>
-            </div>
         </div>
-    )
+                            </div>
+                            )
 }
