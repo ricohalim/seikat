@@ -55,7 +55,7 @@ export default function UserManagementPage() {
 
             if (data) {
                 // Client-side Filter & Pagination (RPC returns all)
-                let filteredData = data
+                let filteredData = data.filter((u: any) => u.account_status !== 'Pending')
 
                 // Populate available generations (once or always?) - Always good to keep updated
                 const gens = Array.from(new Set(data.map((u: any) => u.generation).filter(Boolean))).sort() as string[]
