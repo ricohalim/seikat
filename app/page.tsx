@@ -2,7 +2,20 @@
 import Link from 'next/link'
 import { ArrowRight, Users, Calendar, Award } from 'lucide-react'
 
-export default function Home() {
+import { createClient } from '@/lib/supabase/server'
+
+export default async function Home() {
+  const supabase = await createClient()
+
+  // Fetch Active Alumni Count
+  const { count: activeCount } = await supabase
+    .from('profiles')
+    .select('*', { count: 'exact', head: true })
+    .eq('account_status', 'Active')
+
+  // Default to a realistic number/placeholder if fetch fails or is 0 (though 0 is valid)
+  const displayCount = activeCount || 0
+
   return (
     <div className="min-h-screen bg-white flex flex-col font-sans text-slate-800">
 
@@ -39,6 +52,12 @@ export default function Home() {
             <h1 className="text-5xl md:text-6xl font-extrabold text-navy leading-tight mb-6">
               Terhubung Kembali dengan <span className="text-transparent bg-clip-text bg-gradient-to-r from-azure to-blue-400">Keluarga Beswan Djarum</span>
             </h1>
+
+            {/* Dynamic Stats Badge */}
+            <div className="inline-flex items-center gap-2 bg-blue-50/50 backdrop-blur-sm border border-blue-100 text-azure px-5 py-2.5 rounded-full text-base font-semibold shadow-sm mb-8 hover:bg-blue-50 transition cursor-default">
+              <Users size={18} />
+              <span>Bergabunglah dengan <span className="font-bold text-navy">{displayCount} Alumni</span> lainnya</span>
+            </div>
 
             <p className="text-lg text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
               Portal resmi untuk berjejaring, berbagi peluang, dan mengenang masa-masa indah bersama penerima Djarum Beasiswa Plus dari seluruh angkatan.
