@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import { CheckCircle, AlertCircle, Clock, Loader2 } from 'lucide-react'
-import QRCode from 'react-qr-code'
 
 export default function CheckAccountPage() {
     const [email, setEmail] = useState('')
@@ -151,9 +150,6 @@ export default function CheckAccountPage() {
                                             result.status === 'found_on_hold' ? 'text-yellow-700' :
                                                 'text-gray-700'
                                         }`}>
-                                        result.status === 'found_on_hold' ? 'text-yellow-700' :
-                                        'text-gray-700'
-                                                    }`}>
                                         {result.message}
                                     </h4>
 
@@ -173,7 +169,31 @@ export default function CheckAccountPage() {
                                         <Link href="/auth/login" className="inline-block mt-3 bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-blue-700 transition">
                                             Login Sekarang
                                         </Link>
-        </div>
+                                    )}
+
+                                    {result.status === 'not_found' && (
+                                        <div className="mt-2">
+                                            <p className="text-sm text-gray-600 mb-2">Email <strong>{result.data?.email}</strong> belum terdaftar.</p>
+                                            <Link href="/auth/register" className="text-sm font-bold text-navy hover:underline">
+                                                Daftar Disini
+                                            </Link>
+                                            {/* DEBUG INFO */}
+                                            <p className="text-[10px] text-gray-400 mt-2 font-mono border-t pt-2">
+                                                Debug: {result.data?.debug || 'No RPC response'}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                            )
+                        </div>
+                    )}
+
+                </div>
+            </div>
+
+            <div className="fixed bottom-6 text-center w-full text-xs text-gray-400">
+                <Link href="/" className="hover:text-navy transition">← Kembali ke Beranda</Link>
+            </div>
+        </div>
+    )
 }
