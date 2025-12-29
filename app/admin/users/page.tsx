@@ -432,14 +432,35 @@ export default function UserManagementPage() {
                         ) : users.map((u) => (
                             <tr key={u.id} className="hover:bg-gray-50 transition group">
                                 <td className="p-4">
-                                    <div className="font-bold text-navy text-base">{u.full_name}</div>
-                                    {u.member_id && (
-                                        <div className="text-[10px] font-mono font-bold text-blue-600 bg-blue-50 inline-block px-1.5 rounded mb-1 border border-blue-100">
-                                            {u.member_id}
+                                    <div className="flex items-center gap-3">
+                                        {/* Avatar */}
+                                        <div className="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden border border-gray-100">
+                                            {u.photo_url ? (
+                                                <img src={u.photo_url} alt={u.full_name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold text-xs">
+                                                    {u.full_name?.charAt(0)}
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                    <div className="text-xs text-gray-400 font-mono mb-1">{u.email}</div>
-                                    <div className="text-[10px] text-gray-400">{u.phone || '-'}</div>
+
+                                        {/* Info */}
+                                        <div>
+                                            <div className="font-bold text-navy text-base">{u.full_name}</div>
+                                            {u.member_id && (
+                                                <div className="text-[10px] font-mono font-bold text-blue-600 bg-blue-50 inline-block px-1.5 rounded mb-1 border border-blue-100 mr-2">
+                                                    {u.member_id}
+                                                </div>
+                                            )}
+                                            {u.gender && (
+                                                <div className="text-[10px] font-bold text-gray-500 bg-gray-100 inline-block px-1.5 rounded mb-1 border border-gray-200">
+                                                    {u.gender}
+                                                </div>
+                                            )}
+                                            <div className="text-xs text-gray-400 font-mono mb-1">{u.email}</div>
+                                            <div className="text-[10px] text-gray-400">{u.phone || '-'}</div>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td className="p-4 text-gray-600">
                                     <div className="font-semibold text-xs">Beswan {u.generation}</div>
