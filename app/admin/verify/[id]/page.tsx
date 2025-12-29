@@ -178,8 +178,8 @@ export default function VerifyDetailPage() {
                 .from('temp_registrations')
                 .update({
                     status: 'On-Hold',
-                    // Optional: Append reason to raw_data if we want to track history
-                    // raw_data: { ...registrant.raw_data, hold_reason: reason } 
+                    // Save the reason to raw_data so it persists
+                    raw_data: { ...registrant.raw_data, hold_reason: reason }
                 })
                 .eq('id', registrant.id)
 
@@ -213,7 +213,13 @@ export default function VerifyDetailPage() {
                             {registrant.status === 'On-Hold' ? 'On-Hold' : 'Pending Verification'}
                         </span>
                     </div>
-                    <p className="text-gray-500 text-sm">Dikirim pada: {new Date(registrant.submitted_at).toLocaleString()}</p>
+                    {registrant.status === 'On-Hold' && registrant.raw_data?.hold_reason && (
+                        <div className="mt-3 bg-yellow-50 border border-yellow-100 p-3 rounded-xl">
+                            <p className="text-xs font-bold text-yellow-700 uppercase mb-1">Alasan Penundaan</p>
+                            <p className="text-sm text-gray-700 italic">"{registrant.raw_data.hold_reason}"</p>
+                        </div>
+                    )}
+                    <p className="text-gray-500 text-sm mt-1">Dikirim pada: {new Date(registrant.submitted_at).toLocaleString()}</p>
                 </div>
                 <div className="flex gap-3">
                     <button

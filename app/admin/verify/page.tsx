@@ -9,21 +9,32 @@ export default function VerifyListPage() {
     const [registrants, setRegistrants] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [filter, setFilter] = useState('')
+    const [activeTab, setActiveTab] = useState<'pending' | 'on-hold'>('pending')
 
     useEffect(() => {
-        const fetchPending = async () => {
-            const { data, error } = await supabase
+        const fetchRegistrants = async () => {
+            setLoading(true)
+
+            let query = supabase
                 .from('temp_registrations')
                 .select('*')
-                .in('status', ['Pending', 'On-Hold']) // Include On-Hold for review
-                .order('submitted_at', { ascending: true }) // FIFO: Oldest First
+                .order('submitted_at', { ascending: true }) // FIFO
+
+            // Filter based on Tab
+            if (activeTab === 'pending') {
+                query = query.eq('status', 'Pending')
+            } else {
+                query = query.eq('status', 'On-Hold')
+            }
+
+            const { data } = await query
 
             if (data) setRegistrants(data)
             setLoading(false)
         }
 
-        fetchPending()
-    }, [])
+        fetchRegistrants()
+    }, [activeTab]) // Refetch when tab changes
 
     const filtered = registrants.filter(r =>
         r.full_name?.toLowerCase().includes(filter.toLowerCase()) ||
@@ -50,6 +61,28 @@ export default function VerifyListPage() {
                 </div>
             </header>
 
+            {/* TABS */}
+            <div className="flex gap-4 border-b border-gray-200">
+                <button
+                    onClick={() => setActiveTab('pending')}
+                    className={`pb-3 px-2 text-sm font-bold border-b-2 transition ${activeTab === 'pending'
+                        ? 'border-navy text-navy'
+                        : 'border-transparent text-gray-400 hover:text-gray-600'
+                        }`}
+                >
+                    Menunggu Verifikasi
+                </button>
+                <button
+                    onClick={() => setActiveTab('on-hold')}
+                    className={`pb-3 px-2 text-sm font-bold border-b-2 transition ${activeTab === 'on-hold'
+                        ? 'border-yellow-500 text-yellow-600'
+                        : 'border-transparent text-gray-400 hover:text-gray-600'
+                        }`}
+                >
+                    Ditunda (On-Hold)
+                </button>
+            </div>
+
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <table className="w-full text-left border-collapse">
                     <thead>
@@ -58,6 +91,7 @@ export default function VerifyListPage() {
                             <th className="p-4 font-bold">Angkatan</th>
                             <th className="p-4 font-bold">Universitas / Jurusan</th>
                             <th className="p-4 font-bold">Status</th>
+                            {activeTab === 'on-hold' && <th className="p-4 font-bold">Catatan</th>}
                             <th className="p-4 font-bold text-right pt-4">Aksi</th>
                         </tr>
                     </thead>
@@ -93,6 +127,11 @@ export default function VerifyListPage() {
                                             </span>
                                         )}
                                     </td>
+                                    {activeTab === 'on-hold' && (
+                                        <td className="p-4 text-sm text-gray-500 italic max-w-xs truncate">
+                                            "{meta.hold_reason || '-'}"
+                                        </td>
+                                    )}
                                     <td className="p-4 text-right">
                                         <Link href={`/admin/verify/${r.id}`} className="inline-flex items-center gap-2 px-4 py-2 bg-navy text-white text-xs font-bold rounded-lg hover:bg-navy/90 transition shadow-sm">
                                             <Eye size={14} /> Tinjau
