@@ -8,9 +8,18 @@ import { supabase } from '@/lib/supabase'
 interface ProfileImageUploadProps {
     currentUrl: string
     onUploadComplete: (url: string) => void
+    bucket?: string
+    folder?: string
+    cropShape?: 'round' | 'rect'
 }
 
-export default function ProfileImageUpload({ currentUrl, onUploadComplete }: ProfileImageUploadProps) {
+export default function ProfileImageUpload({
+    currentUrl,
+    onUploadComplete,
+    bucket = 'avatars',
+    folder = 'avatars',
+    cropShape = 'round'
+}: ProfileImageUploadProps) {
     const [imageSrc, setImageSrc] = useState<string | null>(null)
     const [crop, setCrop] = useState({ x: 0, y: 0 })
     const [zoom, setZoom] = useState(1)
@@ -77,26 +86,19 @@ export default function ProfileImageUpload({ currentUrl, onUploadComplete }: Pro
             const croppedBlob = await getCroppedImg(imageSrc, croppedAreaPixels)
             const fileExt = 'jpg'
             const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-            const filePath = `avatars/${fileName}`
-
-            // Upload to Supabase Storage
-            // Assuming bucket 'public' exists and 'avatars' folder
-            // Or just a standard bucket named 'avatars'
-            // We will try a bucket named 'avatars' which is common practice. 
-            // If it fails, user might need to create it.
+            // Use provided folder or default
+            const filePath = `${folder}/${fileName}`
 
             const { data, error } = await supabase.storage
-                .from('avatars')
+                .from(bucket)
                 .upload(filePath, croppedBlob)
 
             if (error) {
-                // Fallback if avatars bucket doesn't exist? 
-                // For now, alert error.
                 alert('Gagal upload: ' + error.message)
                 throw error
             }
 
-            const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath)
+            const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath)
 
             onUploadComplete(publicUrl)
             setImageSrc(null) // Reset editor
@@ -112,7 +114,7 @@ export default function ProfileImageUpload({ currentUrl, onUploadComplete }: Pro
             {/* Preview Current or Default */}
             {!imageSrc && (
                 <div className="flex items-center gap-4">
-                    <div className="w-20 h-20 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden relative group">
+                    <div className={`w-20 h-20 ${cropShape === 'round' ? 'rounded-full' : 'rounded-lg'} bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden relative group`}>
                         {currentUrl ? (
                             <img src={currentUrl} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
@@ -154,7 +156,7 @@ export default function ProfileImageUpload({ currentUrl, onUploadComplete }: Pro
                                 onCropChange={setCrop}
                                 onCropComplete={onCropComplete}
                                 onZoomChange={setZoom}
-                                cropShape="round"
+                                cropShape={cropShape}
                             />
                         </div>
 

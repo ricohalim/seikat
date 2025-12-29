@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import { ArrowRight, ArrowLeft, User, Briefcase, MapPin, GraduationCap, Heart, CheckCircle, AlertCircle, Info, Loader2 } from 'lucide-react'
+import ProfileImageUpload from '@/app/components/ProfileImageUpload'
 import {
     GENDERS, GENERATIONS, COUNTRIES, PROVINCES,
     UNIVERSITIES, FACULTIES, JOB_TYPES, BUSINESS_FIELDS, INDUSTRY_SECTORS
@@ -548,44 +549,14 @@ export default function RegisterPage() {
                                     <div>
                                         <label className="label">Foto Profil Smart Casual</label>
                                         <p className="text-xs text-gray-500 mb-2">Upload foto terbaikmu dengan pakaian smart casual (Max 2MB).</p>
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={async (e) => {
-                                                const file = e.target.files?.[0]
-                                                if (!file) return
-
-                                                if (file.size > 2 * 1024 * 1024) {
-                                                    alert('Ukuran file maksimal 2MB')
-                                                    return
-                                                }
-
-                                                setLoading(true)
-                                                try {
-                                                    const fileExt = file.name.split('.').pop()
-                                                    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-                                                    const filePath = `verification/${fileName}`
-
-                                                    const { error: uploadError } = await supabase.storage
-                                                        .from('verification-docs')
-                                                        .upload(filePath, file)
-
-                                                    if (uploadError) throw uploadError
-
-                                                    const { data: { publicUrl } } = supabase.storage
-                                                        .from('verification-docs')
-                                                        .getPublicUrl(filePath)
-
-                                                    setFormData(prev => ({ ...prev, verification_photo_url: publicUrl }))
-                                                } catch (err: any) {
-                                                    alert('Gagal upload foto: ' + err.message)
-                                                } finally {
-                                                    setLoading(false)
-                                                }
-                                            }}
-                                            className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-navy/10 file:text-navy hover:file:bg-navy/20"
+                                        <ProfileImageUpload
+                                            currentUrl={formData.photo_url}
+                                            onUploadComplete={(url) => setFormData(prev => ({ ...prev, photo_url: url }))}
+                                            bucket="verification-docs"
+                                            folder="verification"
+                                            cropShape="rect"
                                         />
-                                        {formData.verification_photo_url && (
+                                        {formData.photo_url && (
                                             <div className="mt-2 text-xs text-green-600 font-bold flex items-center gap-1">
                                                 <CheckCircle size={12} /> Foto berhasil diunggah
                                             </div>

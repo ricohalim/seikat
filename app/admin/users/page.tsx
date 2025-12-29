@@ -586,16 +586,16 @@ export default function UserManagementPage() {
                                 </div>
 
                                 <div className="col-span-2 border-t pt-4 mt-2">
-                                    <h4 className="font-bold text-navy mb-3 text-sm flex items-center gap-2"><Shield size={16} /> Verifikasi</h4>
-                                    {selectedUser.verification_photo_url ? (
-                                        <div className="relative w-full max-w-sm h-48 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 group cursor-pointer" onClick={() => window.open(selectedUser.verification_photo_url, '_blank')}>
-                                            <img src={selectedUser.verification_photo_url} alt="Verifikasi" className="w-full h-full object-cover group-hover:scale-105 transition" />
+                                    <h4 className="font-bold text-navy mb-3 text-sm flex items-center gap-2"><Shield size={16} /> Foto Profil</h4>
+                                    {(selectedUser.photo_url || selectedUser.verification_photo_url) ? (
+                                        <div className="relative w-full max-w-sm h-48 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 group cursor-pointer" onClick={() => window.open(selectedUser.photo_url || selectedUser.verification_photo_url, '_blank')}>
+                                            <img src={selectedUser.photo_url || selectedUser.verification_photo_url} alt="Foto Profil" className="w-full h-full object-cover group-hover:scale-105 transition" />
                                             <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition text-white text-xs font-bold">
                                                 Klik untuk memperbesar
                                             </div>
                                         </div>
                                     ) : (
-                                        <p className="text-gray-500 text-sm italic">Tidak ada dokumen verifikasi.</p>
+                                        <p className="text-gray-500 text-sm italic">Tidak ada foto profil.</p>
                                     )}
                                 </div>
                             </div>
