@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import { ArrowRight, ArrowLeft, User, Briefcase, MapPin, GraduationCap, Heart, CheckCircle, AlertCircle, Info, Loader2 } from 'lucide-react'
-import ProfileImageUpload from '@/app/components/ProfileImageUpload'
+
 import {
     GENDERS, GENERATIONS, COUNTRIES, PROVINCES,
     UNIVERSITIES, FACULTIES, JOB_TYPES, BUSINESS_FIELDS, INDUSTRY_SECTORS
@@ -60,7 +60,7 @@ export default function RegisterPage() {
 
 
         photo_url: '',
-        verification_photo_url: ''
+
     })
 
     const [linkedinUsername, setLinkedinUsername] = useState('')
@@ -225,7 +225,7 @@ export default function RegisterPage() {
                     whatsapp: phoneClean,
                     status: 'Pending',
                     raw_data: profilePayload,
-                    verification_photo_url: formData.verification_photo_url
+
                 })
 
                 setSuccess(true)
@@ -543,26 +543,7 @@ export default function RegisterPage() {
                                     </div>
                                 </section>
 
-                                {/* 4. Verifikasi */}
-                                <section className="space-y-4">
-                                    <h3 className="font-bold text-navy border-b pb-2 flex items-center gap-2"><CheckCircle size={18} /> Verifikasi</h3>
-                                    <div>
-                                        <label className="label">Foto Profil Smart Casual</label>
-                                        <p className="text-xs text-gray-500 mb-2">Upload foto terbaikmu dengan pakaian smart casual (Max 2MB).</p>
-                                        <ProfileImageUpload
-                                            currentUrl={formData.photo_url}
-                                            onUploadComplete={(url) => setFormData(prev => ({ ...prev, photo_url: url }))}
-                                            bucket="verification-docs"
-                                            folder="verification"
-                                            cropShape="rect"
-                                        />
-                                        {formData.photo_url && (
-                                            <div className="mt-2 text-xs text-green-600 font-bold flex items-center gap-1">
-                                                <CheckCircle size={12} /> Foto berhasil diunggah
-                                            </div>
-                                        )}
-                                    </div>
-                                </section>
+
 
                                 {/* TnC Checkbox */}
                                 <div className="pt-4 border-t">
