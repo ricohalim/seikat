@@ -39,57 +39,71 @@ export default function UserManagementPage() {
         checkRole()
     }, [])
 
+    // Reset page when filters change
+    useEffect(() => {
+        setPage(0)
+    }, [filter, filterGeneration, filterGender])
+
     useEffect(() => {
         if (!authLoading && ['superadmin', 'admin'].includes(currentUserRole)) {
             fetchUsers()
         }
     }, [page, filter, filterGeneration, filterGender, authLoading, currentUserRole]) // Refetch on page or filter change
 
+    // Separate fetch for generations to keep dropdown populated
+    useEffect(() => {
+        const fetchGenerations = async () => {
+            const { data } = await supabase.from('profiles').select('generation').not('generation', 'is', null)
+            if (data) {
+                const gens = Array.from(new Set(data.map((u: any) => u.generation).filter(Boolean))).sort() as string[]
+                setAvailableGenerations(gens)
+            }
+        }
+        fetchGenerations()
+    }, [])
+
     const fetchUsers = async () => {
         setLoading(true)
         try {
-            // Fetch via RPC (Bypass RLS)
-            const { data, error } = await supabase.rpc('get_all_profiles_for_admin')
+            // Calculate Range
+            const from = page * ITEMS_PER_PAGE
+            const to = from + ITEMS_PER_PAGE - 1
+
+            // Build Query
+            let query = supabase
+                .from('profiles')
+                .select('*', { count: 'exact' })
+                .neq('account_status', 'Pending')
+                .order('created_at', { ascending: true }) // Oldest First
+                .range(from, to)
+
+            // Apply Filters
+            if (filter) {
+                query = query.or(`full_name.ilike.%${filter}%,email.ilike.%${filter}%`)
+            }
+
+            if (filterGeneration) {
+                query = query.eq('generation', filterGeneration)
+            }
+
+            if (filterGender) {
+                // Determine gender match based on stored values
+                // Assuming DB uses 'Laki-laki' / 'Perempuan'.
+                // If filterGender is 'male', we map or ILIKE.
+                // Let's assume filterGender comes from the Select value which should match DB or be mapped.
+                // Looking at the Select options later on in the file (not visible here but standard):
+                // If the UI sends 'Laki-laki' then exact match.
+                // If it relies on uppercase comparison safely:
+                query = query.ilike('gender', filterGender)
+            }
+
+            const { data, count, error } = await query
 
             if (error) throw error
 
             if (data) {
-                // Client-side Filter & Pagination (RPC returns all)
-                let filteredData = data.filter((u: any) => u.account_status !== 'Pending')
-
-                // Populate available generations (once or always?) - Always good to keep updated
-                const gens = Array.from(new Set(data.map((u: any) => u.generation).filter(Boolean))).sort() as string[]
-                setAvailableGenerations(gens)
-
-
-                if (filter) {
-                    const term = filter.toLowerCase()
-                    filteredData = data.filter((u: any) =>
-                        (u.full_name && u.full_name.toLowerCase().includes(term)) ||
-                        (u.email && u.email.toLowerCase().includes(term))
-                    )
-                }
-
-                if (filterGeneration) {
-                    filteredData = filteredData.filter((u: any) => u.generation === filterGeneration)
-                }
-
-                if (filterGender) {
-                    filteredData = filteredData.filter((u: any) => u.gender?.toUpperCase() === filterGender.toUpperCase())
-                }
-
-                setTotalItems(filteredData.length)
-
-                // Sort
-                filteredData.sort((a: any, b: any) =>
-                    new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-                )
-
-                // Paginate
-                const from = page * ITEMS_PER_PAGE
-                const paginatedData = filteredData.slice(from, from + ITEMS_PER_PAGE)
-
-                setUsers(paginatedData)
+                setUsers(data)
+                setTotalItems(count || 0)
             }
         } catch (err) {
             console.error('Error fetching users:', err)
