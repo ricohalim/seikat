@@ -75,7 +75,7 @@ export default function UserManagementPage() {
                 }
 
                 if (filterGender) {
-                    filteredData = filteredData.filter((u: any) => u.gender === filterGender)
+                    filteredData = filteredData.filter((u: any) => u.gender?.toUpperCase() === filterGender.toUpperCase())
                 }
 
                 setTotalItems(filteredData.length)
