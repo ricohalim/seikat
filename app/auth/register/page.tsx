@@ -546,8 +546,8 @@ export default function RegisterPage() {
                                 <section className="space-y-4">
                                     <h3 className="font-bold text-navy border-b pb-2 flex items-center gap-2"><CheckCircle size={18} /> Verifikasi</h3>
                                     <div>
-                                        <label className="label">Foto Identitas / Kartu Anggota</label>
-                                        <p className="text-xs text-gray-500 mb-2">Upload foto KTP atau Kartu Tanda Anggota untuk verifikasi (Max 2MB).</p>
+                                        <label className="label">Foto Profil Smart Casual</label>
+                                        <p className="text-xs text-gray-500 mb-2">Upload foto terbaikmu dengan pakaian smart casual (Max 2MB).</p>
                                         <input
                                             type="file"
                                             accept="image/*"

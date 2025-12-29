@@ -264,7 +264,7 @@ export default function VerifyDetailPage() {
                     </div>
                     {/* NEW: Verification Photo */}
                     <div className="md:col-span-2">
-                        <label className="text-xs text-gray-400 uppercase font-bold block mb-2">Dokumen Verifikasi</label>
+                        <label className="text-xs text-gray-400 uppercase font-bold block mb-2">Foto Profil (Smart Casual)</label>
                         {(registrant.verification_photo_url || meta.verification_photo_url) ? (
                             <div className="relative w-full max-w-sm h-48 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 group cursor-pointer" onClick={() => window.open(registrant.verification_photo_url || meta.verification_photo_url, '_blank')}>
                                 <img src={registrant.verification_photo_url || meta.verification_photo_url} alt="Verifikasi" className="w-full h-full object-cover group-hover:scale-105 transition" />
