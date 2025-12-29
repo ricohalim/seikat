@@ -15,8 +15,8 @@ export default function VerifyListPage() {
             const { data, error } = await supabase
                 .from('temp_registrations')
                 .select('*')
-                .eq('status', 'Pending')
-                .order('submitted_at', { ascending: false })
+                .in('status', ['Pending', 'On-Hold']) // Include On-Hold for review
+                .order('submitted_at', { ascending: true }) // FIFO: Oldest First
 
             if (data) setRegistrants(data)
             setLoading(false)
@@ -83,9 +83,15 @@ export default function VerifyListPage() {
                                         <div className="text-xs text-gray-400">{meta.major || '-'}</div>
                                     </td>
                                     <td className="p-4">
-                                        <span className="px-3 py-1 rounded-full bg-orange/10 text-orange font-bold text-xs inline-flex items-center gap-1">
-                                            <Clock size={12} /> Pending
-                                        </span>
+                                        {r.status === 'On-Hold' ? (
+                                            <span className="px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 font-bold text-xs inline-flex items-center gap-1">
+                                                <Clock size={12} /> On-Hold
+                                            </span>
+                                        ) : (
+                                            <span className="px-3 py-1 rounded-full bg-orange/10 text-orange font-bold text-xs inline-flex items-center gap-1">
+                                                <Clock size={12} /> Pending
+                                            </span>
+                                        )}
                                     </td>
                                     <td className="p-4 text-right">
                                         <Link href={`/admin/verify/${r.id}`} className="inline-flex items-center gap-2 px-4 py-2 bg-navy text-white text-xs font-bold rounded-lg hover:bg-navy/90 transition shadow-sm">

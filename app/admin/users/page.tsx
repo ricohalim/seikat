@@ -82,7 +82,7 @@ export default function UserManagementPage() {
 
                 // Sort
                 filteredData.sort((a: any, b: any) =>
-                    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                    new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
                 )
 
                 // Paginate
@@ -263,6 +263,7 @@ export default function UserManagementPage() {
                                 value={editForm.account_status || 'Pending'} onChange={e => setEditForm({ ...editForm, account_status: e.target.value })}>
                                 <option value="Pending">Pending</option>
                                 <option value="Active">Active</option>
+                                <option value="On-Hold">On-Hold</option>
                                 <option value="Blocked">Blocked</option>
                             </select>
                         </div>

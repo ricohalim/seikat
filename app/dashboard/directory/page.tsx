@@ -87,8 +87,16 @@ export default function DirectoryPage() {
         // Only run fetch logic if authorized
         if (isAuthorized) {
             fetchMembers()
+            fetchTotalCount()
         }
     }, [isAuthorized, isUserLoading])
+
+    const [totalActiveCount, setTotalActiveCount] = useState(0)
+
+    async function fetchTotalCount() {
+        const { data } = await supabase.rpc('get_active_alumni_count')
+        if (data) setTotalActiveCount(data)
+    }
 
     // Pagination State
     const [page, setPage] = useState(0)
@@ -172,7 +180,7 @@ export default function DirectoryPage() {
                     <p className="text-gray-500 text-sm">
                         Jelajahi profil rekan-rekan Beswan Djarum dari berbagai angkatan.
                         <span className="text-xs bg-gray-100 px-2 py-0.5 rounded ml-2 text-gray-400">
-                            Total: {members.length} Alumni
+                            Total: {totalActiveCount || members.length} Alumni
                         </span>
                     </p>
                 </div>

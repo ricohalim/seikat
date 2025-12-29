@@ -159,6 +159,35 @@ export default function VerifyDetailPage() {
         } catch (err) {
             alert('Gagal menolak.')
         } finally {
+        }
+    }
+
+    const handleOnHold = async () => {
+        const reason = prompt('Masukkan alasan penundaan (On-Hold):')
+        if (!reason) return
+
+        setProcessing(true)
+        try {
+            // 1. Update Profile (if exists) -> On-Hold (so user knows if they login)
+            if (registrant.email) {
+                await supabase.from('profiles').update({ account_status: 'On-Hold' }).eq('email', registrant.email)
+            }
+
+            // 2. Update Temp Registration
+            await supabase
+                .from('temp_registrations')
+                .update({
+                    status: 'On-Hold',
+                    // Optional: Append reason to raw_data if we want to track history
+                    // raw_data: { ...registrant.raw_data, hold_reason: reason } 
+                })
+                .eq('id', registrant.id)
+
+            alert('Status diubah menjadi On-Hold.')
+            router.push('/admin/verify')
+        } catch (err) {
+            alert('Gagal mengubah status.')
+        } finally {
             setProcessing(false)
         }
     }
@@ -177,7 +206,12 @@ export default function VerifyDetailPage() {
                 <div>
                     <div className="flex items-center gap-3 mb-1">
                         <h1 className="text-2xl font-bold text-navy">{registrant.full_name}</h1>
-                        <span className="px-3 py-1 bg-orange/10 text-orange text-xs font-bold rounded-full">Pending Verification</span>
+                        <span className={`px-3 py-1 text-xs font-bold rounded-full ${registrant.status === 'On-Hold'
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : 'bg-orange/10 text-orange'
+                            }`}>
+                            {registrant.status === 'On-Hold' ? 'On-Hold' : 'Pending Verification'}
+                        </span>
                     </div>
                     <p className="text-gray-500 text-sm">Dikirim pada: {new Date(registrant.submitted_at).toLocaleString()}</p>
                 </div>
@@ -188,6 +222,13 @@ export default function VerifyDetailPage() {
                         className="px-6 py-2.5 rounded-xl font-bold bg-white text-red-600 border border-red-200 hover:bg-red-50 transition"
                     >
                         Tolak
+                    </button>
+                    <button
+                        onClick={handleOnHold}
+                        disabled={processing}
+                        className="px-6 py-2.5 rounded-xl font-bold bg-yellow-50 text-yellow-700 border border-yellow-200 hover:bg-yellow-100 transition"
+                    >
+                        Tunda (On-Hold)
                     </button>
                     <button
                         onClick={handleApprove}
