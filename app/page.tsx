@@ -46,7 +46,7 @@ export default async function Home() {
               <Award size={14} /> Resmi Ikatan Alumni
             </div>
 
-            <h1 className="text-5xl md:text-6xl font-extrabold text-navy leading-tight mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold text-navy leading-tight mb-6">
               Terhubung Kembali dengan <span className="text-transparent bg-clip-text bg-gradient-to-r from-azure to-blue-400">Keluarga Beswan Djarum</span>
             </h1>
 
