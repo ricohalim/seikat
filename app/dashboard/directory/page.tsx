@@ -100,7 +100,7 @@ export default function DirectoryPage() {
 
     // Pagination State
     const [page, setPage] = useState(0)
-    const ITEMS_PER_PAGE = 20
+    const ITEMS_PER_PAGE = 25
 
     // Search Logic (MOVED UP to prevent Hook Error #310)
     useEffect(() => {
@@ -111,6 +111,9 @@ export default function DirectoryPage() {
             const batch = member.generation?.toString().toLowerCase() || ''
             return name.includes(query) || batch.includes(query)
         })
+
+        // Enforce A-Z Sorting
+        results.sort((a, b) => a.full_name.localeCompare(b.full_name))
 
         setFilteredMembers(results)
         setPage(0) // Reset to first page on search
@@ -209,55 +212,53 @@ export default function DirectoryPage() {
             </div>
 
             {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[...Array(6)].map((_, i) => (
-                        <div key={i} className="bg-white rounded-xl h-48 animate-pulse shadow-sm border border-gray-100"></div>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 lg:grid-cols-5 gap-4">
+                    {[...Array(10)].map((_, i) => (
+                        <div key={i} className="bg-white rounded-xl h-32 animate-pulse shadow-sm border border-gray-100"></div>
                     ))}
                 </div>
             ) : (
                 <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6"> {/* Squeezed gap on mobile */}
-                        {paginatedMembers.map((member) => ( /* CHANGED to paginatedMembers */
-                            <div key={member.id} className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition border border-gray-100 group relative">
-                                <div className="h-24 bg-gradient-to-r from-gray-100 to-gray-200 relative">
-                                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] font-bold text-navy shadow-sm">
-                                        TS {member.generation}
-                                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4"> {/* More Compact Grid */}
+                        {paginatedMembers.map((member) => (
+                            <div key={member.id} className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition border border-gray-100 group relative flex flex-col items-center p-4 text-center">
+                                {/* Badge Absolute Top Right */}
+                                <div className="absolute top-2 right-2">
+                                    <span className="bg-gray-100 text-gray-500 text-[10px] font-bold px-1.5 py-0.5 rounded border border-gray-200">
+                                        Beswan {member.generation}
+                                    </span>
                                 </div>
-                                <div className="px-5 pb-5 -mt-10">
-                                    <div className="relative w-20 h-20 rounded-full border-4 border-white bg-white shadow-sm overflow-hidden mb-3">
-                                        {member.photo_url ? (
-                                            <img
-                                                src={getOptimizedImageUrl(member.photo_url) || ''}
-                                                alt={member.full_name}
-                                                className="w-full h-full object-cover"
-                                                loading="lazy"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-300 font-bold text-2xl">
-                                                {member.full_name?.charAt(0)}
-                                            </div>
-                                        )}
-                                    </div>
 
-                                    <div className="flex justify-between items-start gap-2">
-                                        <h3 className="font-bold text-navy line-clamp-2" title={member.full_name}>
+                                {/* Photo - Compact Size */}
+                                <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-gray-100 bg-gray-50 mb-3 overflow-hidden shadow-sm group-hover:scale-105 transition duration-300">
+                                    {member.photo_url ? (
+                                        <img
+                                            src={getOptimizedImageUrl(member.photo_url) || ''}
+                                            alt={member.full_name}
+                                            className="w-full h-full object-cover"
+                                            loading="lazy"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-gray-300 font-bold text-xl">
+                                            {member.full_name?.charAt(0)}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Name & LinkedIn */}
+                                <div className="w-full">
+                                    <div className="flex items-center justify-center gap-1.5">
+                                        <h3 className="font-bold text-navy text-xs md:text-sm line-clamp-2 leading-tight" title={member.full_name}>
                                             {member.full_name}
                                         </h3>
-
                                         {member.linkedin_url && (
                                             <a href={member.linkedin_url} target="_blank" rel="noopener noreferrer"
-                                                className="text-gray-400 hover:text-[#0077b5] transition flex-shrink-0"
+                                                className="text-[#0077b5] opacity-80 hover:opacity-100 transition flex-shrink-0"
+                                                title="Lihat LinkedIn"
                                             >
-                                                <Linkedin size={18} />
+                                                <Linkedin size={14} />
                                             </a>
                                         )}
-                                    </div>
-
-                                    <div className="mt-1">
-                                        <span className="text-xs font-medium text-gray-500 bg-gray-50 px-2 py-1 rounded inline-block">
-                                            Beswan {member.generation}
-                                        </span>
                                     </div>
                                 </div>
                             </div>
