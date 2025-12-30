@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Calendar, AlertCircle, Lock } from 'lucide-react'
+import { Calendar, AlertCircle, Lock, LayoutList, History } from 'lucide-react'
 import { calculateProfileCompleteness } from '@/lib/utils'
 import Link from 'next/link'
 import { UserEventCard, UserEventSkeleton } from '@/app/components/events/UserEventCard'
@@ -27,6 +27,7 @@ export default function EventsPage() {
     const [staffEventIds, setStaffEventIds] = useState<string[]>([])
 
     // UI States
+    const [activeTab, setActiveTab] = useState<'upcoming' | 'history'>('upcoming')
     const [registeringId, setRegisteringId] = useState<string | null>(null)
     const [termsModalOpen, setTermsModalOpen] = useState(false)
     const [cancellationModalOpen, setCancellationModalOpen] = useState(false)
@@ -180,6 +181,20 @@ export default function EventsPage() {
         }
     }
 
+    // --- Filter Logic ---
+    const displayedEvents = events.filter(event => {
+        if (activeTab === 'upcoming') {
+            // Show all future events OR events today
+            const eventDate = new Date(event.date_start)
+            const yesterday = new Date()
+            yesterday.setDate(yesterday.getDate() - 1)
+            return eventDate > yesterday
+        } else {
+            // History: Show events registered by user
+            return registeredEventIds.includes(event.id)
+        }
+    })
+
     if (isUserLoading) return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             {[...Array(4)].map((_, i) => <UserEventSkeleton key={i} />)}
@@ -218,18 +233,40 @@ export default function EventsPage() {
                 <p className="text-gray-500 text-sm">Informasi kegiatan dan acara mendatang untuk alumni.</p>
             </div>
 
+            {/* Tabs */}
+            <div className="flex gap-4 border-b border-gray-100">
+                <button
+                    onClick={() => setActiveTab('upcoming')}
+                    className={`pb-3 text-sm font-bold flex items-center gap-2 transition border-b-2 ${activeTab === 'upcoming' ? 'border-navy text-navy' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                >
+                    <LayoutList size={16} />
+                    Agenda Baru
+                </button>
+                <button
+                    onClick={() => setActiveTab('history')}
+                    className={`pb-3 text-sm font-bold flex items-center gap-2 transition border-b-2 ${activeTab === 'history' ? 'border-navy text-navy' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                >
+                    <History size={16} />
+                    Riwayat / Terdaftar
+                </button>
+            </div>
+
             {loading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {[...Array(4)].map((_, i) => <UserEventSkeleton key={i} />)}
                 </div>
-            ) : events.length === 0 ? (
+            ) : displayedEvents.length === 0 ? (
                 <div className="bg-white rounded-xl p-12 text-center border border-gray-100 text-gray-400">
                     <Calendar size={48} className="mx-auto mb-4 opacity-50" />
-                    <p>Belum ada agenda kegiatan saat ini.</p>
+                    <p>
+                        {activeTab === 'upcoming'
+                            ? 'Belum ada agenda kegiatan baru saat ini.'
+                            : 'Anda belum mendaftar kegiatan apapun.'}
+                    </p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {events.map((event) => (
+                    {displayedEvents.map((event) => (
                         <UserEventCard
                             key={event.id}
                             event={event}
