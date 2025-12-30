@@ -1,5 +1,5 @@
 import { X, Lock, Briefcase } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface EditUserModalProps {
     isOpen: boolean
@@ -22,6 +22,22 @@ export function EditUserModal({ isOpen, user, onClose, onSave, loading, onResetP
         role: user?.role,
         account_status: user?.account_status
     })
+
+    // FIX: Sync state when user prop changes (because component stays mounted)
+    useEffect(() => {
+        if (user) {
+            setEditForm({
+                full_name: user.full_name,
+                phone: user.phone,
+                generation: user.generation,
+                university: user.university,
+                company_name: user.company_name,
+                job_position: user.job_position,
+                role: user.role,
+                account_status: user.account_status
+            })
+        }
+    }, [user])
 
     const [showResetInput, setShowResetInput] = useState(false)
     const [newPassword, setNewPassword] = useState('')
