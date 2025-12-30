@@ -50,17 +50,19 @@ export default function AdminDashboardPage() {
 
                 // Process Trend Data
                 const dailyCounts: { [key: string]: number } = {}
-                // Initialize last 7 days with 0
+                // Initialize last 7 days with 0 (Local Time)
                 for (let i = 0; i < 7; i++) {
                     const d = new Date()
                     d.setDate(d.getDate() - i)
-                    const dateKey = d.toISOString().split('T')[0]
+                    // Use 'en-CA' to get YYYY-MM-DD in LOCAL TIME
+                    const dateKey = d.toLocaleDateString('en-CA')
                     dailyCounts[dateKey] = 0
                 }
 
                 if (trendRaw) {
                     trendRaw.forEach((item: any) => {
-                        const dateKey = new Date(item.submitted_at).toISOString().split('T')[0]
+                        // Convert DB timestamp (UTC/ISO) to Local Date Key
+                        const dateKey = new Date(item.submitted_at).toLocaleDateString('en-CA')
                         if (dailyCounts.hasOwnProperty(dateKey)) {
                             dailyCounts[dateKey]++
                         }
