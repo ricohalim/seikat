@@ -222,31 +222,34 @@ export default function DirectoryPage() {
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4"> {/* More Compact Grid */}
                         {paginatedMembers.map((member) => (
                             <div key={member.id} className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition border border-gray-100 group relative flex flex-col items-center p-4 text-center">
-                                {/* Badge Absolute Top Right */}
-                                <div className="absolute top-2 right-2">
-                                    <span className="bg-gray-100 text-gray-500 text-[10px] font-bold px-1.5 py-0.5 rounded border border-gray-200">
-                                        Beswan {member.generation}
-                                    </span>
-                                </div>
 
-                                {/* Photo - Compact Size */}
-                                <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-gray-100 bg-gray-50 mb-3 overflow-hidden shadow-sm group-hover:scale-105 transition duration-300">
-                                    {member.photo_url ? (
-                                        <img
-                                            src={getOptimizedImageUrl(member.photo_url) || ''}
-                                            alt={member.full_name}
-                                            className="w-full h-full object-cover"
-                                            loading="lazy"
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-gray-300 font-bold text-xl">
-                                            {member.full_name?.charAt(0)}
-                                        </div>
-                                    )}
+                                {/* Photo - Compact Size with Overlay Badge */}
+                                <div className="relative mb-3">
+                                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-gray-100 bg-gray-50 overflow-hidden shadow-sm group-hover:scale-105 transition duration-300">
+                                        {member.photo_url ? (
+                                            <img
+                                                src={getOptimizedImageUrl(member.photo_url) || ''}
+                                                alt={member.full_name}
+                                                className="w-full h-full object-cover"
+                                                loading="lazy"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-gray-300 font-bold text-xl">
+                                                {member.full_name?.charAt(0)}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Badge Overlaid on Bottom of Image */}
+                                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                                        <span className="bg-navy text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-white shadow-sm">
+                                            Beswan {member.generation}
+                                        </span>
+                                    </div>
                                 </div>
 
                                 {/* Name & LinkedIn */}
-                                <div className="w-full">
+                                <div className="w-full mt-1">
                                     <div className="flex items-center justify-center gap-1.5">
                                         <h3 className="font-bold text-navy text-xs md:text-sm line-clamp-2 leading-tight" title={member.full_name}>
                                             {member.full_name}
