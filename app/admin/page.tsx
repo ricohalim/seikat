@@ -37,16 +37,8 @@ export default function AdminDashboardPage() {
                     .gte('submitted_at', today.toISOString())
 
 
-                // 4. Trend Data (Last 7 Days)
-                const sevenDaysAgo = new Date()
-                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6) // Include today
-                sevenDaysAgo.setHours(0, 0, 0, 0)
-
-                const { data: trendRaw } = await supabase
-                    .from('temp_registrations')
-                    .select('submitted_at')
-                    .gte('submitted_at', sevenDaysAgo.toISOString())
-                    .order('submitted_at', { ascending: true })
+                // 4. Trend Data (Last 7 Days) using RPC (Bypasses RLS)
+                const { data: trendRPC } = await supabase.rpc('get_registration_trend_last_7_days')
 
                 // Process Trend Data
                 const dailyCounts: { [key: string]: number } = {}
@@ -59,12 +51,16 @@ export default function AdminDashboardPage() {
                     dailyCounts[dateKey] = 0
                 }
 
-                if (trendRaw) {
-                    trendRaw.forEach((item: any) => {
-                        // Convert DB timestamp (UTC/ISO) to Local Date Key
-                        const dateKey = new Date(item.submitted_at).toLocaleDateString('en-CA')
+                if (trendRPC) {
+                    trendRPC.forEach((item: any) => {
+                        // RPC returns YYYY-MM-DD string already in Jakarta Time, but safety parsing:
+                        const dateKey = item.submission_date // e.g., "2025-12-30"
                         if (dailyCounts.hasOwnProperty(dateKey)) {
-                            dailyCounts[dateKey]++
+                            dailyCounts[dateKey] = item.total_count
+                        } else {
+                            // If timezone diff causes date mismatch, fallback:
+                            // We can just rely on the RPC date.
+                            dailyCounts[dateKey] = item.total_count
                         }
                     })
                 }
