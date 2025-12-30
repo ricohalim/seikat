@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Calendar, MapPin, Clock } from 'lucide-react'
+import { Calendar, AlertCircle, Lock } from 'lucide-react'
+import { calculateProfileCompleteness } from '@/lib/utils'
+import Link from 'next/link'
+import { UserEventCard, UserEventSkeleton } from '@/app/components/events/UserEventCard'
 
 interface Event {
     id: string
@@ -13,18 +16,14 @@ interface Event {
     status: string
 }
 
-import { calculateProfileCompleteness } from '@/lib/utils'
-import Link from 'next/link'
-import { Lock, AlertCircle } from 'lucide-react'
-
-// ... 
-
 export default function EventsPage() {
     const [events, setEvents] = useState<Event[]>([])
     const [loading, setLoading] = useState(true)
     const [registeredEventIds, setRegisteredEventIds] = useState<string[]>([])
-    const [registeringId, setRegisteringId] = useState<string | null>(null)
     const [staffEventIds, setStaffEventIds] = useState<string[]>([])
+
+    // UI States
+    const [registeringId, setRegisteringId] = useState<string | null>(null)
 
     // Authorization State
     const [isAuthorized, setIsAuthorized] = useState(false)
@@ -34,19 +33,24 @@ export default function EventsPage() {
     // Check Authorization First
     useEffect(() => {
         async function checkAccess() {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) return
-            setCurrentUser(user)
+            try {
+                const { data: { user } } = await supabase.auth.getUser()
+                if (!user) return
+                setCurrentUser(user)
 
-            const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+                const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
 
-            if (profile) {
-                const percent = calculateProfileCompleteness(profile)
-                if (percent >= 90) {
-                    setIsAuthorized(true)
+                if (profile) {
+                    const percent = calculateProfileCompleteness(profile)
+                    if (percent >= 90) {
+                        setIsAuthorized(true)
+                    }
                 }
+            } catch (err) {
+                console.error("Auth check failed", err)
+            } finally {
+                setIsUserLoading(false)
             }
-            setIsUserLoading(false)
         }
         checkAccess()
     }, [])
@@ -55,37 +59,19 @@ export default function EventsPage() {
         if (!isAuthorized || isUserLoading) return
 
         async function fetchData() {
-            // Fetch Events
-            const { data: eventsData, error: eventsError } = await supabase
-                .from('events')
-                .select('*')
-                .neq('status', 'Draft')
-                .order('date_start', { ascending: false })
+            setLoading(true)
 
-            if (eventsData) setEvents(eventsData)
+            // Parallel Fetching for smoother experience
+            const [eventsRes, registrationsRes, staffRes] = await Promise.all([
+                supabase.from('events').select('*').neq('status', 'Draft').order('date_start', { ascending: false }),
+                currentUser ? supabase.from('event_participants').select('event_id').eq('user_id', currentUser.id) : Promise.resolve({ data: [] }),
+                currentUser ? supabase.from('event_staff').select('event_id').eq('user_id', currentUser.id) : Promise.resolve({ data: [] })
+            ])
 
-            // Fetch My Registrations
-            if (currentUser) {
-                // 1. Registrations
-                const { data: registrations } = await supabase
-                    .from('event_participants')
-                    .select('event_id')
-                    .eq('user_id', currentUser.id)
+            if (eventsRes.data) setEvents(eventsRes.data)
+            if (registrationsRes.data) setRegisteredEventIds(registrationsRes.data.map((r: any) => r.event_id))
+            if (staffRes.data) setStaffEventIds(staffRes.data.map((s: any) => s.event_id))
 
-                if (registrations) {
-                    setRegisteredEventIds(registrations.map(r => r.event_id))
-                }
-
-                // 2. Staff Assignments
-                const { data: staffAssignments } = await supabase
-                    .from('event_staff')
-                    .select('event_id')
-                    .eq('user_id', currentUser.id)
-
-                if (staffAssignments) {
-                    setStaffEventIds(staffAssignments.map(s => s.event_id))
-                }
-            }
             setLoading(false)
         }
 
@@ -96,6 +82,8 @@ export default function EventsPage() {
 
     const handleRegister = async (eventId: string) => {
         if (!confirm('Apakah Anda yakin ingin mendaftar kegiatan ini?')) return
+
+        // Optimistic Update
         setRegisteringId(eventId)
 
         try {
@@ -115,11 +103,15 @@ export default function EventsPage() {
         }
     }
 
-    if (isUserLoading) return <div className="p-8 text-center text-gray-500">Memeriksa akses...</div>
+    if (isUserLoading) return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            {[...Array(4)].map((_, i) => <UserEventSkeleton key={i} />)}
+        </div>
+    )
 
     if (!isAuthorized) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6 space-y-6">
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6 space-y-6 animate-in fade-in duration-500">
                 <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-2">
                     <Lock size={40} />
                 </div>
@@ -142,106 +134,35 @@ export default function EventsPage() {
         )
     }
 
-    if (loading) {
-        return (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {[...Array(4)].map((_, i) => (
-                    <div key={i} className="bg-white rounded-xl h-64 animate-pulse shadow-sm border border-gray-100"></div>
-                ))}
-            </div>
-        )
-    }
-
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-20 animate-in fade-in duration-500">
             <div>
                 <h2 className="text-2xl font-bold text-navy">Agenda Kegiatan</h2>
                 <p className="text-gray-500 text-sm">Informasi kegiatan dan acara mendatang untuk alumni.</p>
             </div>
 
-            {events.length === 0 ? (
+            {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {[...Array(4)].map((_, i) => <UserEventSkeleton key={i} />)}
+                </div>
+            ) : events.length === 0 ? (
                 <div className="bg-white rounded-xl p-12 text-center border border-gray-100 text-gray-400">
                     <Calendar size={48} className="mx-auto mb-4 opacity-50" />
                     <p>Belum ada agenda kegiatan saat ini.</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {events.map((event) => {
-                        const isRegistered = registeredEventIds.includes(event.id)
-                        const isClosed = event.status !== 'Open'
-
-                        return (
-                            <div key={event.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition flex flex-col">
-                                <div className={`h-2 ${isClosed ? 'bg-gray-300' : 'bg-gradient-to-r from-orange to-red-500'}`}></div>
-                                <div className="p-6 flex-1 flex flex-col">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <h3 className="text-xl font-bold text-navy line-clamp-2">{event.title}</h3>
-                                        <span className={`text-xs font-bold px-2 py-1 rounded-full uppercase ${isRegistered ? 'bg-green-100 text-green-700' :
-                                            isClosed ? 'bg-gray-100 text-gray-500' : 'bg-blue-50 text-blue-600'
-                                            }`}>
-                                            {isRegistered ? 'Terdaftar' : event.status}
-                                        </span>
-                                    </div>
-
-                                    <p className="text-gray-600 text-sm mb-6 line-clamp-3">
-                                        {event.description || 'Tidak ada deskripsi.'}
-                                    </p>
-
-                                    <div className="mt-auto space-y-3 pt-6 border-t border-gray-50 text-sm text-gray-500">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-azure">
-                                                <Calendar size={16} />
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] uppercase font-bold text-gray-400">Tanggal</span>
-                                                <span className="font-medium text-gray-700">
-                                                    {event.date_start ? new Date(event.date_start).toLocaleDateString('id-ID', {
-                                                        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-                                                    }) : '-'}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-orange/10 flex items-center justify-center text-orange">
-                                                <MapPin size={16} />
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] uppercase font-bold text-gray-400">Lokasi</span>
-                                                <span className="font-medium text-gray-700">{event.location || 'Online'}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <button
-                                        onClick={() => handleRegister(event.id)}
-                                        disabled={isRegistered || isClosed || registeringId === event.id}
-                                        className={`w-full mt-6 font-bold py-2 rounded-lg transition text-sm ${isRegistered
-                                            ? 'bg-green-100 text-green-700 cursor-default'
-                                            : isClosed
-                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                : 'bg-navy text-white hover:bg-navy/90'
-                                            }`}
-                                    >
-                                        {registeringId === event.id ? 'Mendaftarkan...' :
-                                            isRegistered ? 'Anda Telah Terdaftar' :
-                                                isClosed ? 'Pendaftaran Ditutup' : 'Daftar Kegiatan'}
-                                    </button>
-
-                                    {staffEventIds.includes(event.id) && (
-                                        <Link
-                                            href={`/dashboard/events/${event.id}/staff`}
-                                            className="w-full mt-2 block text-center bg-orange text-white font-bold py-2 rounded-lg transition text-sm hover:bg-orange/90 shadow-sm"
-                                        >
-                                            <span className="flex items-center justify-center gap-2">
-                                                🛡️ Console Panitia
-                                            </span>
-                                        </Link>
-                                    )}
-                                </div>
-                            </div>
-                        )
-                    })}
+                    {events.map((event) => (
+                        <UserEventCard
+                            key={event.id}
+                            event={event}
+                            isRegistered={registeredEventIds.includes(event.id)}
+                            isClosed={event.status !== 'Open'}
+                            isStaff={staffEventIds.includes(event.id)}
+                            isRegistering={registeringId === event.id}
+                            onRegister={handleRegister}
+                        />
+                    ))}
                 </div>
             )}
         </div>
