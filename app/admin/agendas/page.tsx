@@ -19,6 +19,7 @@ export default function AdminAgendasPage() {
 
     // Participants State
     const [isParticipantModalOpen, setIsParticipantModalOpen] = useState(false)
+    const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
     const [selectedEventName, setSelectedEventName] = useState('')
     const [participants, setParticipants] = useState<any[]>([])
     const [loadingParticipants, setLoadingParticipants] = useState(false)
@@ -82,18 +83,96 @@ export default function AdminAgendasPage() {
 
     // --- Participants Logic ---
     const viewParticipants = async (eventId: string, eventTitle: string) => {
+        setSelectedEventId(eventId)
         setSelectedEventName(eventTitle)
         setLoadingParticipants(true)
         setIsParticipantModalOpen(true)
 
-        const { data, error } = await supabase.rpc('get_event_participants', {
-            target_event_id: eventId
-        })
+        // Fetch detailed participant stats including status and cancellation info
+        const { data, error } = await supabase
+            .from('event_participants')
+            .select(`
+                *,
+                profiles:user_id (full_name, email, phone, generation, consecutive_absences)
+            `)
+            .eq('event_id', eventId)
 
-        if (error) alert('Gagal memuat peserta: ' + error.message)
-        if (data) setParticipants(data)
+        if (error) {
+            alert('Gagal memuat peserta: ' + error.message)
+        } else {
+            // Flatten generic data structure for table consumption
+            const formatted = data.map((p: any) => ({
+                user_id: p.user_id,
+                full_name: p.profiles?.full_name,
+                email: p.profiles?.email,
+                phone: p.profiles?.phone,
+                generation: p.profiles?.generation,
+                consecutive_absences: p.profiles?.consecutive_absences,
+                status: p.status,
+                checked_in_at: p.checked_in_at,
+                cancellation_reason: p.cancellation_reason,
+                cancellation_status: p.cancellation_status
+            }))
+            setParticipants(formatted)
+        }
         setLoadingParticipants(false)
     }
+
+    const handleCheckIn = async (userId: string) => {
+        if (!selectedEventId) return
+        if (!confirm('Tandai peserta ini sebagai HADIR (Check-in)?')) return
+
+        try {
+            const { error } = await supabase.rpc('check_in_participant', {
+                p_event_id: selectedEventId,
+                p_user_id: userId
+            })
+            if (error) throw error
+
+            // Refresh local list
+            viewParticipants(selectedEventId, selectedEventName)
+            alert('Berhasil Check-in!')
+        } catch (e: any) {
+            alert('Gagal check-in: ' + e.message)
+        }
+    }
+
+    const handleApproveCancellation = async (userId: string, approve: boolean) => {
+        if (!selectedEventId) return
+        if (!confirm(approve ? 'Setujui izin/pembatalan?' : 'Tolak izin ini?')) return
+
+        try {
+            const { error } = await supabase.rpc('approve_cancellation', {
+                p_event_id: selectedEventId,
+                p_user_id: userId,
+                p_approve: approve
+            })
+            if (error) throw error
+
+            // Refresh local list
+            viewParticipants(selectedEventId, selectedEventName)
+            alert(approve ? 'Izin disetujui.' : 'Izin ditolak.')
+        } catch (e: any) {
+            alert('Gagal memproses izin: ' + e.message)
+        }
+    }
+
+    const handleFinalizeEvent = async (eventId: string) => {
+        if (!confirm('PENTING: Aksi ini akan menandai semua peserta "Registered" yang belum Check-in menjadi status "Absent" (Alpha). Sanksi akan dihitung. Lanjutkan?')) return
+
+        try {
+            const { data, error } = await supabase.rpc('finalize_event_attendance', {
+                p_event_id: eventId
+            })
+            if (error) throw error
+
+            alert(data) // Shows success message from RPC
+            fetchEvents()
+        } catch (e: any) {
+            alert('Gagal finalisasi event: ' + e.message)
+        }
+    }
+
 
     // --- Staff Logic ---
     const handleManageStaff = (event: any) => {
