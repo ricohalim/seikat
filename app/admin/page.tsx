@@ -37,48 +37,6 @@ export default function AdminDashboardPage() {
                     .gte('submitted_at', today.toISOString())
 
 
-                // 4. Trend Data (Last 7 Days) using RPC (Bypasses RLS)
-                const { data: trendRPC } = await supabase.rpc('get_registration_trend_last_7_days')
-
-                // Process Trend Data
-                const dailyCounts: { [key: string]: number } = {}
-                // Initialize last 7 days with 0 (Local Time)
-                for (let i = 0; i < 7; i++) {
-                    const d = new Date()
-                    d.setDate(d.getDate() - i)
-                    // Use 'en-CA' to get YYYY-MM-DD in LOCAL TIME
-                    const dateKey = d.toLocaleDateString('en-CA')
-                    dailyCounts[dateKey] = 0
-                }
-
-                if (trendRPC) {
-                    trendRPC.forEach((item: any) => {
-                        // RPC returns YYYY-MM-DD string already in Jakarta Time, but safety parsing:
-                        const dateKey = item.submission_date // e.g., "2025-12-30"
-                        if (dailyCounts.hasOwnProperty(dateKey)) {
-                            dailyCounts[dateKey] = item.total_count
-                        } else {
-                            // If timezone diff causes date mismatch, fallback:
-                            // We can just rely on the RPC date.
-                            dailyCounts[dateKey] = item.total_count
-                        }
-                    })
-                }
-
-                // Convert to Array and Sort
-                const trendArray = Object.keys(dailyCounts)
-                    .sort()
-                    .map(dateKey => {
-                        const date = new Date(dateKey)
-                        return {
-                            date: dateKey,
-                            count: dailyCounts[dateKey],
-                            label: date.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric' })
-                        }
-                    })
-
-                setTrendData(trendArray)
-
                 setStats({
                     totalActive: activeCount || 0,
                     totalPending: pendingCount || 0,
@@ -143,48 +101,11 @@ export default function AdminDashboardPage() {
                 </div>
             </div>
 
-            {/* Daily Trend Chart */}
+            {/* Quick Actions / Recent Flow */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <h3 className="font-bold text-navy text-lg">Trend Pendaftar Perhari</h3>
-                        <p className="text-xs text-gray-400">Total registrasi 7 hari terakhir</p>
-                    </div>
-                    <div className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-bold">
-                        Last 7 Days
-                    </div>
-                </div>
-
-                <div className="h-64 flex items-end justify-between gap-2 md:gap-4 px-2">
-                    {loading ? (
-                        <div className="w-full h-full flex items-center justify-center text-gray-300">Loading Chart...</div>
-                    ) : (
-                        trendData.map((day, index) => {
-                            const maxCount = Math.max(...trendData.map(d => d.count), 5); // Min max is 5 for scale
-                            const heightPercent = (day.count / maxCount) * 100;
-                            const isToday = index === trendData.length - 1;
-
-                            return (
-                                <div key={day.date} className="flex flex-col items-center justify-end w-full group">
-                                    <div className="relative w-full flex justify-end flex-col items-center h-full">
-                                        <div
-                                            className={`w-full max-w-[40px] md:max-w-[60px] rounded-t-lg transition-all duration-500 ease-out relative ${isToday ? 'bg-navy' : 'bg-blue-200 group-hover:bg-blue-300'}`}
-                                            style={{ height: `${Math.max(heightPercent, 2)}%` }} // Min 2% height
-                                        >
-                                            {/* Tooltip Content */}
-                                            <div className="opacity-0 group-hover:opacity-100 absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs py-1 px-2 rounded pointer-events-none transition mb-2 shadow-lg whitespace-nowrap z-10">
-                                                {day.count} Pendaftar
-                                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className={`mt-3 text-[10px] md:text-xs font-bold text-center ${isToday ? 'text-navy' : 'text-gray-400'}`}>
-                                        {day.label}
-                                    </div>
-                                </div>
-                            )
-                        })
-                    )}
+                <h3 className="font-bold text-navy mb-4 text-lg">Aktivitas Terkini</h3>
+                <div className="h-40 flex items-center justify-center text-gray-400 text-sm border-2 border-dashed border-gray-100 rounded-xl bg-gray-50">
+                    Belum ada aktivitas tercatat hari ini.
                 </div>
             </div>
         </div>
