@@ -243,7 +243,7 @@ export default function DirectoryPage() {
                                     {/* Badge Overlaid on Bottom of Image */}
                                     <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
                                         <span className="bg-navy text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-white shadow-sm">
-                                            Beswan {member.generation}
+                                            Beswan {member.generation?.split('(')[0].trim()}
                                         </span>
                                     </div>
                                 </div>
