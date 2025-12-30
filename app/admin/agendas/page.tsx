@@ -180,6 +180,7 @@ export default function AdminAgendasPage() {
                             onDelete={handleDelete}
                             onViewParticipants={viewParticipants}
                             onManageStaff={handleManageStaff}
+                            onFinalize={handleFinalizeEvent}
                         />
                     ))
                 }
@@ -200,6 +201,8 @@ export default function AdminAgendasPage() {
                 eventName={selectedEventName}
                 participants={participants}
                 loading={loadingParticipants}
+                onCheckIn={handleCheckIn}
+                onApprove={handleApproveCancellation}
             />
 
             <StaffModal
