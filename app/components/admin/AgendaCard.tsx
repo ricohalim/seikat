@@ -1,4 +1,4 @@
-import { Calendar, MapPin, Edit2, Users, Shield, Trash2 } from 'lucide-react'
+import { Calendar, MapPin, Edit2, Users, Shield, Trash2, CheckSquare } from 'lucide-react'
 import { Skeleton } from '../ui/Skeleton'
 
 interface AgendaCardProps {
@@ -7,9 +7,10 @@ interface AgendaCardProps {
     onDelete: (id: string) => void
     onViewParticipants: (id: string, title: string) => void
     onManageStaff: (event: any) => void
+    onFinalize: (id: string) => void
 }
 
-export function AgendaCard({ event, onEdit, onDelete, onViewParticipants, onManageStaff }: AgendaCardProps) {
+export function AgendaCard({ event, onEdit, onDelete, onViewParticipants, onManageStaff, onFinalize }: AgendaCardProps) {
     return (
         <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 flex flex-col group animate-in fade-in zoom-in-95 duration-300">
             <div className={`h-2 ${event.status === 'Open' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
@@ -38,25 +39,34 @@ export function AgendaCard({ event, onEdit, onDelete, onViewParticipants, onMana
                     </div>
                 </div>
 
-                <div className="mt-auto flex gap-2 pt-4 border-t border-gray-50">
+                <div className="mt-auto flex gap-2 pt-4 border-t border-gray-50 flex-wrap">
                     <button
                         onClick={() => onEdit(event)}
-                        className="flex-1 flex items-center justify-center gap-1 bg-gray-50 hover:bg-gray-100 text-navy py-2 rounded text-xs font-bold transition active:scale-95"
+                        className="flex-1 min-w-[60px] flex items-center justify-center gap-1 bg-gray-50 hover:bg-gray-100 text-navy py-2 rounded text-xs font-bold transition active:scale-95"
                     >
                         <Edit2 size={14} /> Edit
                     </button>
                     <button
                         onClick={() => onViewParticipants(event.id, event.title)}
-                        className="flex-1 flex items-center justify-center gap-1 bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 rounded text-xs font-bold transition active:scale-95"
+                        className="flex-1 min-w-[60px] flex items-center justify-center gap-1 bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 rounded text-xs font-bold transition active:scale-95"
                     >
                         <Users size={14} /> Peserta
                     </button>
                     <button
                         onClick={() => onManageStaff(event)}
-                        className="flex-1 flex items-center justify-center gap-1 bg-orange/10 hover:bg-orange/20 text-orange py-2 rounded text-xs font-bold transition active:scale-95"
+                        className="flex-1 min-w-[60px] flex items-center justify-center gap-1 bg-orange/10 hover:bg-orange/20 text-orange py-2 rounded text-xs font-bold transition active:scale-95"
                     >
                         <Shield size={14} /> Staff
                     </button>
+
+                    <button
+                        onClick={() => onFinalize(event.id)}
+                        title="Finalize Attendance (Calculate Sanctions)"
+                        className="p-2 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded transition active:scale-95"
+                    >
+                        <CheckSquare size={14} />
+                    </button>
+
                     <button
                         onClick={() => onDelete(event.id)}
                         className="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded transition active:scale-95"

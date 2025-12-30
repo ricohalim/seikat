@@ -18,9 +18,10 @@ interface UserEventCardProps {
     isStaff: boolean
     isRegistering: boolean
     onRegister: (id: string) => void
+    onCancel: (id: string) => void
 }
 
-export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegistering, onRegister }: UserEventCardProps) {
+export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegistering, onRegister, onCancel }: UserEventCardProps) {
     return (
         <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition flex flex-col group animate-in fade-in zoom-in-95 duration-500">
             <div className={`h-2 ${isClosed ? 'bg-gray-300' : 'bg-gradient-to-r from-orange to-red-500'}`}></div>
@@ -64,20 +65,31 @@ export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegist
                     </div>
                 </div>
 
-                <button
-                    onClick={() => onRegister(event.id)}
-                    disabled={isRegistered || isClosed || isRegistering}
-                    className={`w-full mt-6 font-bold py-2 rounded-lg transition text-sm active:scale-95 ${isRegistered
-                        ? 'bg-green-100 text-green-700 cursor-default'
-                        : isClosed
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-navy text-white hover:bg-navy/90 shadow-md shadow-navy/20'
-                        }`}
-                >
-                    {isRegistering ? 'Mendaftarkan...' :
-                        isRegistered ? 'Anda Telah Terdaftar' :
-                            isClosed ? 'Pendaftaran Ditutup' : 'Daftar Kegiatan'}
-                </button>
+                <div className="mt-6 flex flex-col gap-2">
+                    <button
+                        onClick={() => onRegister(event.id)}
+                        disabled={isRegistered || isClosed || isRegistering}
+                        className={`w-full font-bold py-2 rounded-lg transition text-sm active:scale-95 ${isRegistered
+                            ? 'bg-green-100 text-green-700 cursor-default'
+                            : isClosed
+                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                : 'bg-navy text-white hover:bg-navy/90 shadow-md shadow-navy/20'
+                            }`}
+                    >
+                        {isRegistering ? 'Mendaftarkan...' :
+                            isRegistered ? 'Anda Telah Terdaftar' :
+                                isClosed ? 'Pendaftaran Ditutup' : 'Daftar Kegiatan'}
+                    </button>
+
+                    {isRegistered && !isClosed && (
+                        <button
+                            onClick={() => onCancel(event.id)}
+                            className="w-full font-medium py-2 rounded-lg transition text-sm text-red-500 hover:bg-red-50 border border-transparent hover:border-red-100"
+                        >
+                            Batalkan / Izin Tidak Hadir
+                        </button>
+                    )}
+                </div>
 
                 {isStaff && (
                     <Link
