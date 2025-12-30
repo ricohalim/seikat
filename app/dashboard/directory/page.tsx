@@ -78,8 +78,11 @@ export default function DirectoryPage() {
                 console.error('Error fetching directory:', error)
                 setCheckError(`Directory Fetch Error: ${error.message}`)
             } else {
-                setMembers(data || [])
-                setFilteredMembers(data || [])
+                const sortedData = (data || []).sort((a: Member, b: Member) =>
+                    (a.full_name || '').trim().localeCompare((b.full_name || '').trim())
+                )
+                setMembers(sortedData)
+                setFilteredMembers(sortedData)
             }
             setLoading(false)
         }
@@ -112,8 +115,8 @@ export default function DirectoryPage() {
             return name.includes(query) || batch.includes(query)
         })
 
-        // Enforce A-Z Sorting
-        results.sort((a, b) => a.full_name.localeCompare(b.full_name))
+        // Enforce A-Z Sorting (Robust)
+        results.sort((a, b) => (a.full_name || '').trim().localeCompare((b.full_name || '').trim()))
 
         setFilteredMembers(results)
         setPage(0) // Reset to first page on search
