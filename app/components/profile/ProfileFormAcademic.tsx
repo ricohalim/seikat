@@ -70,7 +70,10 @@ export default function ProfileFormAcademic({ formData, handleChange, isSameEduc
                         type="text"
                         name="university"
                         value={formData.university}
-                        onChange={handleChange}
+                        onChange={(e) => {
+                            e.target.value = e.target.value.toUpperCase()
+                            handleChange(e)
+                        }}
                         className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
                         placeholder="Ketik nama universitas..."
                     />
@@ -117,7 +120,11 @@ export default function ProfileFormAcademic({ formData, handleChange, isSameEduc
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 mb-1">Universitas Saat Ini</label>
-                                <input type="text" name="current_university" value={formData.current_university} onChange={handleChange}
+                                <input type="text" name="current_university" value={formData.current_university}
+                                    onChange={(e) => {
+                                        e.target.value = e.target.value.toUpperCase()
+                                        handleChange(e)
+                                    }}
                                     className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
                                     placeholder="Ketik nama universitas..."
                                 />
