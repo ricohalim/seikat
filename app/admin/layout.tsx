@@ -91,6 +91,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             <Link href="/admin/users" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium opacity-75 hover:opacity-100">
                                 <Users size={18} /> User Management
                             </Link>
+                            <Link href="/admin/master-data" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium opacity-75 hover:opacity-100">
+                                <ShieldAlert size={18} /> Master Data
+                            </Link>
                             <Link href="/admin/logs" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium opacity-75 hover:opacity-100">
                                 <Clock size={18} /> Activity Logs
                             </Link>

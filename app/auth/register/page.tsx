@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import { ArrowRight, ArrowLeft, User, Briefcase, MapPin, GraduationCap, Heart, CheckCircle, AlertCircle, Info, Loader2 } from 'lucide-react'
 import { useNameValidation } from '@/app/hooks/useNameValidation'
+import { useUniversities } from '@/app/hooks/useUniversities'
 
 import {
     GENDERS, GENERATIONS, COUNTRIES, PROVINCES,
@@ -17,6 +18,7 @@ export default function RegisterPage() {
     // Validation
     const { validateName } = useNameValidation()
     const [nameWarning, setNameWarning] = useState<string | null>(null)
+    const { universities: universityList } = useUniversities()
 
     // Form Data
     const [email, setEmail] = useState('')
@@ -99,6 +101,12 @@ export default function RegisterPage() {
             } else {
                 setNameWarning(null)
             }
+        }
+
+        // Force Uppercase for University
+        if (name === 'university') {
+            setFormData(prev => ({ ...prev, [name]: value.toUpperCase() }))
+            return
         }
 
         if (upperFields.includes(name)) {
@@ -533,7 +541,7 @@ export default function RegisterPage() {
                                             <label className="label">Universitas (S1)</label>
                                             <input list="universities" name="university" required value={formData.university} onChange={handleChange} className="input-field" placeholder="Nama Universitas" />
                                             <datalist id="universities">
-                                                {UNIVERSITIES.map(u => <option key={u} value={u} />)}
+                                                {universityList.map(u => <option key={u} value={u} />)}
                                             </datalist>
                                         </div>
                                         <div>

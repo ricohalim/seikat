@@ -2,6 +2,7 @@ import { X, Lock, Briefcase, AlertCircle } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { GENERATIONS, UNIVERSITIES } from '@/lib/constants'
 import { useNameValidation } from '@/app/hooks/useNameValidation'
+import { useUniversities } from '@/app/hooks/useUniversities'
 
 interface EditUserModalProps {
     isOpen: boolean
@@ -43,6 +44,7 @@ export function EditUserModal({ isOpen, user, onClose, onSave, loading, onResetP
 
     // Validation
     const { validateName } = useNameValidation()
+    const { universities } = useUniversities()
     const [nameWarning, setNameWarning] = useState<string | null>(null)
 
     useEffect(() => {
@@ -121,7 +123,7 @@ export function EditUserModal({ isOpen, user, onClose, onSave, loading, onResetP
                             onChange={e => setEditForm({ ...editForm, university: e.target.value })}
                         >
                             <option value="">- Pilih Universitas -</option>
-                            {UNIVERSITIES.map(uni => (
+                            {universities.map(uni => (
                                 <option key={uni} value={uni}>{uni}</option>
                             ))}
                         </select>
