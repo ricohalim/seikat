@@ -1,5 +1,6 @@
 import { X, Lock, Briefcase } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { GENERATIONS, UNIVERSITIES } from '@/lib/constants'
 
 interface EditUserModalProps {
     isOpen: boolean
@@ -78,15 +79,31 @@ export function EditUserModal({ isOpen, user, onClose, onSave, loading, onResetP
                         </div>
                         <div>
                             <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Angkatan</label>
-                            <input type="text" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-navy/20 outline-none"
-                                value={editForm.generation || ''} onChange={e => setEditForm({ ...editForm, generation: e.target.value })} />
+                            <select
+                                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-navy/20 outline-none bg-white"
+                                value={editForm.generation || ''}
+                                onChange={e => setEditForm({ ...editForm, generation: e.target.value })}
+                            >
+                                <option value="">- Pilih Angkatan -</option>
+                                {GENERATIONS.map(gen => (
+                                    <option key={gen} value={gen}>{gen}</option>
+                                ))}
+                            </select>
                         </div>
                     </div>
 
                     <div>
                         <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Universitas</label>
-                        <input type="text" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-navy/20 outline-none"
-                            value={editForm.university || ''} onChange={e => setEditForm({ ...editForm, university: e.target.value })} />
+                        <select
+                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-navy/20 outline-none bg-white"
+                            value={editForm.university || ''}
+                            onChange={e => setEditForm({ ...editForm, university: e.target.value })}
+                        >
+                            <option value="">- Pilih Universitas -</option>
+                            {UNIVERSITIES.map(uni => (
+                                <option key={uni} value={uni}>{uni}</option>
+                            ))}
+                        </select>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">

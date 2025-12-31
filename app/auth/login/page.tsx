@@ -35,12 +35,23 @@ export default function LoginPage() {
                     .eq('id', data.user.id)
                     .single()
 
-                if (profile && profile.account_status === 'Pending') {
-                    // Force Logout
-                    await supabase.auth.signOut()
-                    // Redirect to Pending Page
-                    router.push('/auth/verification-pending')
-                    return
+                if (profile) {
+                    const status = profile.account_status?.trim()
+
+                    if (status === 'Pending') {
+                        // Force Logout
+                        await supabase.auth.signOut()
+                        // Redirect to Pending Page
+                        router.push('/auth/verification-pending')
+                        return
+                    }
+
+                    // BLOCK ON-HOLD USERS
+                    if (status === 'On-Hold' || status === 'on-hold' || status === 'Ditunda') {
+                        await supabase.auth.signOut()
+                        setError('Status: DITANGGUHKAN. Harap hubungi Admin untuk informasi lebih lanjut.')
+                        return
+                    }
                 }
 
                 try {
