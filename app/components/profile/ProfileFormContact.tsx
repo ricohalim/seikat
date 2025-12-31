@@ -1,10 +1,11 @@
 'use client'
 
-import React from 'react'
-import { User } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { User, AlertCircle } from 'lucide-react'
 import ProfileImageUpload from '@/app/components/ProfileImageUpload'
 import { ProfileData } from '@/types/profile'
 import { useToast } from '@/app/context/ToastContext'
+import { useNameValidation } from '@/app/hooks/useNameValidation'
 
 interface Props {
     formData: ProfileData
@@ -17,6 +18,19 @@ interface Props {
 
 export default function ProfileFormContact({ formData, handleChange, handlePhoneChange, handleLinkedinChange, linkedinUsername, setFormData }: Props) {
     const { addToast } = useToast()
+
+    // Validation
+    const { validateName } = useNameValidation()
+    const [nameWarning, setNameWarning] = useState<string | null>(null)
+
+    useEffect(() => {
+        if (formData.full_name) {
+            const validation = validateName(formData.full_name)
+            setNameWarning(validation.hasWarning ? validation.message : null)
+        } else {
+            setNameWarning(null)
+        }
+    }, [formData.full_name, validateName])
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -38,6 +52,13 @@ export default function ProfileFormContact({ formData, handleChange, handlePhone
                     <input type="text" name="full_name" value={formData.full_name} onChange={handleChange} required
                         className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
                     />
+                    {nameWarning ? (
+                        <p className="text-xs text-orange mt-1 flex items-center gap-1 font-medium bg-orange/10 p-2 rounded-lg border border-orange/20">
+                            <AlertCircle size={12} /> {nameWarning}
+                        </p>
+                    ) : (
+                        <p className="text-[10px] text-gray-400 mt-1">Isi nama lengkap sesuai KTP tanpa gelar.</p>
+                    )}
                 </div>
                 <div>
                     <label className="block text-xs font-bold text-gray-500 mb-1">No. Whatsapp</label>

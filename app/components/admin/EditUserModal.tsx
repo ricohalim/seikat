@@ -1,6 +1,7 @@
-import { X, Lock, Briefcase } from 'lucide-react'
+import { X, Lock, Briefcase, AlertCircle } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { GENERATIONS, UNIVERSITIES } from '@/lib/constants'
+import { useNameValidation } from '@/app/hooks/useNameValidation'
 
 interface EditUserModalProps {
     isOpen: boolean
@@ -40,6 +41,19 @@ export function EditUserModal({ isOpen, user, onClose, onSave, loading, onResetP
         }
     }, [user])
 
+    // Validation
+    const { validateName } = useNameValidation()
+    const [nameWarning, setNameWarning] = useState<string | null>(null)
+
+    useEffect(() => {
+        if (editForm.full_name) {
+            const validation = validateName(editForm.full_name)
+            setNameWarning(validation.hasWarning ? validation.message : null)
+        } else {
+            setNameWarning(null)
+        }
+    }, [editForm.full_name, validateName])
+
     const [showResetInput, setShowResetInput] = useState(false)
     const [newPassword, setNewPassword] = useState('')
 
@@ -69,6 +83,13 @@ export function EditUserModal({ isOpen, user, onClose, onSave, loading, onResetP
                         <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Nama Lengkap</label>
                         <input type="text" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-navy/20 outline-none"
                             value={editForm.full_name || ''} onChange={e => setEditForm({ ...editForm, full_name: e.target.value })} />
+                        {nameWarning ? (
+                            <p className="text-xs text-orange mt-1 flex items-center gap-1 font-medium bg-orange/10 p-2 rounded-lg border border-orange/20">
+                                <AlertCircle size={12} /> {nameWarning}
+                            </p>
+                        ) : (
+                            <p className="text-[10px] text-gray-400 mt-1">Isi nama lengkap sesuai KTP tanpa gelar.</p>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">

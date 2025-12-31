@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import { ArrowRight, ArrowLeft, User, Briefcase, MapPin, GraduationCap, Heart, CheckCircle, AlertCircle, Info, Loader2 } from 'lucide-react'
+import { useNameValidation } from '@/app/hooks/useNameValidation'
 
 import {
     GENDERS, GENERATIONS, COUNTRIES, PROVINCES,
@@ -12,6 +13,10 @@ import {
 
 export default function RegisterPage() {
     const [step, setStep] = useState(1) // 1: Cek Email, 2: Form
+
+    // Validation
+    const { validateName } = useNameValidation()
+    const [nameWarning, setNameWarning] = useState<string | null>(null)
 
     // Form Data
     const [email, setEmail] = useState('')
@@ -85,6 +90,16 @@ export default function RegisterPage() {
             'domicile_province', 'domicile_city', 'domicile_country',
             'business_name', 'business_field', 'business_position', 'business_location'
         ]
+
+        /* Name Validation Logic */
+        if (name === 'full_name') {
+            const validation = validateName(value)
+            if (validation.hasWarning) {
+                setNameWarning(validation.message)
+            } else {
+                setNameWarning(null)
+            }
+        }
 
         if (upperFields.includes(name)) {
             setFormData(prev => ({ ...prev, [name]: value.toUpperCase() }))
@@ -472,7 +487,14 @@ export default function RegisterPage() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="md:col-span-2">
                                             <label className="label">Nama Lengkap</label>
-                                            <input type="text" name="full_name" required value={formData.full_name} onChange={handleChange} className="input-field" placeholder="Nama Lengkap" />
+                                            <input type="text" name="full_name" required value={formData.full_name} onChange={handleChange} className="input-field" placeholder="Nama sesuai KTP tanpa gelar" />
+                                            {nameWarning ? (
+                                                <p className="text-xs text-orange mt-1 flex items-center gap-1 font-medium bg-orange/10 p-2 rounded-lg border border-orange/20">
+                                                    <AlertCircle size={12} /> {nameWarning}
+                                                </p>
+                                            ) : (
+                                                <p className="text-[10px] text-gray-400 mt-1">Isi nama lengkap sesuai KTP tanpa gelar (contoh: Budi Santoso, bukan Ir. Budi Santoso, S.Kom).</p>
+                                            )}
                                         </div>
                                         <div>
                                             <label className="label">Nomor Whatsapp</label>
@@ -565,7 +587,7 @@ export default function RegisterPage() {
                                     <button
                                         type="submit"
                                         disabled={loading || !tncAccepted}
-                                        className="w-full bg-navy text-white py-4 rounded-xl font-bold text-lg hover:bg-navy/90 transition shadow-lg shadow-navy/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="w-full bg-navy text-white py-4 rounded-xl font-bold text-lg hover:bg-navy/90 transition shadow-lg shadow-navy/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
                                     >
                                         {loading ? <Loader2 className="animate-spin" /> : (
                                             <>Daftar Sekarang <CheckCircle size={20} /></>
