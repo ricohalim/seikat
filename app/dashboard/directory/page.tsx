@@ -67,60 +67,58 @@ export default function DirectoryPage() {
         checkAccess()
     }, [])
 
-    // Fetch Directory ONLY if Authorized
-    useEffect(() => {
-        if (!isAuthorized || isUserLoading) return
-
-        async function fetchMembers() {
-            const { data, error } = await supabase.rpc('get_directory_members')
-
-            if (error) {
-                console.error('Error fetching directory:', error)
-                setCheckError(`Directory Fetch Error: ${error.message}`)
-            } else {
-                const sortedData = (data || []).sort((a: Member, b: Member) =>
-                    (a.full_name || '').trim().localeCompare((b.full_name || '').trim())
-                )
-                setMembers(sortedData)
-                setFilteredMembers(sortedData)
-            }
-            setLoading(false)
-        }
-
-        // Only run fetch logic if authorized
-        if (isAuthorized) {
-            fetchMembers()
-            fetchTotalCount()
-        }
-    }, [isAuthorized, isUserLoading])
-
     const [totalActiveCount, setTotalActiveCount] = useState(0)
+
+    // Pagination State
+    const [page, setPage] = useState(0)
+    const ITEMS_PER_PAGE = 25
 
     async function fetchTotalCount() {
         const { data } = await supabase.rpc('get_active_alumni_count')
         if (data) setTotalActiveCount(data)
     }
 
-    // Pagination State
-    const [page, setPage] = useState(0)
-    const ITEMS_PER_PAGE = 25
+    // Debounce Search Value
+    const [debouncedSearch, setDebouncedSearch] = useState('')
 
-    // Search Logic (MOVED UP to prevent Hook Error #310)
     useEffect(() => {
-        const query = searchQuery.toLowerCase()
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchQuery)
+        }, 500)
+        return () => clearTimeout(timer)
+    }, [searchQuery])
 
-        const results = members.filter(member => {
-            const name = member.full_name?.toLowerCase() || ''
-            const batch = member.generation?.toString().toLowerCase() || ''
-            return name.includes(query) || batch.includes(query)
-        })
+    // Fetch Directory (Server-Side Search)
+    useEffect(() => {
+        if (!isAuthorized || isUserLoading) return
+        setLoading(true)
 
-        // Enforce A-Z Sorting (Robust)
-        results.sort((a, b) => (a.full_name || '').trim().localeCompare((b.full_name || '').trim()))
+        async function fetchMembers() {
+            // Clean Query
+            const query = debouncedSearch.trim()
 
-        setFilteredMembers(results)
-        setPage(0) // Reset to first page on search
-    }, [searchQuery, members])
+            // Pass parameter to RPC (Using V2 to ensure correct logic)
+            const { data, error } = await supabase.rpc('get_directory_members_v2', {
+                search_query: query
+            })
+
+            if (error) {
+                console.error('Error fetching directory:', error)
+                setCheckError(`Directory Fetch Error: ${error.message}`)
+            } else {
+                setFilteredMembers(data || [])
+                setMembers(data || []) // Keep synced for now, though unused for filtering
+            }
+            setLoading(false)
+        }
+
+        fetchMembers()
+
+        // Only fetch total once
+        if (debouncedSearch === '') {
+            fetchTotalCount()
+        }
+    }, [isAuthorized, isUserLoading, debouncedSearch])
 
     // Pagination Logic
     const totalPages = Math.ceil(filteredMembers.length / ITEMS_PER_PAGE)

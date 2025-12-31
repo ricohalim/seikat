@@ -1,6 +1,8 @@
 -- FIX: Show ALL members EXCEPT Pending
 -- Replaces previous logic to be more inclusive (Active, suspended, nulls, etc are visible)
 
+DROP FUNCTION IF EXISTS public.get_directory_members();
+
 create or replace function public.get_directory_members()
 returns table (
   id uuid,
