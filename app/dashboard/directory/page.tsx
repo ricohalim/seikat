@@ -106,8 +106,12 @@ export default function DirectoryPage() {
                 console.error('Error fetching directory:', error)
                 setCheckError(`Directory Fetch Error: ${error.message}`)
             } else {
-                setFilteredMembers(data || [])
-                setMembers(data || []) // Keep synced for now, though unused for filtering
+                // Force Client-Side Sort (Double Safety)
+                const sortedData = (data || []).sort((a: any, b: any) =>
+                    (a.full_name || '').trim().localeCompare((b.full_name || '').trim())
+                )
+                setMembers(sortedData)
+                setFilteredMembers(sortedData)
             }
             setLoading(false)
         }
