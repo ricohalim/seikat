@@ -17,13 +17,15 @@ interface Event {
     date_start: string
     location: string
     status: string
+    quota: number
+    participants?: { status: string }[]
 }
 
 export default function EventsPage() {
     const { addToast } = useToast()
     const [events, setEvents] = useState<Event[]>([])
     const [loading, setLoading] = useState(true)
-    const [registeredEventIds, setRegisteredEventIds] = useState<string[]>([])
+    const [userRegistrations, setUserRegistrations] = useState<Record<string, string>>({})
     const [staffEventIds, setStaffEventIds] = useState<string[]>([])
 
     // UI States
@@ -74,13 +76,16 @@ export default function EventsPage() {
 
             // Parallel Fetching for smoother experience
             const [eventsRes, registrationsRes, staffRes] = await Promise.all([
-                supabase.from('events').select('*').neq('status', 'Draft').order('date_start', { ascending: false }),
-                currentUser ? supabase.from('event_participants').select('event_id').eq('user_id', currentUser.id).neq('status', 'Cancelled').neq('status', 'Permitted') : Promise.resolve({ data: [] }),
+                supabase.from('events').select('*, participants:event_participants(status)').neq('status', 'Draft').order('date_start', { ascending: false }),
+                currentUser ? supabase.from('event_participants').select('event_id, status').eq('user_id', currentUser.id).neq('status', 'Cancelled').neq('status', 'Permitted') : Promise.resolve({ data: [] }),
                 currentUser ? supabase.from('event_staff').select('event_id').eq('user_id', currentUser.id) : Promise.resolve({ data: [] })
             ])
 
             if (eventsRes.data) setEvents(eventsRes.data)
-            if (registrationsRes.data) setRegisteredEventIds(registrationsRes.data.map((r: any) => r.event_id))
+            if (registrationsRes.data) {
+                const map = registrationsRes.data.reduce((acc: any, r: any) => ({ ...acc, [r.event_id]: r.status }), {})
+                setUserRegistrations(map)
+            }
             if (staffRes.data) setStaffEventIds(staffRes.data.map((s: any) => s.event_id))
 
             setLoading(false)
@@ -115,7 +120,7 @@ export default function EventsPage() {
 
             if (error) throw error
 
-            setRegisteredEventIds(prev => [...prev, selectedEventId])
+            setUserRegistrations(prev => ({ ...prev, [selectedEventId]: status }))
 
             if (status === 'Waiting List') {
                 addToast('Terdaftar di Waiting List (Sanksi Aktif).', 'info')
@@ -184,14 +189,16 @@ export default function EventsPage() {
     // --- Filter Logic ---
     const displayedEvents = events.filter(event => {
         if (activeTab === 'upcoming') {
-            // Show all future events OR events today
+            // Show all future events OR events today (ignore time, just date comparison?)
+            // Actually user wants "literally kemarin" gone. So Today is kept.
+            // Logic: Event Date >= Today's Start
             const eventDate = new Date(event.date_start)
-            const yesterday = new Date()
-            yesterday.setDate(yesterday.getDate() - 1)
-            return eventDate > yesterday
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+            return eventDate >= today
         } else {
             // History: Show events registered by user
-            return registeredEventIds.includes(event.id)
+            return !!userRegistrations[event.id]
         }
     })
 
@@ -270,7 +277,8 @@ export default function EventsPage() {
                         <UserEventCard
                             key={event.id}
                             event={event}
-                            isRegistered={registeredEventIds.includes(event.id)}
+                            isRegistered={!!userRegistrations[event.id]}
+                            registrationStatus={userRegistrations[event.id]}
                             isClosed={event.status !== 'Open'}
                             isStaff={staffEventIds.includes(event.id)}
                             isRegistering={false}
@@ -287,6 +295,7 @@ export default function EventsPage() {
                 onConfirm={handleConfirmRegistration}
                 loading={!!registeringId}
                 isSanctioned={consecutiveAbsences >= 2}
+                consecutiveAbsences={consecutiveAbsences}
             />
 
             <CancellationModal

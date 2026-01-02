@@ -8,6 +8,7 @@ export interface Event {
     date_start: string
     location: string
     status: string
+    quota: number
     participants?: { count: number }[]
 }
 

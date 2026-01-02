@@ -10,26 +10,35 @@ interface AgendaFormModalProps {
 }
 
 export function AgendaFormModal({ isOpen, onClose, onSubmit, initialData, isEditing }: AgendaFormModalProps) {
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<any>({
         title: '',
         description: '',
         date_start: '',
         location: '',
-        status: 'Open'
+        status: 'Open',
+        quota: 0
     })
     const [isSubmitting, setIsSubmitting] = useState(false)
 
     useEffect(() => {
         if (isOpen) {
             if (isEditing && initialData) {
-                setFormData(initialData)
+                setFormData({
+                    title: initialData.title || '',
+                    description: initialData.description || '',
+                    date_start: initialData.date_start ? formatDateForInput(initialData.date_start) : '',
+                    location: initialData.location || '',
+                    status: initialData.status || 'Open',
+                    quota: initialData.quota || 0
+                })
             } else {
                 setFormData({
                     title: '',
                     description: '',
                     date_start: '',
                     location: '',
-                    status: 'Open'
+                    status: 'Open',
+                    quota: 0
                 })
             }
         }
@@ -38,7 +47,13 @@ export function AgendaFormModal({ isOpen, onClose, onSubmit, initialData, isEdit
     const handleSubmitInternal = async (e: React.FormEvent) => {
         try {
             setIsSubmitting(true)
-            await onSubmit(e, formData)
+            const payload = {
+                ...formData,
+                // Ensure date is sent as ISO UTC
+                date_start: formData.date_start ? new Date(formData.date_start).toISOString() : null,
+                quota: formData.quota === '' ? 0 : Number(formData.quota)
+            }
+            await onSubmit(e, payload)
         } finally {
             setIsSubmitting(false)
         }
@@ -103,6 +118,19 @@ export function AgendaFormModal({ isOpen, onClose, onSubmit, initialData, isEdit
                             <option value="Draft">Draft (Disembunyikan)</option>
                         </select>
                     </div>
+
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Kuota Peserta</label>
+                        <input
+                            type="number"
+                            min="0"
+                            placeholder="0 = Tidak Terbatas"
+                            className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-navy/20 outline-none"
+                            value={formData.quota}
+                            onChange={e => setFormData({ ...formData, quota: e.target.value === '' ? '' : parseInt(e.target.value) })}
+                        />
+                        <p className="text-[10px] text-gray-400 mt-1">*Isi 0 jika tidak ada batasan kuota.</p>
+                    </div>
                     <div className="pt-4 flex justify-end gap-2">
                         <button type="button" onClick={onClose} className="px-4 py-2 text-gray-500 hover:bg-gray-100 rounded-lg text-sm font-bold transition">Batal</button>
                         <button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-navy text-white rounded-lg text-sm font-bold hover:bg-navy/90 flex items-center gap-2 transition disabled:opacity-70">
@@ -113,4 +141,13 @@ export function AgendaFormModal({ isOpen, onClose, onSubmit, initialData, isEdit
             </div>
         </div>
     )
+}
+
+// Helper to convert UTC ISO string to Local YYYY-MM-DDThh:mm for input
+function formatDateForInput(isoString: string) {
+    if (!isoString) return ''
+    const date = new Date(isoString)
+    const offset = date.getTimezoneOffset() * 60000
+    const localISOTime = new Date(date.getTime() - offset).toISOString().slice(0, 16)
+    return localISOTime
 }

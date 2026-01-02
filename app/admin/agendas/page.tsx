@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Plus } from 'lucide-react'
 import { useAgendas } from '@/app/hooks/useAgendas'
+import { calculateProfileCompleteness } from '@/lib/utils'
 import { AgendaCard, AgendaCardSkeleton } from '@/app/components/admin/AgendaCard'
 import { AgendaFormModal } from '@/app/components/admin/AgendaFormModal'
 import { ParticipantsModal } from '@/app/components/admin/ParticipantsModal'
@@ -29,6 +30,7 @@ export default function AdminAgendasPage() {
     const [staffList, setStaffList] = useState<any[]>([])
     const [loadingStaff, setLoadingStaff] = useState(false)
     const [activeEventId, setActiveEventId] = useState<string | null>(null)
+    const [activeTab, setActiveTab] = useState<'active' | 'history'>('active')
 
     // Role Check
     const [roleLoading, setRoleLoading] = useState(true)
@@ -93,7 +95,7 @@ export default function AdminAgendasPage() {
             .from('event_participants')
             .select(`
                 *,
-                profiles:user_id (full_name, email, phone, generation, consecutive_absences)
+                profiles:user_id (*)
             `)
             .eq('event_id', eventId)
 
@@ -109,6 +111,7 @@ export default function AdminAgendasPage() {
                 generation: p.profiles?.generation,
                 consecutive_absences: p.profiles?.consecutive_absences,
                 status: p.status,
+                isVerified: calculateProfileCompleteness(p.profiles) >= 90,
                 checked_in_at: p.checked_in_at,
                 cancellation_reason: p.cancellation_reason,
                 cancellation_status: p.cancellation_status
@@ -234,24 +237,54 @@ export default function AdminAgendasPage() {
 
     return (
         <div className="max-w-7xl mx-auto space-y-6 pb-20 animate-in fade-in duration-500">
-            <header className="flex justify-between items-center">
+            {/* Header & Tabs */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-navy">Manajemen Agenda</h1>
                     <p className="text-gray-500 text-sm">Buat dan kelola jadwal kegiatan alumni.</p>
                 </div>
-                <button
-                    onClick={() => { setEditingEvent(null); setIsFormOpen(true) }}
-                    className="flex items-center gap-2 bg-navy text-white px-4 py-2 rounded-lg font-bold hover:bg-navy/90 transition text-sm shadow-md shadow-navy/20 active:scale-95"
-                >
-                    <Plus size={16} /> Buat Agenda
-                </button>
-            </header>
+                <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+                    <div className="flex bg-gray-100 p-1 rounded-lg">
+                        <button
+                            onClick={() => setActiveTab('active')}
+                            className={`px-4 py-1.5 rounded-md text-sm font-bold transition ${activeTab === 'active' ? 'bg-white text-navy shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            Aktif
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('history')}
+                            className={`px-4 py-1.5 rounded-md text-sm font-bold transition ${activeTab === 'history' ? 'bg-white text-navy shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            Riwayat
+                        </button>
+                    </div>
+                    <button
+                        onClick={() => { setEditingEvent(null); setIsFormOpen(true) }}
+                        className="flex items-center gap-2 bg-navy text-white px-4 py-2 rounded-lg font-bold hover:bg-navy/90 transition text-sm shadow-md shadow-navy/20 active:scale-95"
+                    >
+                        <Plus size={16} /> Buat Agenda
+                    </button>
+                </div>
+            </div>
 
             {/* Event List */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {loading
                     ? [...Array(6)].map((_, i) => <AgendaCardSkeleton key={i} />)
-                    : events.map((event) => (
+                    : events.filter(event => {
+                        // Logic: History if Date < Today OR Status == Closed
+                        const isPast = new Date(event.date_start) < new Date()
+                        const isClosed = event.status === 'Closed'
+                        return activeTab === 'active' ? (!isPast && !isClosed) : (isPast || isClosed)
+                    }).length === 0 ? (
+                        <div className="col-span-full py-12 text-center text-gray-400 border-2 border-dashed rounded-xl bg-gray-50/50">
+                            {activeTab === 'active' ? 'Tidak ada agenda aktif saat ini.' : 'Belum ada riwayat agenda.'}
+                        </div>
+                    ) : events.filter(event => {
+                        const isPast = new Date(event.date_start) < new Date()
+                        const isClosed = event.status === 'Closed'
+                        return activeTab === 'active' ? (!isPast && !isClosed) : (isPast || isClosed)
+                    }).map((event) => (
                         <AgendaCard
                             key={event.id}
                             event={event}

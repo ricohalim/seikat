@@ -9,6 +9,8 @@ interface Event {
     date_start: string
     location: string
     status: string
+    quota: number
+    participants?: { status: string }[]
 }
 
 interface UserEventCardProps {
@@ -19,9 +21,17 @@ interface UserEventCardProps {
     isRegistering: boolean
     onRegister: (id: string) => void
     onCancel: (id: string) => void
+    registrationStatus?: string
 }
 
-export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegistering, onRegister, onCancel }: UserEventCardProps) {
+export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegistering, onRegister, onCancel, registrationStatus }: UserEventCardProps) {
+    // Calculate active participants (excluding Cancelled and Permitted)
+    const activeParticipantsCount = event.participants?.filter(p =>
+        p.status !== 'Cancelled' && p.status !== 'Permitted'
+    ).length || 0
+
+    const isQuotaFull = event.quota > 0 && activeParticipantsCount >= event.quota
+
     return (
         <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition flex flex-col group animate-in fade-in zoom-in-95 duration-500">
             <div className={`h-2 ${isClosed ? 'bg-gray-300' : 'bg-gradient-to-r from-orange to-red-500'}`}></div>
@@ -63,31 +73,67 @@ export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegist
                             <span className="font-medium text-gray-700">{event.location || 'Online'}</span>
                         </div>
                     </div>
+
+                    {/* Quota Info */}
+                    {(event.quota > 0) && (
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
+                                <Clock size={16} />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-[10px] uppercase font-bold text-gray-400">Kuota</span>
+                                <span className={`font-medium ${isQuotaFull ? 'text-red-500' : 'text-gray-700'
+                                    }`}>
+                                    {activeParticipantsCount} / {event.quota} Peserta
+                                </span>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="mt-6 flex flex-col gap-2">
-                    <button
-                        onClick={() => onRegister(event.id)}
-                        disabled={isRegistered || isClosed || isRegistering}
-                        className={`w-full font-bold py-2 rounded-lg transition text-sm active:scale-95 ${isRegistered
-                            ? 'bg-green-100 text-green-700 cursor-default'
-                            : isClosed
-                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                : 'bg-navy text-white hover:bg-navy/90 shadow-md shadow-navy/20'
-                            }`}
-                    >
-                        {isRegistering ? 'Mendaftarkan...' :
-                            isRegistered ? 'Anda Telah Terdaftar' :
-                                isClosed ? 'Pendaftaran Ditutup' : 'Daftar Kegiatan'}
-                    </button>
-
-                    {isRegistered && !isClosed && (
+                    {!isRegistered ? (
                         <button
-                            onClick={() => onCancel(event.id)}
-                            className="w-full font-medium py-2 rounded-lg transition text-sm text-red-500 hover:bg-red-50 border border-transparent hover:border-red-100"
+                            onClick={() => onRegister(event.id)}
+                            disabled={
+                                isClosed ||
+                                isRegistering ||
+                                isQuotaFull
+                            }
+                            className={`w-full font-bold py-2 rounded-lg transition text-sm active:scale-95 ${isClosed
+                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                    : isQuotaFull
+                                        ? 'bg-red-50 text-red-400 cursor-not-allowed border border-red-100'
+                                        : 'bg-navy text-white hover:bg-navy/90 shadow-md shadow-navy/20'
+                                }`}
                         >
-                            Batalkan / Izin Tidak Hadir
+                            {isRegistering ? 'Mendaftarkan...' :
+                                isClosed ? 'Pendaftaran Ditutup' :
+                                    isQuotaFull ? 'Kuota Penuh' :
+                                        'Daftar Kegiatan'}
                         </button>
+                    ) : (
+                        <>
+                            {registrationStatus === 'Waiting List' ? (
+                                <div className="p-3 bg-orange/10 text-orange rounded-lg text-center font-bold text-sm border border-orange/20 animate-in fade-in zoom-in duration-300 flex flex-col gap-1">
+                                    <span>⚠️ Status: Waiting List</span>
+                                    <span className="text-[10px] font-normal opacity-80">(Kuota Penuh / Sanksi Aktif)</span>
+                                </div>
+                            ) : (
+                                <div className="p-3 bg-green-50 text-green-700 rounded-lg text-center font-bold text-sm border border-green-100 animate-in fade-in zoom-in duration-300">
+                                    Anda Telah Terdaftar
+                                </div>
+                            )}
+
+                            {!isClosed && (
+                                <button
+                                    onClick={() => onCancel(event.id)}
+                                    className="w-full font-medium py-2 rounded-lg transition text-sm text-red-500 hover:bg-red-50 border border-transparent hover:border-red-100"
+                                >
+                                    Batalkan / Izin Tidak Hadir
+                                </button>
+                            )}
+                        </>
                     )}
                 </div>
 

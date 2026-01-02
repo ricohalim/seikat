@@ -8,9 +8,10 @@ interface Props {
     onConfirm: () => void
     loading: boolean
     isSanctioned: boolean
+    consecutiveAbsences?: number
 }
 
-export function EventTermsModal({ isOpen, onClose, onConfirm, loading, isSanctioned }: Props) {
+export function EventTermsModal({ isOpen, onClose, onConfirm, loading, isSanctioned, consecutiveAbsences = 0 }: Props) {
     if (!isOpen) return null
 
     return (
@@ -29,11 +30,19 @@ export function EventTermsModal({ isOpen, onClose, onConfirm, loading, isSanctio
 
                 {/* Content */}
                 <div className="p-6 space-y-4 text-gray-700 text-sm leading-relaxed">
-                    <div className={`p-4 rounded-xl border ${isSanctioned ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'}`}>
+                    <div className={`p-4 rounded-xl border ${isSanctioned ? 'bg-red-50 border-red-200' :
+                            consecutiveAbsences > 0 ? 'bg-orange/10 border-orange/20' :
+                                'bg-blue-50 border-blue-200'
+                        }`}>
                         {isSanctioned ? (
                             <p className="font-bold text-red-700 flex items-start gap-2">
                                 <AlertTriangle className="shrink-0 mt-0.5" size={16} />
                                 Perhatian: Akun Anda sedang dalam masa sanksi karena tidak hadir (Alpha) 2x berturut-turut. Pendaftaran Anda akan masuk ke WAITING LIST.
+                            </p>
+                        ) : consecutiveAbsences > 0 ? (
+                            <p className="font-bold text-orange flex items-start gap-2">
+                                <AlertTriangle className="shrink-0 mt-0.5" size={16} />
+                                Peringatan: Anda tercatat memiliki {consecutiveAbsences}x Alpha. Jika mencapai 2x Alpha, akun Anda akan terkena sanksi.
                             </p>
                         ) : (
                             <p className="font-bold text-blue-700 flex items-start gap-2">
@@ -46,9 +55,6 @@ export function EventTermsModal({ isOpen, onClose, onConfirm, loading, isSanctio
                     <div className="space-y-3">
                         <p className="font-semibold text-gray-900 border-b pb-2">Aturan Penting:</p>
                         <ul className="list-disc pl-5 space-y-2">
-                            <li>
-                                <strong>Wajib Scan QR:</strong> Kehadiran hanya dihitung scan QR Code di lokasi acara.
-                            </li>
                             <li>
                                 <strong>Sanksi Alpha:</strong> Jika tidak hadir tanpa izin (Alpha) sebanyak 2x berturut-turut, akun Anda akan terkena sanksi.
                             </li>

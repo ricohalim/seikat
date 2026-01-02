@@ -1,4 +1,7 @@
-import { X, Check, CheckCircle, AlertOctagon, XCircle } from 'lucide-react'
+import { useState } from 'react'
+import { X, Check, CheckCircle, AlertOctagon, XCircle, Search, Download } from 'lucide-react'
+import { Sheet } from '../ui/Sheet'
+import { Badge } from '../ui/Badge'
 
 interface ParticipantsModalProps {
     isOpen: boolean
@@ -11,59 +14,117 @@ interface ParticipantsModalProps {
 }
 
 export function ParticipantsModal({ isOpen, onClose, eventName, participants, loading, onCheckIn, onApprove }: ParticipantsModalProps) {
-    if (!isOpen) return null
+    const [searchTerm, setSearchTerm] = useState('')
+
+    const filtered = participants.filter(p =>
+        p.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.generation?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+
+    // Export CSV logic
+    const handleDownloadCSV = () => {
+        const csvContent = "data:text/csv;charset=utf-8,"
+            + "Nama,Email,Angkatan,No HP,Status,Izin\n"
+            + participants.map(p => `"${p.full_name}","${p.email}","${p.generation}","${p.phone}","${p.status}","${p.cancellation_reason || ''}"`).join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `peserta_${eventName.replace(/\s+/g, '_')}.csv`);
+        document.body.appendChild(link);
+        link.click();
+    }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[80vh] flex flex-col animate-in zoom-in-95 duration-200">
-                <div className="p-6 border-b flex justify-between items-center bg-gray-50 rounded-t-2xl">
-                    <div>
-                        <h3 className="text-lg font-bold text-navy">Daftar Peserta</h3>
-                        <p className="text-gray-500 text-xs">{eventName} — {participants.length} Total</p>
-                    </div>
-                    <button onClick={onClose}><X className="text-gray-400 hover:text-red-500 transition" /></button>
+        <Sheet
+            isOpen={isOpen}
+            onClose={onClose}
+            size="xl"
+            title="Daftar Peserta"
+            description={
+                <div className="flex flex-col gap-1">
+                    <span>{eventName} — {participants.length} Total</span>
+                    <span className="text-xs text-gray-400">Cari nama peserta dan klik Check-In untuk mencatat kehadiran manual.</span>
                 </div>
-                <div className="p-0 overflow-y-auto flex-1">
+            }
+        >
+            <div className="p-6 space-y-4">
+                {/* Search Bar */}
+                <div className="flex gap-2">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Cari nama, email, atau angkatan..."
+                            className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-navy/20 outline-none"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            autoFocus
+                        />
+                    </div>
+                    <button
+                        onClick={handleDownloadCSV}
+                        disabled={participants.length === 0}
+                        className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition"
+                        title="Download CSV"
+                    >
+                        <Download size={18} />
+                    </button>
+                </div>
+
+                {/* Table */}
+                <div className="border rounded-xl overflow-hidden">
                     <table className="w-full text-left text-sm">
-                        <thead className="bg-gray-50 text-gray-500 uppercase text-xs sticky top-0 font-bold tracking-wider">
+                        <thead className="bg-gray-50 text-gray-500 uppercase text-xs font-bold tracking-wider">
                             <tr>
                                 <th className="p-4">Peserta</th>
-                                <th className="p-4">Status Log</th>
-                                <th className="p-4">Status Kehadiran</th>
-                                <th className="p-4 text-center">Aksi / Kontrol</th>
+                                <th className="p-4 text-center">Status</th>
+                                <th className="p-4 text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {loading ? (
-                                <tr><td colSpan={4} className="p-8 text-center text-gray-400">Loading...</td></tr>
-                            ) : participants.length === 0 ? (
-                                <tr><td colSpan={4} className="p-8 text-center text-gray-400">Belum ada peserta terdaftar.</td></tr>
-                            ) : participants.map((p, idx) => (
+                                <tr><td colSpan={3} className="p-8 text-center text-gray-400">Loading...</td></tr>
+                            ) : filtered.length === 0 ? (
+                                <tr><td colSpan={3} className="p-8 text-center text-gray-400">
+                                    {searchTerm ? 'Tidak ditemukan.' : 'Belum ada peserta terdaftar.'}
+                                </td></tr>
+                            ) : filtered.map((p, idx) => (
                                 <tr key={idx} className="hover:bg-gray-50 transition">
                                     <td className="p-4">
-                                        <div className="font-bold text-navy">{p.full_name}</div>
+                                        <div className="font-bold text-navy flex items-center gap-2">
+                                            {p.full_name}
+                                            {p.isVerified && (
+                                                <Badge variant="verified" className="h-5 px-2 cursor-default">
+                                                    <CheckCircle size={12} className="mr-1" /> Verified
+                                                </Badge>
+                                            )}
+                                        </div>
                                         <div className="text-xs text-gray-500 font-mono">{p.email}</div>
                                         <div className="text-xs text-gray-500">{p.phone} • Beswan {p.generation}</div>
+
+                                        {/* Status Metadata */}
+                                        <div className="mt-1 flex flex-wrap gap-1">
+                                            {p.consecutive_absences > 0 && (
+                                                <span className="inline-flex items-center gap-1 text-[10px] bg-red-50 text-red-600 px-1.5 py-0.5 rounded border border-red-100">
+                                                    <AlertOctagon size={10} /> {p.consecutive_absences}x Alpha
+                                                </span>
+                                            )}
+                                        </div>
                                     </td>
 
-                                    <td className="p-4">
-                                        {p.consecutive_absences > 0 && (
-                                            <span className="inline-flex items-center gap-1 text-[10px] bg-red-50 text-red-600 px-2 py-1 rounded-full font-bold border border-red-100 mb-1">
-                                                <AlertOctagon size={10} /> {p.consecutive_absences}x Alpha
-                                            </span>
-                                        )}
-                                        {p.cancellation_status === 'pending' && (
-                                            <div className="text-xs mt-1 p-2 bg-yellow-50 rounded border border-yellow-100 text-yellow-800">
-                                                <strong>Izin:</strong> "{p.cancellation_reason}"
+                                    <td className="p-4 text-center">
+                                        <div className="flex justify-center">
+                                            <StatusBadge status={p.status} cancellationStatus={p.cancellation_status} />
+                                        </div>
+                                        {p.checked_in_at && (
+                                            <div className="text-[10px] text-green-600 mt-1 font-mono text-center">
+                                                {new Date(p.checked_in_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                                             </div>
                                         )}
-                                    </td>
-
-                                    <td className="p-4">
-                                        <StatusBadge status={p.status} cancellationStatus={p.cancellation_status} />
-                                        {p.checked_in_at && (
-                                            <div className="text-[10px] text-green-600 mt-1 font-mono">
-                                                {new Date(p.checked_in_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                        {p.cancellation_status === 'pending' && (
+                                            <div className="text-[10px] mt-1 p-1 bg-yellow-50 rounded border border-yellow-100 text-yellow-800 text-center mx-auto max-w-[150px]">
+                                                "{p.cancellation_reason}"
                                             </div>
                                         )}
                                     </td>
@@ -89,7 +150,7 @@ export function ParticipantsModal({ isOpen, onClose, eventName, participants, lo
                                                 (p.status === 'Registered' || p.status === 'Waiting List') && (
                                                     <button
                                                         onClick={() => onCheckIn(p.user_id)}
-                                                        className="bg-navy text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-navy/90 shadow-sm active:scale-95"
+                                                        className="bg-navy text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-navy/90 shadow-sm active:scale-95"
                                                     >
                                                         Check In
                                                     </button>
@@ -102,30 +163,8 @@ export function ParticipantsModal({ isOpen, onClose, eventName, participants, lo
                         </tbody>
                     </table>
                 </div>
-                <div className="p-4 border-t bg-gray-50 rounded-b-2xl flex justify-between items-center text-xs text-gray-500">
-                    <div>
-                        Total: <strong>{participants.length}</strong>
-                    </div>
-                    <button
-                        onClick={() => {
-                            const csvContent = "data:text/csv;charset=utf-8,"
-                                + "Nama,Email,Angkatan,No HP,Status,Izin\n"
-                                + participants.map(p => `"${p.full_name}","${p.email}","${p.generation}","${p.phone}","${p.status}","${p.cancellation_reason || ''}"`).join("\n");
-                            const encodedUri = encodeURI(csvContent);
-                            const link = document.createElement("a");
-                            link.setAttribute("href", encodedUri);
-                            link.setAttribute("download", `peserta_${eventName.replace(/\s+/g, '_')}.csv`);
-                            document.body.appendChild(link);
-                            link.click();
-                        }}
-                        disabled={participants.length === 0}
-                        className="font-bold text-navy hover:underline disabled:opacity-50 transition"
-                    >
-                        Download CSV
-                    </button>
-                </div>
             </div>
-        </div>
+        </Sheet>
     )
 }
 
