@@ -10,6 +10,7 @@ import { AgendaCard, AgendaCardSkeleton } from '@/app/components/admin/AgendaCar
 import { AgendaFormModal } from '@/app/components/admin/AgendaFormModal'
 import { ParticipantsModal } from '@/app/components/admin/ParticipantsModal'
 import { StaffModal } from '@/app/components/admin/StaffModal'
+import { EventQRModal } from '@/app/components/admin/EventQRModal'
 
 export default function AdminAgendasPage() {
     // 1. Hook for Data
@@ -37,6 +38,11 @@ export default function AdminAgendasPage() {
     // Role Check
     const [roleLoading, setRoleLoading] = useState(true)
     const [userProfile, setUserProfile] = useState<any>(null)
+
+    // QR Modal State
+    const [isQRModalOpen, setIsQRModalOpen] = useState(false)
+    const [qrEventId, setQrEventId] = useState('')
+    const [qrEventName, setQrEventName] = useState('')
 
     useEffect(() => {
         const checkRole = async () => {
@@ -238,6 +244,12 @@ export default function AdminAgendasPage() {
         if (activeEventId) fetchStaff(activeEventId)
     }
 
+    const handleShowQR = (id: string, title: string) => {
+        setQrEventId(id)
+        setQrEventName(title)
+        setIsQRModalOpen(true)
+    }
+
     if (roleLoading) return null // Or a generic page loader
 
     return (
@@ -297,6 +309,7 @@ export default function AdminAgendasPage() {
                             onDelete={handleDelete}
                             onViewParticipants={viewParticipants}
                             onManageStaff={handleManageStaff}
+                            onShowQR={handleShowQR}
                             onFinalize={handleFinalizeEvent}
                         />
                     ))
@@ -331,6 +344,13 @@ export default function AdminAgendasPage() {
                 loading={loadingStaff}
                 onAddStaff={handleAddStaff}
                 onRemoveStaff={handleRemoveStaff}
+            />
+
+            <EventQRModal
+                isOpen={isQRModalOpen}
+                onClose={() => setIsQRModalOpen(false)}
+                eventName={qrEventName}
+                eventId={qrEventId}
             />
         </div>
     )

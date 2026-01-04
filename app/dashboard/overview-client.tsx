@@ -4,8 +4,9 @@ import { useState } from 'react'
 import {
     Building2, MapPin, GraduationCap, Mail, Phone,
     Linkedin, Calendar, User as UserIcon, Eye, EyeOff,
-    AlertCircle, CheckCircle, X
+    AlertCircle, CheckCircle, X, TrendingUp, Clock, QrCode
 } from 'lucide-react'
+import { EventScannerModal } from '../components/EventScannerModal'
 import QRCode from 'react-qr-code'
 import { calculateProfileCompleteness } from '@/lib/utils'
 import Link from 'next/link'
@@ -39,7 +40,9 @@ export interface Profile {
 }
 
 export default function OverviewClient({ profile }: { profile: Profile }) {
-    const [showQR, setShowQR] = useState(false) // State for QR Modal
+    const [showPrivacy, setShowPrivacy] = useState(false)
+    const [isScannerOpen, setIsScannerOpen] = useState(false) // State for Event Scanner
+    const [showQR, setShowQR] = useState(false) // State for Member ID QR
     const [isPrivacyMode, setIsPrivacyMode] = useState(false) // State for Privacy Mode
 
     // Calculate Integrity
@@ -62,14 +65,12 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-
-            {/* Verification Status Banner (If incomplete) */}
+            {/* ... verification banner ... */}
             {!isVerified && (
                 <div className="bg-orange/10 border border-orange/20 rounded-xl p-4 flex items-center justify-between">
+                    {/* ... content ... */}
                     <div className="flex items-center gap-3">
-                        <div className="bg-orange/20 p-2 rounded-full text-orange">
-                            <AlertCircle size={20} />
-                        </div>
+                        {/* ... */}
                         <div>
                             <h4 className="font-bold text-navy text-sm">Profil Belum Lengkap ({completionPercentage}%)</h4>
                             <p className="text-xs text-gray-600">Lengkapi profil Anda hingga 90% untuk mendapatkan lencana Verified dan akses fitur Agenda.</p>
@@ -81,7 +82,7 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
                 </div>
             )}
 
-            {/* 1. Header Card (Hero) */}
+            {/* 1. Header Card */}
             <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-navy to-azure opacity-90"></div>
 
@@ -97,6 +98,7 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
                                 </div>
                             )}
                         </div>
+
                         {isVerified && (
                             <div className="absolute bottom-2 right-2 bg-gradient-to-br from-blue-500 to-blue-600 text-white p-2 rounded-full border-4 border-white shadow-lg z-10" title="Verified Member">
                                 <CheckCircle size={20} fill="white" className="text-blue-600" />
@@ -176,7 +178,7 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
                             </div>
                         )}
 
-                        <div className="flex gap-3">
+                        <div className="flex flex-wrap gap-2 justify-end mt-2">
                             <button
                                 onClick={() => setIsPrivacyMode(!isPrivacyMode)}
                                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition ${isPrivacyMode
@@ -186,7 +188,15 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
                                 title={isPrivacyMode ? "Nonaktifkan Mode Privasi" : "Aktifkan Mode Privasi"}
                             >
                                 {isPrivacyMode ? <EyeOff size={18} /> : <Eye size={18} />}
-                                <span className="hidden md:inline">{isPrivacyMode ? 'Privasi On' : 'Privasi Off'}</span>
+                                <span className="hidden md:inline">{isPrivacyMode ? 'Privasi' : 'Privasi'}</span>
+                            </button>
+
+                            <button
+                                onClick={() => setIsScannerOpen(true)}
+                                className="bg-navy text-white border border-navy px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-navy/90 transition flex items-center gap-2"
+                            >
+                                <QrCode size={16} />
+                                Scan Event
                             </button>
 
                             <button
@@ -199,168 +209,170 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
                         </div>
                     </div>
                 </div>
+            </div>
 
 
-                {/* Grid Content */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+            {/* Grid Content */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
 
-                    {/* Left Col: Contact & Personal */}
-                    <div className="space-y-6">
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
-                            <h3 className="font-bold text-navy mb-4 border-b border-gray-100 pb-2">Informasi Kontak</h3>
-                            <div className={`space-y-4 transition-all duration-300 ${isPrivacyMode ? 'filter blur-sm select-none' : ''}`}>
-                                <div className="flex items-start gap-3">
-                                    <Mail size={18} className="text-gray-400 mt-1" />
-                                    <div>
-                                        <p className="text-xs text-gray-400">Email</p>
-                                        <p className="text-sm font-medium text-gray-700 break-all">{profile.email}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-3">
-                                    <Phone size={18} className="text-gray-400 mt-1" />
-                                    <div>
-                                        <p className="text-xs text-gray-400">Whatsapp</p>
-                                        <p className="text-sm font-medium text-gray-700">{profile.phone || '-'}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-3">
-                                    <MapPin size={18} className="text-gray-400 mt-1" />
-                                    <div>
-                                        <p className="text-xs text-gray-400">Domisili</p>
-                                        <p className="text-sm font-medium text-gray-700">
-                                            {profile.domicile_city}, {profile.domicile_province}
-                                        </p>
-                                    </div>
-                                </div>
-                                {profile.linkedin_url && (
-                                    <div className="flex items-start gap-3">
-                                        <Linkedin size={18} className="text-blue-600 mt-1" />
-                                        <div>
-                                            <p className="text-xs text-gray-400">LinkedIn</p>
-                                            <a href={profile.linkedin_url} target="_blank" className="text-sm font-medium text-blue-600 hover:underline truncate block max-w-[200px]">
-                                                Lihat Profil
-                                            </a>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                            {isPrivacyMode && (
-                                <div className="absolute inset-0 flex items-center justify-center z-10">
-                                    <div className="bg-white/80 px-3 py-1 rounded-full border border-gray-200 shadow-sm flex items-center gap-2">
-                                        <EyeOff size={14} className="text-gray-500" />
-                                        <span className="text-xs font-bold text-gray-500">Disembunyikan</span>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Bio Section (Moved here for balance) */}
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
-                            <h3 className="font-bold text-navy mb-4 border-b border-gray-100 pb-2 flex items-center gap-2">
-                                <UserIcon size={20} className="text-azure" />
-                                Biodata Diri
-                            </h3>
-                            <div className={`space-y-4 transition-all duration-300 ${isPrivacyMode ? 'filter blur-sm select-none' : ''}`}>
+                {/* Left Col: Contact & Personal */}
+                <div className="space-y-6">
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
+                        <h3 className="font-bold text-navy mb-4 border-b border-gray-100 pb-2">Informasi Kontak</h3>
+                        <div className={`space-y-4 transition-all duration-300 ${isPrivacyMode ? 'filter blur-sm select-none' : ''}`}>
+                            <div className="flex items-start gap-3">
+                                <Mail size={18} className="text-gray-400 mt-1" />
                                 <div>
-                                    <p className="text-xs text-gray-400">Tempat, Tanggal Lahir</p>
+                                    <p className="text-xs text-gray-400">Email</p>
+                                    <p className="text-sm font-medium text-gray-700 break-all">{profile.email}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3">
+                                <Phone size={18} className="text-gray-400 mt-1" />
+                                <div>
+                                    <p className="text-xs text-gray-400">Whatsapp</p>
+                                    <p className="text-sm font-medium text-gray-700">{profile.phone || '-'}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3">
+                                <MapPin size={18} className="text-gray-400 mt-1" />
+                                <div>
+                                    <p className="text-xs text-gray-400">Domisili</p>
                                     <p className="text-sm font-medium text-gray-700">
-                                        {profile.birth_place ? `${profile.birth_place}, ` : ''}
-                                        {profile.birth_date ? new Date(profile.birth_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
+                                        {profile.domicile_city}, {profile.domicile_province}
                                     </p>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <p className="text-xs text-gray-400">Jenis Kelamin</p>
-                                        <p className="text-sm font-medium text-gray-700">{profile.gender || '-'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-gray-400">Jurusan</p>
-                                        <p className="text-sm font-medium text-gray-700">{profile.major || '-'}</p>
-                                    </div>
-                                </div>
                             </div>
-                            {isPrivacyMode && (
-                                <div className="absolute inset-0 flex items-center justify-center z-10">
-                                    <div className="bg-white/80 px-3 py-1 rounded-full border border-gray-200 shadow-sm flex items-center gap-2">
-                                        <EyeOff size={14} className="text-gray-500" />
-                                        <span className="text-xs font-bold text-gray-500">Disembunyikan</span>
+                            {profile.linkedin_url && (
+                                <div className="flex items-start gap-3">
+                                    <Linkedin size={18} className="text-blue-600 mt-1" />
+                                    <div>
+                                        <p className="text-xs text-gray-400">LinkedIn</p>
+                                        <a href={profile.linkedin_url} target="_blank" className="text-sm font-medium text-blue-600 hover:underline truncate block max-w-[200px]">
+                                            Lihat Profil
+                                        </a>
                                     </div>
                                 </div>
                             )}
                         </div>
+                        {isPrivacyMode && (
+                            <div className="absolute inset-0 flex items-center justify-center z-10">
+                                <div className="bg-white/80 px-3 py-1 rounded-full border border-gray-200 shadow-sm flex items-center gap-2">
+                                    <EyeOff size={14} className="text-gray-500" />
+                                    <span className="text-xs font-bold text-gray-500">Disembunyikan</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
-                    {/* Center & Right Col: Academic & Career */}
-                    <div className="md:col-span-2 space-y-6">
-
-                        {/* Career Section */}
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
-                            <h3 className="font-bold text-navy mb-4 border-b border-gray-100 pb-2 flex items-center gap-2">
-                                <Building2 size={20} className="text-orange" />
-                                Pekerjaan & Karir
-                            </h3>
-                            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 transition-all duration-300 ${isPrivacyMode ? 'filter blur-sm select-none' : ''}`}>
+                    {/* Bio Section (Moved here for balance) */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
+                        <h3 className="font-bold text-navy mb-4 border-b border-gray-100 pb-2 flex items-center gap-2">
+                            <UserIcon size={20} className="text-azure" />
+                            Biodata Diri
+                        </h3>
+                        <div className={`space-y-4 transition-all duration-300 ${isPrivacyMode ? 'filter blur-sm select-none' : ''}`}>
+                            <div>
+                                <p className="text-xs text-gray-400">Tempat, Tanggal Lahir</p>
+                                <p className="text-sm font-medium text-gray-700">
+                                    {profile.birth_place ? `${profile.birth_place}, ` : ''}
+                                    {profile.birth_date ? new Date(profile.birth_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
+                                </p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <p className="text-xs text-gray-400">Posisi / Jabatan</p>
-                                    <p className="text-base font-semibold text-gray-800">{profile.job_position || '-'}</p>
+                                    <p className="text-xs text-gray-400">Jenis Kelamin</p>
+                                    <p className="text-sm font-medium text-gray-700">{profile.gender || '-'}</p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-gray-400">Perusahaan / Instansi</p>
-                                    <p className="text-base font-semibold text-gray-800">{profile.company_name || '-'}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-gray-400">Sektor Industri</p>
-                                    <span className="inline-block bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded mt-1">
-                                        {profile.industry_sector || '-'}
-                                    </span>
+                                    <p className="text-xs text-gray-400">Jurusan</p>
+                                    <p className="text-sm font-medium text-gray-700">{profile.major || '-'}</p>
                                 </div>
                             </div>
-                            {isPrivacyMode && (
-                                <div className="absolute inset-0 flex items-center justify-center z-10">
-                                    <div className="bg-white/80 px-3 py-1 rounded-full border border-gray-200 shadow-sm flex items-center gap-2">
-                                        <EyeOff size={14} className="text-gray-500" />
-                                        <span className="text-xs font-bold text-gray-500">Disembunyikan</span>
-                                    </div>
-                                </div>
-                            )}
                         </div>
+                        {isPrivacyMode && (
+                            <div className="absolute inset-0 flex items-center justify-center z-10">
+                                <div className="bg-white/80 px-3 py-1 rounded-full border border-gray-200 shadow-sm flex items-center gap-2">
+                                    <EyeOff size={14} className="text-gray-500" />
+                                    <span className="text-xs font-bold text-gray-500">Disembunyikan</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* QR Modal */}
-                {
-                    showQR && (
-                        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                            <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center relative zoom-in-95 duration-200">
-                                <button
-                                    onClick={() => setShowQR(false)}
-                                    className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition"
-                                >
-                                    <X size={24} />
-                                </button>
+                {/* Center & Right Col: Academic & Career */}
+                <div className="md:col-span-2 space-y-6">
 
-                                <h3 className="text-xl font-bold text-navy mb-2">ID Anggota</h3>
-                                <p className="text-sm text-gray-500 mb-6">Tunjukkan QR Code ini untuk verifikasi.</p>
-
-                                <div className="bg-white p-4 rounded-xl border-2 border-navy/10 inline-block shadow-sm">
-                                    <QRCode
-                                        value={profile.member_id || profile.id || ""}
-                                        size={200}
-                                        level="H"
-                                    />
-                                </div>
-
-                                <p className="text-lg font-mono font-bold text-navy mt-6 tracking-widest break-all">
-                                    {profile.member_id || '-'}
-                                </p>
-                                <p className="text-xs text-gray-400 mt-1 break-all">
-                                    UID: {profile.id}
-                                </p>
+                    {/* Career Section */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
+                        <h3 className="font-bold text-navy mb-4 border-b border-gray-100 pb-2 flex items-center gap-2">
+                            <Building2 size={20} className="text-orange" />
+                            Pekerjaan & Karir
+                        </h3>
+                        <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 transition-all duration-300 ${isPrivacyMode ? 'filter blur-sm select-none' : ''}`}>
+                            <div>
+                                <p className="text-xs text-gray-400">Posisi / Jabatan</p>
+                                <p className="text-base font-semibold text-gray-800">{profile.job_position || '-'}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-400">Perusahaan / Instansi</p>
+                                <p className="text-base font-semibold text-gray-800">{profile.company_name || '-'}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-400">Sektor Industri</p>
+                                <span className="inline-block bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded mt-1">
+                                    {profile.industry_sector || '-'}
+                                </span>
                             </div>
                         </div>
-                    )
-                }
+                        {isPrivacyMode && (
+                            <div className="absolute inset-0 flex items-center justify-center z-10">
+                                <div className="bg-white/80 px-3 py-1 rounded-full border border-gray-200 shadow-sm flex items-center gap-2">
+                                    <EyeOff size={14} className="text-gray-500" />
+                                    <span className="text-xs font-bold text-gray-500">Disembunyikan</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
-        </div>
+
+            {/* QR Modal */}
+            {
+                showQR && (
+                    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 animate-in fade-in duration-200">
+                        <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center relative zoom-in-95 duration-200">
+                            <button
+                                onClick={() => setShowQR(false)}
+                                className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition"
+                            >
+                                <X size={24} />
+                            </button>
+
+                            <h3 className="text-xl font-bold text-navy mb-2">ID Anggota</h3>
+                            <p className="text-sm text-gray-500 mb-6">Tunjukkan QR Code ini untuk verifikasi.</p>
+
+                            <div className="bg-white p-4 rounded-xl border-2 border-navy/10 inline-block shadow-sm">
+                                <QRCode
+                                    value={profile.member_id || profile.id || ""}
+                                    size={200}
+                                    level="H"
+                                />
+                            </div>
+
+                            <p className="text-lg font-mono font-bold text-navy mt-6 tracking-widest break-all">
+                                {profile.member_id || '-'}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1 break-all">
+                                UID: {profile.id}
+                            </p>
+                        </div>
+                    </div>
+                )
+            }
+            {/* Event Scanner Modal */}
+            <EventScannerModal isOpen={isScannerOpen} onClose={() => setIsScannerOpen(false)} />
+        </div >
     )
 }

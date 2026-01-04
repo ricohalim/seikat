@@ -7,10 +7,11 @@ interface AgendaCardProps {
     onDelete: (id: string) => void
     onViewParticipants: (id: string, title: string) => void
     onManageStaff: (event: any) => void
+    onShowQR: (id: string, title: string) => void
     onFinalize: (id: string) => void
 }
 
-export function AgendaCard({ event, onEdit, onDelete, onViewParticipants, onManageStaff, onFinalize }: AgendaCardProps) {
+export function AgendaCard({ event, onEdit, onDelete, onViewParticipants, onManageStaff, onShowQR, onFinalize }: AgendaCardProps) {
     return (
         <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 flex flex-col group animate-in fade-in zoom-in-95 duration-300">
             <div className={`h-2 ${event.status === 'Open' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
@@ -57,6 +58,15 @@ export function AgendaCard({ event, onEdit, onDelete, onViewParticipants, onMana
                         className="flex-1 min-w-[60px] flex items-center justify-center gap-1 bg-orange/10 hover:bg-orange/20 text-orange py-2 rounded text-xs font-bold transition active:scale-95"
                     >
                         <Shield size={14} /> Staff
+                    </button>
+
+                    <button
+                        onClick={() => onShowQR(event.id, event.title)}
+                        title="Tampilkan QR Code Event"
+                        className="p-2 bg-navy/10 text-navy hover:bg-navy/20 rounded transition active:scale-95"
+                    >
+                        <CheckSquare size={14} className="hidden" /> {/* Legacy icon replacement */}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M7 7h.01" /><path d="M17 7h.01" /><path d="M7 17h.01" /><path d="M17 17h.01" /></svg>
                     </button>
 
                     <button

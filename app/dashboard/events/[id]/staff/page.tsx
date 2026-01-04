@@ -1,12 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
+import { EventQRModal } from '@/app/components/admin/EventQRModal'
 import { supabase } from '@/lib/supabase'
 import { useParams, useRouter } from 'next/navigation'
-import {
-    Shield, Users, CheckCircle, Search, Download,
-    Coffee, AlertCircle, Camera, X
-} from 'lucide-react'
+import { Search, Users, CheckCircle, Clock, AlertCircle, Camera, QrCode, Download } from 'lucide-react'
 import Link from 'next/link'
 
 export default function EventStaffPage() {
@@ -16,6 +15,8 @@ export default function EventStaffPage() {
 
     // State
     const [loading, setLoading] = useState(true)
+    const [activeTab, setActiveTab] = useState<'scan' | 'list'>('scan')
+    const [isQROpen, setIsQROpen] = useState(false)
     const [event, setEvent] = useState<any>(null)
     const [myRole, setMyRole] = useState<string | null>(null)
     const [stats, setStats] = useState({ total: 0, checkedIn: 0, percentage: 0 })
@@ -155,17 +156,17 @@ export default function EventStaffPage() {
     const downloadReport = async () => {
         const { data: allData } = await supabase
             .from('event_participants')
-            .select('check_in_time, profiles:user_id(full_name, email, phone)')
+            .select('check_in_time, profiles:user_id(full_name, generation, university)')
             .eq('event_id', eventId)
             .order('check_in_time', { ascending: false })
 
         if (!allData) return
 
-        const csv = "Nama,Email,No HP,Waktu Check-in,Status\n" +
+        const csv = "NAMA,ANGKATAN,UNIVERSITAS,WAKTU CHECK-IN,STATUS\n" +
             allData.map((row: any) => {
                 const status = row.check_in_time ? 'Hadir' : 'Belum';
-                const time = row.check_in_time ? new Date(row.check_in_time).toLocaleTimeString() : '-';
-                return `"${row.profiles.full_name}","${row.profiles.email}","${row.profiles.phone}","${time}","${status}"`
+                const time = row.check_in_time ? new Date(row.check_in_time).toLocaleTimeString('id-ID') : '-';
+                return `"${row.profiles.full_name}","${row.profiles.generation}","${row.profiles.university}","${time}","${status}"`
             }).join("\n")
 
         const blob = new Blob([csv], { type: 'text/csv' })
@@ -212,6 +213,26 @@ export default function EventStaffPage() {
                 <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-center">
                     <p className="text-gray-400 text-xs uppercase font-bold">Kehadiran</p>
                     <p className="text-2xl font-bold text-blue-600">{stats.percentage}%</p>
+                </div>
+            </div>
+
+            {/* Header */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-navy">{event?.title || 'Memuat...'}</h1>
+                        <p className="text-gray-500 flex items-center gap-2 text-sm mt-1">
+                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                            Live Console Panitia
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => setIsQROpen(true)}
+                        className="bg-navy/10 text-navy px-4 py-2 rounded-lg text-sm font-bold hover:bg-navy/20 transition flex items-center gap-2"
+                    >
+                        <QrCode size={18} />
+                        Tampilkan QR Event
+                    </button>
                 </div>
             </div>
 
@@ -318,6 +339,15 @@ export default function EventStaffPage() {
                     </div>
                 </div>
             </div>
+            {/* Modal QR */}
+            {event && (
+                <EventQRModal
+                    isOpen={isQROpen}
+                    onClose={() => setIsQROpen(false)}
+                    eventName={event.title}
+                    eventId={event.id}
+                />
+            )}
         </div>
     )
 }
