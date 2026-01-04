@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { Plus } from 'lucide-react'
 import { useAgendas } from '@/app/hooks/useAgendas'
 import { calculateProfileCompleteness } from '@/lib/utils'
+import { useToast } from '@/app/context/ToastContext'
 import { AgendaCard, AgendaCardSkeleton } from '@/app/components/admin/AgendaCard'
 import { AgendaFormModal } from '@/app/components/admin/AgendaFormModal'
 import { ParticipantsModal } from '@/app/components/admin/ParticipantsModal'
@@ -13,6 +14,7 @@ import { StaffModal } from '@/app/components/admin/StaffModal'
 export default function AdminAgendasPage() {
     // 1. Hook for Data
     const { events, loading, fetchEvents, deleteEvent } = useAgendas()
+    const { addToast } = useToast()
 
     // 2. Local UI State
     const [isFormOpen, setIsFormOpen] = useState(false)
@@ -45,7 +47,7 @@ export default function AdminAgendasPage() {
                 const role = profile?.role?.toLowerCase()
 
                 if (role !== 'admin' && role !== 'superadmin') {
-                    alert("Akses Ditolak: Anda bukan Admin.")
+                    addToast("Akses Ditolak: Anda bukan Admin.", "error")
                     window.location.href = '/dashboard'
                 }
             } catch (error) {
@@ -74,7 +76,7 @@ export default function AdminAgendasPage() {
             setEditingEvent(null)
         } catch (error: any) {
             console.error('Save Error:', error)
-            alert(`Gagal menyimpan agenda: ${error.message}`)
+            addToast(`Gagal menyimpan agenda: ${error.message}`, "error")
         }
     }
 
@@ -100,7 +102,7 @@ export default function AdminAgendasPage() {
             .eq('event_id', eventId)
 
         if (error) {
-            alert('Gagal memuat peserta: ' + error.message)
+            addToast('Gagal memuat peserta: ' + error.message, 'error')
         } else {
             // Flatten generic data structure for table consumption
             const formatted = data.map((p: any) => ({
@@ -134,9 +136,9 @@ export default function AdminAgendasPage() {
 
             // Refresh local list
             viewParticipants(selectedEventId, selectedEventName)
-            alert('Berhasil Check-in!')
+            addToast('Berhasil Check-in!', 'success')
         } catch (e: any) {
-            alert('Gagal check-in: ' + e.message)
+            addToast('Gagal check-in: ' + e.message, 'error')
         }
     }
 
@@ -154,9 +156,9 @@ export default function AdminAgendasPage() {
 
             // Refresh local list
             viewParticipants(selectedEventId, selectedEventName)
-            alert(approve ? 'Izin disetujui.' : 'Izin ditolak.')
+            addToast(approve ? 'Izin disetujui.' : 'Izin ditolak.', 'success')
         } catch (e: any) {
-            alert('Gagal memproses izin: ' + e.message)
+            addToast('Gagal memproses izin: ' + e.message, 'error')
         }
     }
 
@@ -169,10 +171,10 @@ export default function AdminAgendasPage() {
             })
             if (error) throw error
 
-            alert(data) // Shows success message from RPC
+            addToast(data, 'success') // Shows success message from RPC
             fetchEvents()
         } catch (e: any) {
-            alert('Gagal finalisasi event: ' + e.message)
+            addToast('Gagal finalisasi event: ' + e.message, 'error')
         }
     }
 
@@ -206,7 +208,7 @@ export default function AdminAgendasPage() {
                 .from('profiles').select('id').ilike('email', email).single()
 
             if (userError || !users) {
-                alert('User tidak ditemukan dengan email tersebut.')
+                addToast('User tidak ditemukan dengan email tersebut.', 'error')
                 return
             }
 
@@ -217,13 +219,13 @@ export default function AdminAgendasPage() {
             })
 
             if (insertError) {
-                if (insertError.code === '23505') alert('User ini sudah menjadi staff.')
+                if (insertError.code === '23505') addToast('User ini sudah menjadi staff.', 'info')
                 else throw insertError
                 return
             }
             fetchStaff(activeEventId)
         } catch (error: any) {
-            alert('Gagal menambah staff: ' + error.message)
+            addToast('Gagal menambah staff: ' + error.message, 'error')
         }
     }
 

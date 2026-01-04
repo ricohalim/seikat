@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
-import { LayoutDashboard, Users, UserCheck, LogOut, ShieldAlert, Menu, Calendar, Clock } from 'lucide-react'
+import { LayoutDashboard, Users, UserCheck, LogOut, ShieldAlert, Menu, Calendar, Clock, Inbox } from 'lucide-react'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<any>(null)
@@ -85,6 +85,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </Link>
                     <Link href="/admin/agendas" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium">
                         <Calendar size={18} /> Agenda
+                    </Link>
+                    <Link href="/admin/inbox" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium">
+                        <Inbox size={18} /> Inbox Broadcast
                     </Link>
                     {profile?.role === 'superadmin' && (
                         <>

@@ -2,16 +2,19 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, User, Calendar, Users, LogOut, LayoutDashboard, X, Lock } from 'lucide-react'
+import { Home, User, Calendar, Users, LogOut, LayoutDashboard, X, Lock, Inbox } from 'lucide-react'
 import { clsx } from 'clsx'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { getUnreadCount } from '@/app/actions/inbox'
 
 const menuItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'My Profile', href: '/dashboard/profile', icon: User },
     { name: 'Events', href: '/dashboard/events', icon: Calendar },
     { name: 'Alumni Directory', href: '/dashboard/directory', icon: Users },
+    { name: 'Inbox', href: '/dashboard/inbox', icon: Inbox },
     { name: 'Ganti Password', href: '/dashboard/change-password', icon: Lock },
 ]
 
@@ -23,6 +26,25 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     const pathname = usePathname()
     const router = useRouter()
+    const [unreadCount, setUnreadCount] = useState(0)
+
+    useEffect(() => {
+        const fetchUnread = async () => {
+            const count = await getUnreadCount()
+            setUnreadCount(count)
+        }
+        fetchUnread()
+
+        // Poll every 30 seconds
+        const interval = setInterval(fetchUnread, 30000)
+
+        // Optimistically clear count if on inbox page
+        if (pathname === '/dashboard/inbox') {
+            setUnreadCount(0)
+        }
+
+        return () => clearInterval(interval)
+    }, [pathname])
 
     const handleLogout = async () => {
         await supabase.auth.signOut()
@@ -58,6 +80,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     {menuItems.map((item) => {
                         const Icon = item.icon
                         const isActive = pathname === item.href
+                        const isInbox = item.name === 'Inbox'
 
                         return (
                             <Link
@@ -65,7 +88,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                                 href={item.href}
                                 onClick={onClose}
                                 className={clsx(
-                                    'flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors',
+                                    'flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors relative',
                                     isActive
                                         ? 'bg-navy text-white shadow-sm'
                                         : 'text-gray-600 hover:bg-gray-50 hover:text-navy'
@@ -73,7 +96,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                             >
                                 {/* @ts-ignore */}
                                 <Icon size={18} />
-                                {item.name}
+                                <span className="flex-1">{item.name}</span>
+
+                                {isInbox && unreadCount > 0 && (
+                                    <span className="flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-red-500 rounded-full animate-pulse">
+                                        {unreadCount > 9 ? '9+' : unreadCount}
+                                    </span>
+                                )}
                             </Link>
                         )
                     })}

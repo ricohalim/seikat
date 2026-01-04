@@ -19,6 +19,9 @@ interface Event {
     status: string
     quota: number
     participants?: { status: string }[]
+    scope?: string
+    province?: string[] // Changed to array
+    is_online?: boolean
 }
 
 export default function EventsPage() {
@@ -50,11 +53,15 @@ export default function EventsPage() {
                 if (!user) return
                 setCurrentUser(user)
 
-                const { data: profile } = await supabase.from('profiles').select('*, consecutive_absences').eq('id', user.id).single()
+                const { data: profile } = await supabase.from('profiles').select('*, consecutive_absences, domicile_province').eq('id', user.id).single()
 
                 if (profile) {
                     setConsecutiveAbsences(profile.consecutive_absences || 0)
                     const percent = calculateProfileCompleteness(profile)
+                    // Save user province for filtering
+                    if (profile.domicile_province) {
+                        setCurrentUser((prev: any) => ({ ...user, domicile_province: profile.domicile_province }))
+                    }
                     if (percent >= 90) {
                         setIsAuthorized(true)
                     }
@@ -195,7 +202,33 @@ export default function EventsPage() {
             const eventDate = new Date(event.date_start)
             const today = new Date()
             today.setHours(0, 0, 0, 0)
-            return eventDate >= today
+
+            // Date Filter
+            if (eventDate < today) return false
+
+            // Visibility Filter Logic
+            // 1. Online Events -> Visible to ALL
+            if (event.is_online) return true
+
+            // 2. National Scope -> Visible to ALL
+            if (event.scope === 'nasional') return true
+
+            // 3. Regional Scope -> Visible only if province matches
+            if (event.scope === 'regional') {
+                // If user has no province data, maybe hide or show? Assuming hide to be strict.
+                if (!currentUser?.domicile_province) return false
+
+                // Compare with Array
+                // Handle legacy data (string) or new data (array)
+                const targetProvinces = Array.isArray(event.province)
+                    ? event.province
+                    : (event.province ? [event.province] : [])
+
+                return targetProvinces.some((p: string) => p.toUpperCase() === currentUser.domicile_province.toUpperCase())
+            }
+
+            // Default fallback (should not reach here if data is clean)
+            return true
         } else {
             // History: Show events registered by user
             return !!userRegistrations[event.id]
