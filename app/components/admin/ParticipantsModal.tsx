@@ -11,9 +11,10 @@ interface ParticipantsModalProps {
     loading: boolean
     onCheckIn: (userId: string) => void
     onApprove: (userId: string, approve: boolean) => void
+    onApproveWaitlist: (userId: string, approve: boolean) => void
 }
 
-export function ParticipantsModal({ isOpen, onClose, eventName, participants, loading, onCheckIn, onApprove }: ParticipantsModalProps) {
+export function ParticipantsModal({ isOpen, onClose, eventName, participants, loading, onCheckIn, onApprove, onApproveWaitlist }: ParticipantsModalProps) {
     const [searchTerm, setSearchTerm] = useState('')
 
     const filtered = participants.filter(p =>
@@ -146,14 +147,30 @@ export function ParticipantsModal({ isOpen, onClose, eventName, participants, lo
                                                     </button>
                                                 </>
                                             ) : (
-                                                /* Logic for Check-In */
-                                                (p.status === 'Registered' || p.status === 'Waiting List') && (
-                                                    <button
-                                                        onClick={() => onCheckIn(p.user_id)}
-                                                        className="bg-navy text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-navy/90 shadow-sm active:scale-95"
-                                                    >
-                                                        Check In
-                                                    </button>
+                                                /* Logic for Waiting List Approval */
+                                                p.status === 'Waiting List' ? (
+                                                    <>
+                                                        <button
+                                                            onClick={() => onApproveWaitlist(p.user_id, true)}
+                                                            className="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1.5 rounded-lg text-xs font-bold" title="Terima (Registered)">
+                                                            Terima
+                                                        </button>
+                                                        <button
+                                                            onClick={() => onApproveWaitlist(p.user_id, false)}
+                                                            className="bg-red-100 hover:bg-red-200 text-red-700 p-2 rounded-lg" title="Tolak">
+                                                            <X size={16} />
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    /* Logic for Check-In */
+                                                    (p.status === 'Registered') && (
+                                                        <button
+                                                            onClick={() => onCheckIn(p.user_id)}
+                                                            className="bg-navy text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-navy/90 shadow-sm active:scale-95"
+                                                        >
+                                                            Check In
+                                                        </button>
+                                                    )
                                                 )
                                             )}
                                         </div>

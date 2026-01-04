@@ -25,7 +25,12 @@ export async function selfCheckIn(eventId: string) {
             return { success: false, message: 'Anda belum terdaftar di event ini.' }
         }
 
-        // 3. Check if already checked in
+        // 3. Check Status (Block Waiting List)
+        if (participant.status === 'Waiting List') {
+            return { success: false, message: 'Status Anda Waiting List (Kena Sanksi).\nHarap lapor ke panitia untuk pemutihan.' }
+        }
+
+        // 4. Check if already checked in
         if (participant.check_in_time) {
             return { success: true, message: 'Anda sudah check-in sebelumnya.', alreadyCheckedIn: true }
         }
