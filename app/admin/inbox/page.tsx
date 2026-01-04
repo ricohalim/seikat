@@ -32,6 +32,7 @@ export default function AdminInboxPage() {
     const [content, setContent] = useState('')
     const [isUnlimited, setIsUnlimited] = useState(true)
     const [deadline, setDeadline] = useState<Date>()
+    const [status, setStatus] = useState<'draft' | 'published'>('published')
 
     const fetchMessages = async () => {
         setLoading(true)
@@ -52,6 +53,7 @@ export default function AdminInboxPage() {
         setContent('')
         setIsUnlimited(true)
         setDeadline(undefined)
+        setStatus('published') // Reset status as well
     }
 
     const openCreate = () => {
@@ -63,6 +65,7 @@ export default function AdminInboxPage() {
         setEditId(msg.id)
         setTitle(msg.title)
         setContent(msg.content)
+        setStatus((msg.status as 'draft' | 'published') || 'published')
 
         if (msg.expires_at) {
             setIsUnlimited(false)
@@ -78,30 +81,35 @@ export default function AdminInboxPage() {
 
     const { addToast } = useToast()
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent, submitStatus: 'draft' | 'published' = 'published') => {
         e.preventDefault()
         if (!title || !content) return addToast('Mohon isi judul dan konten', 'error')
 
         const expiry = isUnlimited ? null : deadline
-        if (!isUnlimited && !deadline) return addToast('Mohon isi tanggal deadline', 'error')
+        if (!isUnlimited && !deadline && submitStatus === 'published') return addToast('Mohon isi tanggal deadline', 'error')
 
         setSubmitting(true)
 
-        let res;
-        if (isEditing && editId) {
-            res = await updateMessage(editId, title, content, expiry || null)
-        } else {
-            res = await createBroadcastMessage(title, content, expiry || null)
-        }
+        try {
+            let res;
+            if (isEditing && editId) {
+                res = await updateMessage(editId, title, content, expiry || null, submitStatus)
+            } else {
+                res = await createBroadcastMessage(title, content, expiry || null, submitStatus)
+            }
 
-        setSubmitting(false)
-
-        if (res.error) {
-            alert(isEditing ? 'Gagal mengupdate pengumuman' : 'Gagal membuat pengumuman')
-        } else {
-            resetForm()
-            fetchMessages()
-            alert(isEditing ? 'Pengumuman berhasil diupdate' : 'Pengumuman berhasil disiarkan')
+            if (res.error) {
+                addToast('Gagal menyimpan pesan', 'error')
+            } else {
+                addToast(submitStatus === 'draft' ? 'Disimpan sebagai Draft' : 'Berhasil dipublikasikan!', 'success')
+                resetForm()
+                fetchMessages()
+            }
+        } catch (error) {
+            console.error(error)
+            addToast('Terjadi kesalahan', 'error')
+        } finally {
+            setSubmitting(false)
         }
     }
 
@@ -127,6 +135,12 @@ export default function AdminInboxPage() {
         const res = await unarchiveMessage(id)
         if (res.error) alert('Gagal memulihkan')
         else fetchMessages()
+    }
+
+    // Helper for badge color
+    const getStatusColor = (s: string) => {
+        if (s === 'draft') return 'bg-gray-200 text-gray-700'
+        return 'bg-green-100 text-green-700'
     }
 
     return (
@@ -165,7 +179,7 @@ export default function AdminInboxPage() {
                         </button>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form onSubmit={(e) => handleSubmit(e, status)} className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Judul</label>
                             <input
@@ -223,8 +237,16 @@ export default function AdminInboxPage() {
                                                 <Calendar
                                                     mode="single"
                                                     selected={deadline}
-                                                    onSelect={setDeadline}
-                                                    fromDate={new Date()}
+                                                    onSelect={(date) => {
+                                                        if (date) {
+                                                            // Set to end of day 23:59:59
+                                                            const endOfDay = new Date(date)
+                                                            endOfDay.setHours(23, 59, 59, 999)
+                                                            setDeadline(endOfDay)
+                                                        } else {
+                                                            setDeadline(undefined)
+                                                        }
+                                                    }}
                                                     initialFocus
                                                 />
                                             </PopoverContent>
@@ -235,7 +257,7 @@ export default function AdminInboxPage() {
                             </div>
                         </div>
 
-                        <div className="flex justify-end gap-3 pt-2">
+                        <div className="pt-4 flex justify-end gap-2">
                             <button
                                 type="button"
                                 onClick={resetForm}
@@ -243,13 +265,26 @@ export default function AdminInboxPage() {
                             >
                                 Batal
                             </button>
+
+                            {/* Save as Draft Button */}
                             <button
-                                type="submit"
+                                type="button"
                                 disabled={submitting}
-                                className="flex items-center gap-2 bg-navy text-white px-6 py-2 rounded-lg hover:bg-navy/90 transition disabled:opacity-50"
+                                onClick={(e) => handleSubmit(e, 'draft')}
+                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-300 transition disabled:opacity-70"
                             >
-                                {submitting ? <Loader2 size={18} className="animate-spin" /> : (isEditing ? <Save size={18} /> : <Send size={18} />)}
-                                {isEditing ? 'Simpan Perubahan' : 'Kirim Broadcast'}
+                                Simpan Draft
+                            </button>
+
+                            {/* Publish Button */}
+                            <button
+                                type="button"
+                                disabled={submitting}
+                                onClick={(e) => handleSubmit(e, 'published')}
+                                className="px-4 py-2 bg-navy text-white rounded-lg text-sm font-bold hover:bg-navy/90 flex items-center gap-2 transition disabled:opacity-70"
+                            >
+                                {submitting ? <Loader2 className="animate-spin" size={16} /> : (isEditing ? <Save size={18} /> : <Send size={18} />)}
+                                {isEditing ? 'Update & Publish' : 'Kirim Broadcast'}
                             </button>
                         </div>
                     </form>

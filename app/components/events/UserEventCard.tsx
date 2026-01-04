@@ -39,7 +39,9 @@ export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegist
                 <div className="flex justify-between items-start mb-4">
                     <h3 className="text-xl font-bold text-navy line-clamp-2" title={event.title}>{event.title}</h3>
                     <span className={`text-xs font-bold px-2 py-1 rounded-full uppercase ${isRegistered ? 'bg-green-100 text-green-700' :
-                        isClosed ? 'bg-gray-100 text-gray-500' : 'bg-blue-50 text-blue-600'
+                        isClosed ? 'bg-gray-100 text-gray-500' :
+                            event.status === 'Draft' ? 'bg-purple-50 text-purple-600 border border-purple-100' :
+                                'bg-blue-50 text-blue-600'
                         }`}>
                         {isRegistered ? 'Terdaftar' : event.status}
                     </span>
@@ -101,10 +103,10 @@ export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegist
                                 isQuotaFull
                             }
                             className={`w-full font-bold py-2 rounded-lg transition text-sm active:scale-95 ${isClosed
-                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                    : isQuotaFull
-                                        ? 'bg-red-50 text-red-400 cursor-not-allowed border border-red-100'
-                                        : 'bg-navy text-white hover:bg-navy/90 shadow-md shadow-navy/20'
+                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                : isQuotaFull
+                                    ? 'bg-red-50 text-red-400 cursor-not-allowed border border-red-100'
+                                    : 'bg-navy text-white hover:bg-navy/90 shadow-md shadow-navy/20'
                                 }`}
                         >
                             {isRegistering ? 'Mendaftarkan...' :

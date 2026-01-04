@@ -44,6 +44,7 @@ export default function EventsPage() {
     const [isUserLoading, setIsUserLoading] = useState(true)
     const [currentUser, setCurrentUser] = useState<any>(null)
     const [consecutiveAbsences, setConsecutiveAbsences] = useState(0)
+    const [isAdmin, setIsAdmin] = useState(false)
 
     // Check Authorization First
     useEffect(() => {
@@ -53,7 +54,7 @@ export default function EventsPage() {
                 if (!user) return
                 setCurrentUser(user)
 
-                const { data: profile } = await supabase.from('profiles').select('*, consecutive_absences, domicile_province').eq('id', user.id).single()
+                const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
 
                 if (profile) {
                     setConsecutiveAbsences(profile.consecutive_absences || 0)
@@ -64,6 +65,9 @@ export default function EventsPage() {
                     }
                     if (percent >= 90) {
                         setIsAuthorized(true)
+                    }
+                    if (['admin', 'superadmin'].includes(profile.role)) {
+                        setIsAdmin(true)
                     }
                 }
             } catch (err) {
@@ -81,9 +85,20 @@ export default function EventsPage() {
         async function fetchData() {
             setLoading(true)
 
+            // Construct Event Query
+            let eventQuery = supabase
+                .from('events')
+                .select('*, participants:event_participants(status)')
+                .order('date_start', { ascending: false })
+
+            // Only hide drafts for non-admins
+            if (!isAdmin) {
+                eventQuery = eventQuery.neq('status', 'Draft')
+            }
+
             // Parallel Fetching for smoother experience
             const [eventsRes, registrationsRes, staffRes] = await Promise.all([
-                supabase.from('events').select('*, participants:event_participants(status)').neq('status', 'Draft').order('date_start', { ascending: false }),
+                eventQuery,
                 currentUser ? supabase.from('event_participants').select('event_id, status').eq('user_id', currentUser.id).neq('status', 'Cancelled').neq('status', 'Permitted') : Promise.resolve({ data: [] }),
                 currentUser ? supabase.from('event_staff').select('event_id').eq('user_id', currentUser.id) : Promise.resolve({ data: [] })
             ])
@@ -101,7 +116,7 @@ export default function EventsPage() {
         if (isAuthorized) {
             fetchData()
         }
-    }, [isAuthorized, isUserLoading, currentUser])
+    }, [isAuthorized, isUserLoading, currentUser, isAdmin])
 
     // Step 1: Click Register -> Open T&C Modal
     const handleRegisterClick = (eventId: string) => {

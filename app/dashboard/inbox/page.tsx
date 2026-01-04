@@ -59,6 +59,12 @@ export default function InboxPage() {
                                             {msg.title}
                                         </h3>
                                         <div className="flex items-center gap-2">
+                                            {/* Status Badge - Only visible if Draft or for Admins */}
+                                            {msg.status === 'draft' && (
+                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-purple-100 text-purple-700 border border-purple-200">
+                                                    Draft
+                                                </span>
+                                            )}
                                             {msg.expires_at && (
                                                 <div className="flex items-center gap-1.5 text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-md border border-orange-100">
                                                     <Clock size={12} />

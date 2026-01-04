@@ -40,7 +40,7 @@ export function AgendaFormModal({ isOpen, onClose, onSubmit, initialData, isEdit
         description: '',
         date_start: '',
         location: '',
-        status: 'Open',
+        status: 'Draft',
         quota: 0,
         scope: 'nasional',
         province: [], // Changed to array
@@ -77,7 +77,7 @@ export function AgendaFormModal({ isOpen, onClose, onSubmit, initialData, isEdit
                     description: '',
                     date_start: '',
                     location: '',
-                    status: 'Open',
+                    status: 'Draft',
                     quota: 0,
                     scope: 'nasional',
                     province: [],

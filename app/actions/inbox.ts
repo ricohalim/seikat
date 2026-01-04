@@ -34,9 +34,10 @@ export async function getInboxMessages(limit = 50, showArchived = false) {
             query = query.eq('is_archived', false)
         }
     } else {
-        // User views: Only active and not expired (RLS might handle this too, but safe to filter here)
+        // User views: Only active, not expired, AND PUBLISHED
         query = query.or(`target_user_id.eq.${user.id},target_user_id.is.null`)
             .eq('is_archived', false)
+            .eq('status', 'published') // Only show published
             .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
     }
 
@@ -50,7 +51,7 @@ export async function getInboxMessages(limit = 50, showArchived = false) {
     return data
 }
 
-export async function createBroadcastMessage(title: string, content: string, expiresAt: Date | null) {
+export async function createBroadcastMessage(title: string, content: string, expiresAt: Date | null, status: 'draft' | 'published' = 'published') {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -75,7 +76,8 @@ export async function createBroadcastMessage(title: string, content: string, exp
             created_by: user.id,
             target_user_id: null, // Broadcast
             type: 'announcement',
-            expires_at: expiresAt ? expiresAt.toISOString() : null
+            expires_at: expiresAt ? expiresAt.toISOString() : null,
+            status: status
         })
 
     if (error) {
@@ -88,7 +90,7 @@ export async function createBroadcastMessage(title: string, content: string, exp
     return { success: true }
 }
 
-export async function updateMessage(id: string, title: string, content: string, expiresAt: Date | null) {
+export async function updateMessage(id: string, title: string, content: string, expiresAt: Date | null, status: 'draft' | 'published') {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -110,7 +112,8 @@ export async function updateMessage(id: string, title: string, content: string, 
         .update({
             title,
             content,
-            expires_at: expiresAt ? expiresAt.toISOString() : null
+            expires_at: expiresAt ? expiresAt.toISOString() : null,
+            status: status
         })
         .eq('id', id)
 
@@ -219,6 +222,7 @@ export async function getUnreadCount() {
         .select('*', { count: 'exact', head: true })
         .or(`target_user_id.eq.${user.id},target_user_id.is.null`)
         .eq('is_archived', false)
+        .eq('status', 'published')
         .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
         .gt('created_at', lastRead)
 
