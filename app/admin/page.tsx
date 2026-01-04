@@ -16,6 +16,16 @@ export default function AdminDashboardPage() {
     useEffect(() => {
         const fetchStats = async () => {
             try {
+                // Check Role First - Redirect Korwil to Agenda
+                const { data: { user } } = await supabase.auth.getUser()
+                if (user) {
+                    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+                    if (profile?.role === 'korwil') {
+                        window.location.href = '/admin/agendas'
+                        return
+                    }
+                }
+
                 // 1. Total Active Profiles
                 const { count: activeCount } = await supabase
                     .from('profiles')

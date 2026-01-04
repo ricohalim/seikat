@@ -130,14 +130,11 @@ export default function EventStaffPage() {
 
         try {
             if (action === 'CheckIn') {
-                const { error } = await supabase
-                    .from('event_participants')
-                    .update({
-                        check_in_time: new Date().toISOString()
-                    })
-                    .eq('id', participantId)
-                // Note: participantId here is the row ID in event_participants, not user_id. 
-                // Make sure UI passes correct ID.
+                // Use RPC to ensure consistency with Admin Panel & Sanction Reset
+                const { error } = await supabase.rpc('check_in_participant', {
+                    p_event_id: eventId,
+                    p_user_id: participants.find(p => p.id === participantId)?.user_id
+                })
 
                 if (error) throw error
 
@@ -251,13 +248,7 @@ export default function EventStaffPage() {
                             </div>
                         </form>
 
-                        <div className="mt-6 pt-6 border-t border-gray-100">
-                            <button className="w-full py-3 bg-gray-100 text-gray-400 rounded-xl font-bold text-sm cursor-not-allowed flex flex-col items-center gap-2">
-                                <Camera size={24} />
-                                <span>Kamera Scanner (Segera)</span>
-                            </button>
-                            <p className="text-xs text-center text-gray-400 mt-2">Gunakan pencarian manual untuk saat ini.</p>
-                        </div>
+
                     </div>
 
                     <button
