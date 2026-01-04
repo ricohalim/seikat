@@ -68,12 +68,14 @@ export function UserTable({ users, loading, onRoleChange, onViewDetail, onEdit }
                                         onChange={(e) => onRoleChange(u.id, e.target.value)}
                                         className={`px-2 py-1 rounded text-xs font-bold border-none outline-none cursor-pointer ${u.role === 'superadmin' ? 'bg-purple-100 text-purple-700' :
                                             u.role === 'admin' ? 'bg-blue-100 text-blue-700' :
-                                                'bg-gray-100 text-gray-600'
+                                                u.role === 'korwil' ? 'bg-orange/10 text-orange' :
+                                                    'bg-gray-100 text-gray-600'
                                             }`}
                                     >
                                         <option value="member">Member</option>
                                         <option value="admin">Verifikator</option>
                                         <option value="superadmin">Super Admin</option>
+                                        <option value="korwil">Koordinator Wilayah</option>
                                     </select>
                                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${u.account_status === 'Active' ? 'text-green-600 border-green-200 bg-green-50' : 'text-orange border-orange/20 bg-orange/10'}`}>
                                         {u.account_status}

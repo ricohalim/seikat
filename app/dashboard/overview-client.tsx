@@ -124,6 +124,16 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
                                     Admin Portal
                                 </Link>
                             )}
+
+                            {/* Korwil Badge */}
+                            {profile.role === 'korwil' && (
+                                <Link
+                                    href="/admin"
+                                    className="hidden md:inline-flex items-center gap-1 bg-orange/10 border border-orange/20 text-orange text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider hover:bg-orange/20 transition"
+                                >
+                                    Koordinator Wilayah
+                                </Link>
+                            )}
                         </div>
 
                         {/* Mobile Admin Badge */}
@@ -133,6 +143,15 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
                                 className="md:hidden inline-flex items-center gap-1 bg-purple-50 border border-purple-100 text-purple-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider hover:bg-purple-100 transition mb-3"
                             >
                                 Admin
+                            </Link>
+                        )}
+                        {/* Mobile Korwil Badge */}
+                        {profile.role === 'korwil' && (
+                            <Link
+                                href="/admin"
+                                className="md:hidden inline-flex items-center gap-1 bg-orange/10 border border-orange/20 text-orange text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider hover:bg-orange/20 transition mb-3"
+                            >
+                                Korwil
                             </Link>
                         )}
 

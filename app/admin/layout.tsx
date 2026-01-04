@@ -29,7 +29,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 .eq('id', session.user.id)
                 .single()
 
-            if (error || !profileData || !['admin', 'superadmin'].includes(profileData.role)) {
+            if (error || !profileData || !['admin', 'superadmin', 'korwil'].includes(profileData.role)) {
                 // Not authorized
                 router.replace('/dashboard') // Send back to member dashboard
                 return
@@ -77,18 +77,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </div>
 
                 <nav className="flex-1 p-4 space-y-2">
-                    <Link href="/admin" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium">
-                        <LayoutDashboard size={18} /> Dashboard
-                    </Link>
-                    <Link href="/admin/verify" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium">
-                        <UserCheck size={18} /> Verifikasi Member
-                    </Link>
+                    {profile?.role !== 'korwil' && (
+                        <Link href="/admin" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium">
+                            <LayoutDashboard size={18} /> Dashboard
+                        </Link>
+                    )}
+                    {profile?.role !== 'korwil' && (
+                        <Link href="/admin/verify" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium">
+                            <UserCheck size={18} /> Verifikasi Member
+                        </Link>
+                    )}
                     <Link href="/admin/agendas" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium">
                         <Calendar size={18} /> Agenda
                     </Link>
-                    <Link href="/admin/inbox" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium">
-                        <Inbox size={18} /> Inbox Broadcast
-                    </Link>
+                    {profile?.role !== 'korwil' && (
+                        <Link href="/admin/inbox" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium">
+                            <Inbox size={18} /> Inbox Broadcast
+                        </Link>
+                    )}
                     {profile?.role === 'superadmin' && (
                         <>
                             <Link href="/admin/users" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium opacity-75 hover:opacity-100">

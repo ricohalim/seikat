@@ -36,6 +36,7 @@ export default function AdminAgendasPage() {
 
     // Role Check
     const [roleLoading, setRoleLoading] = useState(true)
+    const [userProfile, setUserProfile] = useState<any>(null)
 
     useEffect(() => {
         const checkRole = async () => {
@@ -43,13 +44,15 @@ export default function AdminAgendasPage() {
                 const { data: { user } } = await supabase.auth.getUser()
                 if (!user) return
 
-                const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+                const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
                 const role = profile?.role?.toLowerCase()
 
-                if (role !== 'admin' && role !== 'superadmin') {
-                    addToast("Akses Ditolak: Anda bukan Admin.", "error")
+                // Allow Admin, Superadmin, AND Korwil
+                if (!['admin', 'superadmin', 'korwil'].includes(role)) {
+                    addToast("Akses Ditolak: Anda bukan Admin/Korwil.", "error")
                     window.location.href = '/dashboard'
                 }
+                setUserProfile(profile)
             } catch (error) {
                 console.error("Auth check error", error)
             } finally {
@@ -307,6 +310,7 @@ export default function AdminAgendasPage() {
                 onSubmit={handleSubmit}
                 initialData={editingEvent}
                 isEditing={!!editingEvent}
+                currentUser={userProfile}
             />
 
             <ParticipantsModal

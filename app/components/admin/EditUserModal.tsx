@@ -1,8 +1,14 @@
-import { X, Lock, Briefcase, AlertCircle } from 'lucide-react'
+import { X, Lock, Briefcase, AlertCircle, Check, ChevronsUpDown } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { GENERATIONS, UNIVERSITIES } from '@/lib/constants'
+import { GENERATIONS, UNIVERSITIES, PROVINCES } from '@/lib/constants'
 import { useNameValidation } from '@/app/hooks/useNameValidation'
 import { useUniversities } from '@/app/hooks/useUniversities'
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/app/components/ui/popover"
+import { cn } from "@/lib/utils"
 
 interface EditUserModalProps {
     isOpen: boolean
@@ -23,8 +29,11 @@ export function EditUserModal({ isOpen, user, onClose, onSave, loading, onResetP
         company_name: user?.company_name,
         job_position: user?.job_position,
         role: user?.role,
-        account_status: user?.account_status
+        account_status: user?.account_status,
+        managed_provinces: user?.managed_provinces || []
     })
+
+    const [openProvince, setOpenProvince] = useState(false)
 
     // FIX: Sync state when user prop changes (because component stays mounted)
     useEffect(() => {
@@ -37,7 +46,8 @@ export function EditUserModal({ isOpen, user, onClose, onSave, loading, onResetP
                 company_name: user.company_name,
                 job_position: user.job_position,
                 role: user.role,
-                account_status: user.account_status
+                account_status: user.account_status,
+                managed_provinces: user.managed_provinces || []
             })
         }
     }, [user])
@@ -64,6 +74,17 @@ export function EditUserModal({ isOpen, user, onClose, onSave, loading, onResetP
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         onSave(e, editForm)
+    }
+
+    const toggleProvince = (prov: string) => {
+        setEditForm((prev: any) => {
+            const current = prev.managed_provinces || []
+            if (current.includes(prov)) {
+                return { ...prev, managed_provinces: current.filter((p: string) => p !== prov) }
+            } else {
+                return { ...prev, managed_provinces: [...current, prov] }
+            }
+        })
     }
 
     return (
@@ -150,6 +171,7 @@ export function EditUserModal({ isOpen, user, onClose, onSave, loading, onResetP
                                 <option value="member">Member</option>
                                 <option value="admin">Verifikator</option>
                                 <option value="superadmin">Superadmin</option>
+                                <option value="korwil">Koordinator Wilayah</option>
                             </select>
                         </div>
                         <div>
@@ -163,6 +185,57 @@ export function EditUserModal({ isOpen, user, onClose, onSave, loading, onResetP
                             </select>
                         </div>
                     </div>
+
+                    {/* MANAGED PROVINCES - Only for Korwil */}
+                    {editForm.role === 'korwil' && (
+                        <div className="animate-in fade-in slide-in-from-top-2 bg-purple-50 p-4 rounded-xl border border-purple-100">
+                            <label className="text-xs font-bold text-purple-800 uppercase mb-1 block">Wilayah Pegangan (Provinsi)</label>
+                            <p className="text-[10px] text-gray-500 mb-2">Pilih provinsi yang dikelola oleh Koordinator ini.</p>
+
+                            <Popover open={openProvince} onOpenChange={setOpenProvince}>
+                                <PopoverTrigger asChild>
+                                    <button
+                                        type="button"
+                                        role="combobox"
+                                        className="flex h-10 w-full items-center justify-between rounded-md border border-purple-200 bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        <span className="truncate text-gray-700">
+                                            {editForm.managed_provinces && editForm.managed_provinces.length > 0
+                                                ? `${editForm.managed_provinces.length} Provinsi Terpilih`
+                                                : "Pilih Provinsi..."}
+                                        </span>
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[300px] p-0 z-[101] max-h-60 overflow-y-auto bg-white">
+                                    <div className="p-1">
+                                        {PROVINCES.map((prov) => (
+                                            <div
+                                                key={prov}
+                                                className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-sm cursor-pointer"
+                                                onClick={() => toggleProvince(prov)}
+                                            >
+                                                <div className={cn(
+                                                    "flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                                    editForm.managed_provinces?.includes(prov)
+                                                        ? "bg-navy border-navy text-white"
+                                                        : "opacity-50 [&_svg]:invisible"
+                                                )}>
+                                                    <Check className={cn("h-3 w-3")} />
+                                                </div>
+                                                <span className="text-sm">{prov}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+                            {editForm.managed_provinces?.length > 0 && (
+                                <p className="text-[10px] text-gray-600 mt-2 leading-tight">
+                                    {editForm.managed_provinces.join(", ")}
+                                </p>
+                            )}
+                        </div>
+                    )}
 
                     {/* RESET PASSWORD SECTION */}
                     <div className="pt-4 border-t border-gray-100">
@@ -216,3 +289,4 @@ export function EditUserModal({ isOpen, user, onClose, onSave, loading, onResetP
         </div>
     )
 }
+

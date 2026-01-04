@@ -16,15 +16,7 @@ import {
 import { cn } from "@/lib/utils"
 // import { Button } from "@/app/components/ui/button" // Assuming Button exists or use HTML button
 
-const PROVINCES = [
-    "ACEH", "SUMATERA UTARA", "SUMATERA BARAT", "RIAU", "JAMBI", "SUMATERA SELATAN", "BENGKULU", "LAMPUNG", "KEPULAUAN BANGKA BELITUNG", "KEPULAUAN RIAU",
-    "DKI JAKARTA", "JAWA BARAT", "JAWA TENGAH", "DI YOGYAKARTA", "JAWA TIMUR", "BANTEN",
-    "BALI", "NUSA TENGGARA BARAT", "NUSA TENGGARA TIMUR",
-    "KALIMANTAN BARAT", "KALIMANTAN TENGAH", "KALIMANTAN SELATAN", "KALIMANTAN TIMUR", "KALIMANTAN UTARA",
-    "SULAWESI UTARA", "SULAWESI TENGAH", "SULAWESI SELATAN", "SULAWESI TENGGARA", "GORONTALO", "SULAWESI BARAT",
-    "MALUKU", "MALUKU UTARA",
-    "PAPUA", "PAPUA BARAT", "PAPUA SELATAN", "PAPUA TENGAH", "PAPUA PEGUNUNGAN", "PAPUA BARAT DAYA"
-]
+import { PROVINCES } from '@/lib/constants'
 
 interface AgendaFormModalProps {
     isOpen: boolean
@@ -32,9 +24,10 @@ interface AgendaFormModalProps {
     onSubmit: (e: React.FormEvent, formData: any) => Promise<void>
     initialData?: any
     isEditing: boolean
+    currentUser?: any
 }
 
-export function AgendaFormModal({ isOpen, onClose, onSubmit, initialData, isEditing }: AgendaFormModalProps) {
+export function AgendaFormModal({ isOpen, onClose, onSubmit, initialData, isEditing, currentUser }: AgendaFormModalProps) {
     const [formData, setFormData] = useState<any>({
         title: '',
         description: '',
@@ -48,6 +41,10 @@ export function AgendaFormModal({ isOpen, onClose, onSubmit, initialData, isEdit
     })
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [openProvince, setOpenProvince] = useState(false)
+
+    // Derived state for Korwil
+    const isKorwil = currentUser?.role === 'korwil'
+    const managedProvinces = currentUser?.managed_provinces || []
 
     useEffect(() => {
         if (isOpen) {
@@ -72,20 +69,35 @@ export function AgendaFormModal({ isOpen, onClose, onSubmit, initialData, isEdit
                     is_online: initialData.is_online || false
                 })
             } else {
-                setFormData({
-                    title: '',
-                    description: '',
-                    date_start: '',
-                    location: '',
-                    status: 'Draft',
-                    quota: 0,
-                    scope: 'nasional',
-                    province: [],
-                    is_online: false
-                })
+                // NEW: Default for Korwil
+                if (isKorwil) {
+                    setFormData({
+                        title: '',
+                        description: '',
+                        date_start: '',
+                        location: '',
+                        status: 'Draft',
+                        quota: 0,
+                        scope: 'regional', // Locked to regional
+                        province: managedProvinces, // Default select all managed provinces
+                        is_online: false
+                    })
+                } else {
+                    setFormData({
+                        title: '',
+                        description: '',
+                        date_start: '',
+                        location: '',
+                        status: 'Draft',
+                        quota: 0,
+                        scope: 'nasional',
+                        province: [],
+                        is_online: false
+                    })
+                }
             }
         }
-    }, [isOpen, initialData, isEditing])
+    }, [isOpen, initialData, isEditing, isKorwil, currentUser])
 
     const handleSubmitInternal = async (e: React.FormEvent) => {
         try {
@@ -164,7 +176,7 @@ export function AgendaFormModal({ isOpen, onClose, onSubmit, initialData, isEdit
                                             <SelectValue placeholder="Pilih cakupan" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="nasional">NASIONAL (Semua)</SelectItem>
+                                            {!isKorwil && <SelectItem value="nasional">NASIONAL (Semua)</SelectItem>}
                                             <SelectItem value="regional">REGIONAL (Daerah)</SelectItem>
                                         </SelectContent>
                                     </Select>
@@ -190,7 +202,7 @@ export function AgendaFormModal({ isOpen, onClose, onSubmit, initialData, isEdit
                                             </PopoverTrigger>
                                             <PopoverContent className="w-[200px] p-0 z-[101] max-h-60 overflow-y-auto bg-white">
                                                 <div className="p-1">
-                                                    {PROVINCES.map((prov) => (
+                                                    {(isKorwil ? managedProvinces : PROVINCES).map((prov: string) => (
                                                         <div
                                                             key={prov}
                                                             className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-sm cursor-pointer"
