@@ -77,7 +77,14 @@ export default function LoginPage() {
             router.push(nextUrl || '/dashboard')
         } catch (err) {
             if (err instanceof Error) {
-                setError(err.message)
+                // Translate common Supabase errors
+                if (err.message === 'Email not confirmed') {
+                    setError('Email belum dikonfirmasi. Silakan cek email Anda untuk verifikasi.')
+                } else if (err.message === 'Invalid login credentials') {
+                    setError('Email atau password salah.')
+                } else {
+                    setError(err.message)
+                }
             } else {
                 setError('Terjadi kesalahan saat login')
             }

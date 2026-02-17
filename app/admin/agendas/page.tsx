@@ -169,211 +169,211 @@ export default function AdminAgendasPage() {
         } catch (e: any) {
             addToast('Gagal memproses izin: ' + e.message, 'error')
         }
-        const handleApproveWaitlist = async (userId: string, approve: boolean) => {
-            if (!selectedEventId) return
-            if (!confirm(approve ? 'Terima peserta ini dari Waiting List?' : 'Tolak peserta ini?')) return
+    }
 
-            try {
-                // Update status manually
-                const status = approve ? 'Registered' : 'Rejected'
-                const { error } = await supabase
-                    .from('event_participants')
-                    .update({ status: status })
-                    .eq('event_id', selectedEventId)
-                    .eq('user_id', userId)
+    const handleApproveWaitlist = async (userId: string, approve: boolean) => {
+        if (!selectedEventId) return
+        if (!confirm(approve ? 'Terima peserta ini dari Waiting List?' : 'Tolak peserta ini?')) return
 
-                if (error) throw error
+        try {
+            // Update status manually
+            const status = approve ? 'Registered' : 'Rejected'
+            const { error } = await supabase
+                .from('event_participants')
+                .update({ status: status })
+                .eq('event_id', selectedEventId)
+                .eq('user_id', userId)
 
-                viewParticipants(selectedEventId, selectedEventName)
-                addToast(approve ? 'Peserta diterima (Registered).' : 'Peserta ditolak.', 'success')
-            } catch (e: any) {
-                addToast('Gagal memproses Waiting List: ' + e.message, 'error')
+            if (error) throw error
+
+            viewParticipants(selectedEventId, selectedEventName)
+            addToast(approve ? 'Peserta diterima (Registered).' : 'Peserta ditolak.', 'success')
+        } catch (e: any) {
+            addToast('Gagal memproses Waiting List: ' + e.message, 'error')
+        }
+    }
+
+    const handleFinalizeEvent = async (eventId: string) => {
+        if (!confirm('PENTING: Aksi ini akan menandai semua peserta "Registered" yang belum Check-in menjadi status "Absent" (Alpha). Sanksi akan dihitung. Lanjutkan?')) return
+
+        try {
+            const { data, error } = await supabase.rpc('finalize_event_attendance', {
+                p_event_id: eventId
+            })
+            if (error) throw error
+
+            addToast(data, 'success') // Shows success message from RPC
+            fetchEvents()
+        } catch (e: any) {
+            addToast('Gagal finalisasi event: ' + e.message, 'error')
+        }
+    }
+
+    // --- Staff Logic ---
+    const handleManageStaff = (event: any) => {
+        setActiveEventId(event.id)
+        setSelectedEventName(event.title)
+        fetchStaff(event.id)
+        setIsStaffModalOpen(true)
+    }
+
+    const fetchStaff = async (eventId: string) => {
+        setLoadingStaff(true)
+        const { data, error } = await supabase
+            .from('event_staff')
+            .select(`*, profiles:user_id (full_name, email)`)
+            .eq('event_id', eventId)
+
+        if (error) console.error('Error fetching staff:', error)
+        if (data) setStaffList(data)
+        setLoadingStaff(false)
+    }
+
+    const handleAddStaff = async (e: React.FormEvent, email: string, role: string) => {
+        e.preventDefault()
+        if (!activeEventId) return
+
+        try {
+            const { data: users, error: userError } = await supabase
+                .from('profiles').select('id').ilike('email', email).single()
+
+            if (userError || !users) {
+                addToast('User tidak ditemukan dengan email tersebut.', 'error')
+                return
             }
-        }
 
-        const handleFinalizeEvent = async (eventId: string) => {
-            if (!confirm('PENTING: Aksi ini akan menandai semua peserta "Registered" yang belum Check-in menjadi status "Absent" (Alpha). Sanksi akan dihitung. Lanjutkan?')) return
+            const { error: insertError } = await supabase.from('event_staff').insert({
+                event_id: activeEventId,
+                user_id: users.id,
+                role: role
+            })
 
-            try {
-                const { data, error } = await supabase.rpc('finalize_event_attendance', {
-                    p_event_id: eventId
-                })
-                if (error) throw error
-
-                addToast(data, 'success') // Shows success message from RPC
-                fetchEvents()
-            } catch (e: any) {
-                addToast('Gagal finalisasi event: ' + e.message, 'error')
+            if (insertError) {
+                if (insertError.code === '23505') addToast('User ini sudah menjadi staff.', 'info')
+                else throw insertError
+                return
             }
+            fetchStaff(activeEventId)
+        } catch (error: any) {
+            addToast('Gagal menambah staff: ' + error.message, 'error')
         }
+    }
 
+    const handleRemoveStaff = async (staffId: string) => {
+        if (!confirm('Hapus staff ini?')) return
+        await supabase.from('event_staff').delete().eq('id', staffId)
+        if (activeEventId) fetchStaff(activeEventId)
+    }
 
-        // --- Staff Logic ---
-        const handleManageStaff = (event: any) => {
-            setActiveEventId(event.id)
-            setSelectedEventName(event.title)
-            fetchStaff(event.id)
-            setIsStaffModalOpen(true)
-        }
+    const handleShowQR = (id: string, title: string) => {
+        setQrEventId(id)
+        setQrEventName(title)
+        setIsQRModalOpen(true)
+    }
 
-        const fetchStaff = async (eventId: string) => {
-            setLoadingStaff(true)
-            const { data, error } = await supabase
-                .from('event_staff')
-                .select(`*, profiles:user_id (full_name, email)`)
-                .eq('event_id', eventId)
+    if (roleLoading) return null // Or a generic page loader
 
-            if (error) console.error('Error fetching staff:', error)
-            if (data) setStaffList(data)
-            setLoadingStaff(false)
-        }
-
-        const handleAddStaff = async (e: React.FormEvent, email: string, role: string) => {
-            e.preventDefault()
-            if (!activeEventId) return
-
-            try {
-                const { data: users, error: userError } = await supabase
-                    .from('profiles').select('id').ilike('email', email).single()
-
-                if (userError || !users) {
-                    addToast('User tidak ditemukan dengan email tersebut.', 'error')
-                    return
-                }
-
-                const { error: insertError } = await supabase.from('event_staff').insert({
-                    event_id: activeEventId,
-                    user_id: users.id,
-                    role: role
-                })
-
-                if (insertError) {
-                    if (insertError.code === '23505') addToast('User ini sudah menjadi staff.', 'info')
-                    else throw insertError
-                    return
-                }
-                fetchStaff(activeEventId)
-            } catch (error: any) {
-                addToast('Gagal menambah staff: ' + error.message, 'error')
-            }
-        }
-
-        const handleRemoveStaff = async (staffId: string) => {
-            if (!confirm('Hapus staff ini?')) return
-            await supabase.from('event_staff').delete().eq('id', staffId)
-            if (activeEventId) fetchStaff(activeEventId)
-        }
-
-        const handleShowQR = (id: string, title: string) => {
-            setQrEventId(id)
-            setQrEventName(title)
-            setIsQRModalOpen(true)
-        }
-
-        if (roleLoading) return null // Or a generic page loader
-
-        return (
-            <div className="max-w-7xl mx-auto space-y-6 pb-20 animate-in fade-in duration-500">
-                {/* Header & Tabs */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-6">
-                    <div>
-                        <h1 className="text-2xl font-bold text-navy">Manajemen Agenda</h1>
-                        <p className="text-gray-500 text-sm">Buat dan kelola jadwal kegiatan alumni.</p>
-                    </div>
-                    <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
-                        <div className="flex bg-gray-100 p-1 rounded-lg">
-                            <button
-                                onClick={() => setActiveTab('active')}
-                                className={`px-4 py-1.5 rounded-md text-sm font-bold transition ${activeTab === 'active' ? 'bg-white text-navy shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                            >
-                                Aktif
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('history')}
-                                className={`px-4 py-1.5 rounded-md text-sm font-bold transition ${activeTab === 'history' ? 'bg-white text-navy shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                            >
-                                Riwayat
-                            </button>
-                        </div>
+    return (
+        <div className="max-w-7xl mx-auto space-y-6 pb-20 animate-in fade-in duration-500">
+            {/* Header & Tabs */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-6">
+                <div>
+                    <h1 className="text-2xl font-bold text-navy">Manajemen Agenda</h1>
+                    <p className="text-gray-500 text-sm">Buat dan kelola jadwal kegiatan alumni.</p>
+                </div>
+                <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+                    <div className="flex bg-gray-100 p-1 rounded-lg">
                         <button
-                            onClick={() => { setEditingEvent(null); setIsFormOpen(true) }}
-                            className="flex items-center gap-2 bg-navy text-white px-4 py-2 rounded-lg font-bold hover:bg-navy/90 transition text-sm shadow-md shadow-navy/20 active:scale-95"
+                            onClick={() => setActiveTab('active')}
+                            className={`px-4 py-1.5 rounded-md text-sm font-bold transition ${activeTab === 'active' ? 'bg-white text-navy shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                         >
-                            <Plus size={16} /> Buat Agenda
+                            Aktif
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('history')}
+                            className={`px-4 py-1.5 rounded-md text-sm font-bold transition ${activeTab === 'history' ? 'bg-white text-navy shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            Riwayat
                         </button>
                     </div>
+                    <button
+                        onClick={() => { setEditingEvent(null); setIsFormOpen(true) }}
+                        className="flex items-center gap-2 bg-navy text-white px-4 py-2 rounded-lg font-bold hover:bg-navy/90 transition text-sm shadow-md shadow-navy/20 active:scale-95"
+                    >
+                        <Plus size={16} /> Buat Agenda
+                    </button>
                 </div>
-
-                {/* Event List */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {loading
-                        ? [...Array(6)].map((_, i) => <AgendaCardSkeleton key={i} />)
-                        : events.filter(event => {
-                            // Logic: History if Date < Today OR Status == Closed
-                            const isPast = new Date(event.date_start) < new Date()
-                            const isClosed = event.status === 'Closed'
-                            return activeTab === 'active' ? (!isPast && !isClosed) : (isPast || isClosed)
-                        }).length === 0 ? (
-                            <div className="col-span-full py-12 text-center text-gray-400 border-2 border-dashed rounded-xl bg-gray-50/50">
-                                {activeTab === 'active' ? 'Tidak ada agenda aktif saat ini.' : 'Belum ada riwayat agenda.'}
-                            </div>
-                        ) : events.filter(event => {
-                            const isPast = new Date(event.date_start) < new Date()
-                            const isClosed = event.status === 'Closed'
-                            return activeTab === 'active' ? (!isPast && !isClosed) : (isPast || isClosed)
-                        }).map((event) => (
-                            <AgendaCard
-                                key={event.id}
-                                event={event}
-                                onEdit={(e) => { setEditingEvent(e); setIsFormOpen(true) }}
-                                onDelete={handleDelete}
-                                onViewParticipants={viewParticipants}
-                                onManageStaff={handleManageStaff}
-                                onShowQR={handleShowQR}
-                                onFinalize={handleFinalizeEvent}
-                            />
-                        ))
-                    }
-                </div>
-
-                {/* Modals */}
-                <AgendaFormModal
-                    isOpen={isFormOpen}
-                    onClose={() => setIsFormOpen(false)}
-                    onSubmit={handleSubmit}
-                    initialData={editingEvent}
-                    isEditing={!!editingEvent}
-                    currentUser={userProfile}
-                />
-
-                <ParticipantsModal
-                    isOpen={isParticipantModalOpen}
-                    onClose={() => setIsParticipantModalOpen(false)}
-                    eventName={selectedEventName}
-                    participants={participants}
-                    loading={loadingParticipants}
-                    onCheckIn={handleCheckIn}
-                    onApprove={handleApproveCancellation}
-                    onApproveWaitlist={handleApproveWaitlist}
-                />
-
-                <StaffModal
-                    isOpen={isStaffModalOpen}
-                    onClose={() => setIsStaffModalOpen(false)}
-                    eventName={selectedEventName}
-                    staffList={staffList}
-                    loading={loadingStaff}
-                    onAddStaff={handleAddStaff}
-                    onRemoveStaff={handleRemoveStaff}
-                />
-
-                <EventQRModal
-                    isOpen={isQRModalOpen}
-                    onClose={() => setIsQRModalOpen(false)}
-                    eventName={qrEventName}
-                    eventId={qrEventId}
-                />
             </div>
-        )
-    }
+
+            {/* Event List */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {loading
+                    ? [...Array(6)].map((_, i) => <AgendaCardSkeleton key={i} />)
+                    : events.filter(event => {
+                        // Logic: History if Date < Today OR Status == Closed
+                        const isPast = new Date(event.date_start) < new Date()
+                        const isClosed = event.status === 'Closed'
+                        return activeTab === 'active' ? (!isPast && !isClosed) : (isPast || isClosed)
+                    }).length === 0 ? (
+                        <div className="col-span-full py-12 text-center text-gray-400 border-2 border-dashed rounded-xl bg-gray-50/50">
+                            {activeTab === 'active' ? 'Tidak ada agenda aktif saat ini.' : 'Belum ada riwayat agenda.'}
+                        </div>
+                    ) : events.filter(event => {
+                        const isPast = new Date(event.date_start) < new Date()
+                        const isClosed = event.status === 'Closed'
+                        return activeTab === 'active' ? (!isPast && !isClosed) : (isPast || isClosed)
+                    }).map((event) => (
+                        <AgendaCard
+                            key={event.id}
+                            event={event}
+                            onEdit={(e) => { setEditingEvent(e); setIsFormOpen(true) }}
+                            onDelete={handleDelete}
+                            onViewParticipants={viewParticipants}
+                            onManageStaff={handleManageStaff}
+                            onShowQR={handleShowQR}
+                            onFinalize={handleFinalizeEvent}
+                        />
+                    ))
+                }
+            </div>
+
+            {/* Modals */}
+            <AgendaFormModal
+                isOpen={isFormOpen}
+                onClose={() => setIsFormOpen(false)}
+                onSubmit={handleSubmit}
+                initialData={editingEvent}
+                isEditing={!!editingEvent}
+                currentUser={userProfile}
+            />
+
+            <ParticipantsModal
+                isOpen={isParticipantModalOpen}
+                onClose={() => setIsParticipantModalOpen(false)}
+                eventName={selectedEventName}
+                participants={participants}
+                loading={loadingParticipants}
+                onCheckIn={handleCheckIn}
+                onApprove={handleApproveCancellation}
+                onApproveWaitlist={handleApproveWaitlist}
+            />
+
+            <StaffModal
+                isOpen={isStaffModalOpen}
+                onClose={() => setIsStaffModalOpen(false)}
+                eventName={selectedEventName}
+                staffList={staffList}
+                loading={loadingStaff}
+                onAddStaff={handleAddStaff}
+                onRemoveStaff={handleRemoveStaff}
+            />
+
+            <EventQRModal
+                isOpen={isQRModalOpen}
+                onClose={() => setIsQRModalOpen(false)}
+                eventName={qrEventName}
+                eventId={qrEventId}
+            />
+        </div>
+    )
 }
