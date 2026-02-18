@@ -32,6 +32,7 @@ export function AgendaFormModal({ isOpen, onClose, onSubmit, initialData, isEdit
         title: '',
         description: '',
         date_start: '',
+        registration_deadline: '', // NEW
         location: '',
         status: 'Draft',
         quota: 0,
@@ -61,6 +62,7 @@ export function AgendaFormModal({ isOpen, onClose, onSubmit, initialData, isEdit
                     title: initialData.title || '',
                     description: initialData.description || '',
                     date_start: initialData.date_start ? formatDateForInput(initialData.date_start) : '',
+                    registration_deadline: initialData.registration_deadline ? formatDateForInput(initialData.registration_deadline) : '', // NEW
                     location: initialData.location || '',
                     status: initialData.status || 'Open',
                     quota: initialData.quota || 0,
@@ -75,6 +77,7 @@ export function AgendaFormModal({ isOpen, onClose, onSubmit, initialData, isEdit
                         title: '',
                         description: '',
                         date_start: '',
+                        registration_deadline: '', // NEW
                         location: '',
                         status: 'Draft',
                         quota: 0,
@@ -106,6 +109,7 @@ export function AgendaFormModal({ isOpen, onClose, onSubmit, initialData, isEdit
                 ...formData,
                 // Ensure date is sent as ISO UTC
                 date_start: formData.date_start ? new Date(formData.date_start).toISOString() : null,
+                registration_deadline: formData.registration_deadline ? new Date(formData.registration_deadline).toISOString() : null, // NEW
                 quota: formData.quota === '' ? 0 : Number(formData.quota),
                 // Normalize data
                 province: (formData.scope === 'regional' && !formData.is_online) ? formData.province : null
@@ -259,6 +263,19 @@ export function AgendaFormModal({ isOpen, onClose, onSubmit, initialData, isEdit
                                 onChange={e => setFormData({ ...formData, date_start: e.target.value })}
                             />
                         </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Deadline Pendaftaran</label>
+                            <input
+                                type="datetime-local"
+                                className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-navy/20 outline-none"
+                                value={formData.registration_deadline || ''}
+                                onChange={e => setFormData({ ...formData, registration_deadline: e.target.value })}
+                            />
+                            <p className="text-[10px] text-gray-400 mt-1">*Opsional. Kosongkan jika tanpa deadline.</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Lokasi Detail</label>
                             <input

@@ -1,4 +1,4 @@
-import { Calendar, MapPin, Edit2, Users, Shield, Trash2, CheckSquare } from 'lucide-react'
+import { Calendar, MapPin, Edit2, Users, Shield, Trash2, CheckSquare, Clock } from 'lucide-react'
 import { Skeleton } from '../ui/Skeleton'
 
 interface AgendaCardProps {
@@ -30,6 +30,14 @@ export function AgendaCard({ event, onEdit, onDelete, onViewParticipants, onMana
                         <Calendar size={14} className="text-navy" />
                         <span>{event.date_start ? new Date(event.date_start).toLocaleString('id-ID') : '-'}</span>
                     </div>
+                    {event.registration_deadline && (
+                        <div className="flex items-center gap-2">
+                            <Clock size={14} className="text-red-500" />
+                            <span className="text-red-600 font-medium text-xs">
+                                Deadline: {new Date(event.registration_deadline).toLocaleString('id-ID')}
+                            </span>
+                        </div>
+                    )}
                     <div className="flex items-center gap-2">
                         <MapPin size={14} className="text-navy" />
                         <span>{event.location || 'Online'}</span>
