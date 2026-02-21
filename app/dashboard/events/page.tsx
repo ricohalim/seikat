@@ -9,6 +9,7 @@ import { UserEventCard, UserEventSkeleton } from '@/app/components/events/UserEv
 import { EventTermsModal } from '@/app/components/events/EventTermsModal'
 import { CancellationModal } from '@/app/components/events/CancellationModal'
 import { useToast } from '@/app/context/ToastContext'
+import { useRouter } from 'next/navigation'
 
 interface Event {
     id: string
@@ -26,6 +27,7 @@ interface Event {
 
 export default function EventsPage() {
     const { addToast } = useToast()
+    const router = useRouter()
     const [events, setEvents] = useState<Event[]>([])
     const [loading, setLoading] = useState(true)
     const [userRegistrations, setUserRegistrations] = useState<Record<string, string>>({})
@@ -150,6 +152,9 @@ export default function EventsPage() {
                 addToast('Berhasil mendaftar kegiatan!', 'success')
             }
 
+            // Force Next.js to re-fetch the server component data
+            router.refresh()
+
             setTermsModalOpen(false)
         } catch (error: any) {
             addToast('Gagal mendaftar: ' + error.message, 'error')
@@ -220,6 +225,9 @@ export default function EventsPage() {
 
             // Date Filter
             if (eventDate < today) return false
+
+            // HIDDEN IF ALREADY REGISTERED:
+            if (userRegistrations[event.id]) return false
 
             // Visibility Filter Logic
             // 1. Online Events -> Visible to ALL
