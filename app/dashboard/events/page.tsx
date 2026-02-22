@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Calendar, AlertCircle, Lock, LayoutList, History } from 'lucide-react'
 import { calculateProfileCompleteness } from '@/lib/utils'
@@ -48,6 +48,36 @@ export default function EventsPage() {
     const [consecutiveAbsences, setConsecutiveAbsences] = useState(0)
     const [isAdmin, setIsAdmin] = useState(false)
 
+    // Pisahkan fetchData agar bisa dipanggil dari Realtime callback
+    const fetchData = useCallback(async () => {
+        if (!isAuthorized) return
+        setLoading(true)
+
+        let eventQuery = supabase
+            .from('events')
+            .select('*, participants:event_participants(status)')
+            .order('date_start', { ascending: false })
+
+        if (!isAdmin) {
+            eventQuery = eventQuery.neq('status', 'Draft')
+        }
+
+        const [eventsRes, registrationsRes, staffRes] = await Promise.all([
+            eventQuery,
+            currentUser ? supabase.from('event_participants').select('event_id, status').eq('user_id', currentUser.id).neq('status', 'Cancelled').neq('status', 'Permitted') : Promise.resolve({ data: [] }),
+            currentUser ? supabase.from('event_staff').select('event_id').eq('user_id', currentUser.id) : Promise.resolve({ data: [] })
+        ])
+
+        if (eventsRes.data) setEvents(eventsRes.data)
+        if (registrationsRes.data) {
+            const map = registrationsRes.data.reduce((acc: any, r: any) => ({ ...acc, [r.event_id]: r.status }), {})
+            setUserRegistrations(map)
+        }
+        if (staffRes.data) setStaffEventIds(staffRes.data.map((s: any) => s.event_id))
+
+        setLoading(false)
+    }, [isAuthorized, isAdmin, currentUser])
+
     // Check Authorization First
     useEffect(() => {
         async function checkAccess() {
@@ -84,41 +114,29 @@ export default function EventsPage() {
     useEffect(() => {
         if (!isAuthorized || isUserLoading) return
 
-        async function fetchData() {
-            setLoading(true)
-
-            // Construct Event Query
-            let eventQuery = supabase
-                .from('events')
-                .select('*, participants:event_participants(status)')
-                .order('date_start', { ascending: false })
-
-            // Only hide drafts for non-admins
-            if (!isAdmin) {
-                eventQuery = eventQuery.neq('status', 'Draft')
-            }
-
-            // Parallel Fetching for smoother experience
-            const [eventsRes, registrationsRes, staffRes] = await Promise.all([
-                eventQuery,
-                currentUser ? supabase.from('event_participants').select('event_id, status').eq('user_id', currentUser.id).neq('status', 'Cancelled').neq('status', 'Permitted') : Promise.resolve({ data: [] }),
-                currentUser ? supabase.from('event_staff').select('event_id').eq('user_id', currentUser.id) : Promise.resolve({ data: [] })
-            ])
-
-            if (eventsRes.data) setEvents(eventsRes.data)
-            if (registrationsRes.data) {
-                const map = registrationsRes.data.reduce((acc: any, r: any) => ({ ...acc, [r.event_id]: r.status }), {})
-                setUserRegistrations(map)
-            }
-            if (staffRes.data) setStaffEventIds(staffRes.data.map((s: any) => s.event_id))
-
-            setLoading(false)
-        }
-
-        if (isAuthorized) {
-            fetchData()
-        }
+        fetchData()
     }, [isAuthorized, isUserLoading, currentUser, isAdmin])
+
+    // Realtime subscription: update kuota langsung saat ada perubahan peserta
+    useEffect(() => {
+        if (!isAuthorized) return
+
+        const channel = supabase
+            .channel('event-participants-changes')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'event_participants' },
+                () => {
+                    // Re-fetch data saat ada perubahan (daftar/batal/check-in oleh siapapun)
+                    fetchData()
+                }
+            )
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [isAuthorized, fetchData])
 
     // Step 1: Click Register -> Open T&C Modal
     const handleRegisterClick = (eventId: string) => {
@@ -126,35 +144,40 @@ export default function EventsPage() {
         setTermsModalOpen(true)
     }
 
-    // Step 2: Confirm T&C -> Insert to DB
+    // Step 2: Confirm T&C -> Panggil RPC atomik di DB
     const handleConfirmRegistration = async () => {
         if (!selectedEventId || !currentUser) return
 
         setRegisteringId(selectedEventId)
 
         try {
-            // Determine status based on sanctions
-            const status = consecutiveAbsences >= 2 ? 'Waiting List' : 'Registered'
-
-            const { error } = await supabase.from('event_participants').insert({
-                event_id: selectedEventId,
-                user_id: currentUser.id,
-                status: status
+            // RPC menentukan status (Registered/Waiting List) secara atomik:
+            // - Cek kuota real-time dengan lock (FOR UPDATE) → aman dari race condition
+            // - Cek sanksi absensi user
+            const { data, error } = await supabase.rpc('register_for_event', {
+                p_event_id: selectedEventId,
+                p_user_id: currentUser.id,
             })
 
             if (error) throw error
 
+            const result = data as { success: boolean; status?: string; message: string }
+
+            if (!result.success) {
+                addToast(result.message, 'error')
+                return
+            }
+
+            const status = result.status as string
             setUserRegistrations(prev => ({ ...prev, [selectedEventId]: status }))
 
             if (status === 'Waiting List') {
-                addToast('Terdaftar di Waiting List (Sanksi Aktif).', 'info')
+                addToast(result.message, 'info')
             } else {
-                addToast('Berhasil mendaftar kegiatan!', 'success')
+                addToast(result.message, 'success')
             }
 
-            // Force Next.js to re-fetch the server component data
             router.refresh()
-
             setTermsModalOpen(false)
         } catch (error: any) {
             addToast('Gagal mendaftar: ' + error.message, 'error')

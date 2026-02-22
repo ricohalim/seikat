@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { X, Search, UserPlus, AlertTriangle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useToast } from '@/app/context/ToastContext'
 
 interface QuickAddModalProps {
     isOpen: boolean
@@ -10,6 +11,7 @@ interface QuickAddModalProps {
 }
 
 export function QuickAddModal({ isOpen, event, onClose, onSuccess }: QuickAddModalProps) {
+    const { addToast } = useToast()
     const [email, setEmail] = useState('')
     const [loading, setLoading] = useState(false)
     const [searchResult, setSearchResult] = useState<any>(null)
@@ -58,7 +60,7 @@ export function QuickAddModal({ isOpen, event, onClose, onSuccess }: QuickAddMod
                 .single()
 
             if (existing) {
-                alert('User ini sudah terdaftar di event ini!')
+                addToast('User ini sudah terdaftar di event ini!', 'info')
                 setLoading(false)
                 return
             }
@@ -69,6 +71,7 @@ export function QuickAddModal({ isOpen, event, onClose, onSuccess }: QuickAddMod
                 .insert({
                     event_id: event.id,
                     user_id: searchResult.id,
+                    status: 'Registered',
                     check_in_time: new Date().toISOString(), // Auto Check-in for On-the-spot
                     notes: 'Walk-in / On-the-spot',
                     tags: ['Walk-in']
@@ -76,11 +79,12 @@ export function QuickAddModal({ isOpen, event, onClose, onSuccess }: QuickAddMod
 
             if (error) throw error
 
-            alert('Berhasil mendaftarkan & check-in peserta!')
+            addToast('Berhasil mendaftarkan & check-in peserta!', 'success')
             onSuccess()
+            onClose()
         } catch (err: any) {
             console.error(err)
-            alert('Gagal mendaftar: ' + err.message)
+            addToast('Gagal mendaftar: ' + err.message, 'error')
         } finally {
             setLoading(false)
         }

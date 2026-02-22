@@ -25,12 +25,13 @@ interface UserEventCardProps {
 }
 
 export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegistering, onRegister, onCancel, registrationStatus }: UserEventCardProps) {
-    // Calculate active participants (excluding Cancelled and Permitted)
-    const activeParticipantsCount = event.participants?.filter(p =>
-        p.status !== 'Cancelled' && p.status !== 'Permitted'
+    // Hitung peserta aktif: hanya 'Registered' (konsisten dengan RPC quota check)
+    // Waiting List tidak dihitung sebagai "mengisi" kuota
+    const registeredCount = event.participants?.filter(p =>
+        p.status === 'Registered'
     ).length || 0
 
-    const isQuotaFull = event.quota > 0 && activeParticipantsCount >= event.quota
+    const isQuotaFull = event.quota > 0 && registeredCount >= event.quota
 
     return (
         <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition flex flex-col group animate-in fade-in zoom-in-95 duration-500">
@@ -86,7 +87,8 @@ export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegist
                                 <span className="text-[10px] uppercase font-bold text-gray-400">Kuota</span>
                                 <span className={`font-medium ${isQuotaFull ? 'text-red-500' : 'text-gray-700'
                                     }`}>
-                                    {activeParticipantsCount} / {event.quota} Peserta
+                                    {registeredCount} / {event.quota} Peserta
+                                    {isQuotaFull && <span className="text-xs font-normal ml-1">(Waiting List tersedia)</span>}
                                 </span>
                             </div>
                         </div>
@@ -97,21 +99,17 @@ export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegist
                     {!isRegistered ? (
                         <button
                             onClick={() => onRegister(event.id)}
-                            disabled={
-                                isClosed ||
-                                isRegistering ||
-                                isQuotaFull
-                            }
+                            disabled={isClosed || isRegistering}
                             className={`w-full font-bold py-2 rounded-lg transition text-sm active:scale-95 ${isClosed
-                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                : isQuotaFull
-                                    ? 'bg-red-50 text-red-400 cursor-not-allowed border border-red-100'
-                                    : 'bg-navy text-white hover:bg-navy/90 shadow-md shadow-navy/20'
+                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                    : isQuotaFull
+                                        ? 'bg-orange/10 text-orange border border-orange/30 hover:bg-orange/20'
+                                        : 'bg-navy text-white hover:bg-navy/90 shadow-md shadow-navy/20'
                                 }`}
                         >
                             {isRegistering ? 'Mendaftarkan...' :
                                 isClosed ? 'Pendaftaran Ditutup' :
-                                    isQuotaFull ? 'Kuota Penuh' :
+                                    isQuotaFull ? 'Daftar (Waiting List)' :
                                         'Daftar Kegiatan'}
                         </button>
                     ) : (

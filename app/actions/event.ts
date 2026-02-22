@@ -25,9 +25,17 @@ export async function selfCheckIn(eventId: string) {
             return { success: false, message: 'Anda belum terdaftar di event ini.' }
         }
 
-        // 3. Check Status (Block Waiting List)
+        // 3. Check Status — blokir semua status yang tidak boleh check-in
         if (participant.status === 'Waiting List') {
             return { success: false, message: 'Status Anda Waiting List (Kena Sanksi).\nHarap lapor ke panitia untuk pemutihan.' }
+        }
+
+        if (participant.status === 'Cancelled') {
+            return { success: false, message: 'Pendaftaran Anda sudah dibatalkan. Anda tidak dapat check-in.' }
+        }
+
+        if (participant.status === 'Permitted') {
+            return { success: false, message: 'Anda telah mengajukan izin tidak hadir untuk event ini.' }
         }
 
         // 4. Check if already checked in

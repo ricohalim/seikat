@@ -123,9 +123,9 @@ export function ParticipantsModal({ isOpen, onClose, eventName, participants, lo
                                                 {new Date(p.checked_in_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                                             </div>
                                         )}
-                                        {p.cancellation_status === 'pending' && (
-                                            <div className="text-[10px] mt-1 p-1 bg-yellow-50 rounded border border-yellow-100 text-yellow-800 text-center mx-auto max-w-[150px]">
-                                                "{p.cancellation_reason}"
+                                        {p.cancellation_status === 'pending' && p.cancellation_reason && (
+                                            <div className="text-[10px] mt-1 p-1 bg-yellow-50 rounded border border-yellow-100 text-yellow-800 text-center mx-auto max-w-[150px] italic">
+                                                &ldquo;{p.cancellation_reason}&rdquo;
                                             </div>
                                         )}
                                     </td>
