@@ -4,9 +4,11 @@ interface UserTableProps {
     onRoleChange: (userId: string, newRole: string) => void
     onViewDetail: (user: any) => void
     onEdit: (user: any) => void
+    onImpersonate: (userId: string) => void
+    impersonateLoading: string | null
 }
 
-export function UserTable({ users, loading, onRoleChange, onViewDetail, onEdit }: UserTableProps) {
+export function UserTable({ users, loading, onRoleChange, onViewDetail, onEdit, onImpersonate, impersonateLoading }: UserTableProps) {
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden select-none"> {/* Anti-Copy: select-none */}
             <table className="w-full text-left border-collapse">
@@ -97,7 +99,14 @@ export function UserTable({ users, loading, onRoleChange, onViewDetail, onEdit }
                                     >
                                         Edit
                                     </button>
-
+                                    <button
+                                        onClick={() => onImpersonate(u.id)}
+                                        disabled={impersonateLoading === u.id}
+                                        className="px-3 py-1.5 bg-amber-500 text-white text-xs font-bold rounded hover:bg-amber-600 transition disabled:opacity-60"
+                                        title="Login sebagai user ini"
+                                    >
+                                        {impersonateLoading === u.id ? '...' : 'Akses Akun'}
+                                    </button>
                                 </div>
                             </td>
                         </tr>

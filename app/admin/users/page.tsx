@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Search, Shield } from 'lucide-react'
+import { Search, Shield, LogIn } from 'lucide-react'
 import { useUsers } from '@/app/hooks/useUsers'
 import { UserTable } from '@/app/components/admin/UserTable'
 import { UserFilters } from '@/app/components/admin/UserFilters'
@@ -22,6 +22,7 @@ export default function UserManagementPage() {
     const [editingUser, setEditingUser] = useState<any>(null)
     const [saveLoading, setSaveLoading] = useState(false)
     const [resetLoading, setResetLoading] = useState(false)
+    const [impersonateLoading, setImpersonateLoading] = useState<string | null>(null)
 
     // Handlers
     const handleRoleChange = async (userId: string, newRole: string) => {
@@ -90,6 +91,33 @@ export default function UserManagementPage() {
         }
     }
 
+    const handleImpersonate = async (userId: string) => {
+        if (!confirm('Buka akun alumni ini di tab baru? Kamu akan login sebagai mereka.')) return
+        setImpersonateLoading(userId)
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) throw new Error('No active session')
+
+            const res = await fetch('/api/admin/impersonate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ targetUserId: userId })
+            })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error)
+
+            // Buka magic link di tab baru
+            window.open(data.link, '_blank')
+        } catch (err: any) {
+            alert('Gagal impersonate: ' + err.message)
+        } finally {
+            setImpersonateLoading(null)
+        }
+    }
+
     if (authLoading) {
         return (
             <div className="flex h-[50vh] items-center justify-center">
@@ -146,6 +174,8 @@ export default function UserManagementPage() {
                 onRoleChange={handleRoleChange}
                 onViewDetail={setSelectedUser}
                 onEdit={setEditingUser}
+                onImpersonate={handleImpersonate}
+                impersonateLoading={impersonateLoading}
             />
 
             {/* Pagination Controls */}
