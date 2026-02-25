@@ -128,6 +128,14 @@ export default function LoginPage() {
                         <div className="space-y-1">
                             <div className="flex justify-between items-center">
                                 <label className="text-xs font-bold text-navy uppercase tracking-wide">Password</label>
+                                <a
+                                    href="https://api.whatsapp.com/send/?phone=6282398243245&text=Halo%2C+Saya+mau+mengubah+password+akun+saya.%0ANama+Lengkap%3A%0AEmail%3A&type=phone_number&app_absent=0"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-azure hover:text-navy font-semibold transition-colors"
+                                >
+                                    Lupa Password?
+                                </a>
                             </div>
                             <input
                                 type="password"

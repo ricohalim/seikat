@@ -54,12 +54,28 @@ export function useAgendas() {
         }
     }
 
+    const fetchEventsSilent = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('events')
+                .select(`*, participants:event_participants(count)`)
+                .order('date_start', { ascending: false })
+            if (error) throw error
+            if (data) setEvents(data)
+        } catch { /* silent */ }
+    }
+
     // Initial Fetch
     useEffect(() => {
-        // Only fetch if we are in browser (client-side)
         if (typeof window !== 'undefined') {
             fetchEvents()
         }
+    }, [])
+
+    // Auto-refresh setiap 30 detik (silent — tanpa loading spinner)
+    useEffect(() => {
+        const interval = setInterval(fetchEventsSilent, 30_000)
+        return () => clearInterval(interval)
     }, [])
 
     return {

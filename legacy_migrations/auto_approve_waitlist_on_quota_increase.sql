@@ -47,7 +47,7 @@ BEGIN
         FROM event_participants
         WHERE event_id = NEW.id
           AND status = 'Waiting List'
-        ORDER BY created_at ASC
+        ORDER BY id ASC
         LIMIT v_available_slots
     LOOP
         UPDATE event_participants
