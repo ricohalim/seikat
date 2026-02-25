@@ -32,12 +32,13 @@ export function AgendaFormModal({ isOpen, onClose, onSubmit, initialData, isEdit
         title: '',
         description: '',
         date_start: '',
-        registration_deadline: '', // NEW
+        registration_deadline: '',
+        opens_at: '',
         location: '',
         status: 'Draft',
         quota: 0,
         scope: 'nasional',
-        province: [], // Changed to array
+        province: [],
         is_online: false
     })
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -62,7 +63,8 @@ export function AgendaFormModal({ isOpen, onClose, onSubmit, initialData, isEdit
                     title: initialData.title || '',
                     description: initialData.description || '',
                     date_start: initialData.date_start ? formatDateForInput(initialData.date_start) : '',
-                    registration_deadline: initialData.registration_deadline ? formatDateForInput(initialData.registration_deadline) : '', // NEW
+                    registration_deadline: initialData.registration_deadline ? formatDateForInput(initialData.registration_deadline) : '',
+                    opens_at: initialData.opens_at ? formatDateForInput(initialData.opens_at) : '',
                     location: initialData.location || '',
                     status: initialData.status || 'Open',
                     quota: initialData.quota || 0,
@@ -77,12 +79,13 @@ export function AgendaFormModal({ isOpen, onClose, onSubmit, initialData, isEdit
                         title: '',
                         description: '',
                         date_start: '',
-                        registration_deadline: '', // NEW
+                        registration_deadline: '',
+                        opens_at: '',
                         location: '',
                         status: 'Draft',
                         quota: 0,
-                        scope: 'regional', // Locked to regional
-                        province: managedProvinces, // Default select all managed provinces
+                        scope: 'regional',
+                        province: managedProvinces,
                         is_online: false
                     })
                 } else {
@@ -107,11 +110,10 @@ export function AgendaFormModal({ isOpen, onClose, onSubmit, initialData, isEdit
             setIsSubmitting(true)
             const payload = {
                 ...formData,
-                // Ensure date is sent as ISO UTC
                 date_start: formData.date_start ? new Date(formData.date_start).toISOString() : null,
-                registration_deadline: formData.registration_deadline ? new Date(formData.registration_deadline).toISOString() : null, // NEW
+                registration_deadline: formData.registration_deadline ? new Date(formData.registration_deadline).toISOString() : null,
+                opens_at: formData.opens_at ? new Date(formData.opens_at).toISOString() : null,
                 quota: formData.quota === '' ? 0 : Number(formData.quota),
-                // Normalize data
                 province: (formData.scope === 'regional' && !formData.is_online) ? formData.province : null
             }
             await onSubmit(e, payload)
@@ -274,6 +276,22 @@ export function AgendaFormModal({ isOpen, onClose, onSubmit, initialData, isEdit
                             <p className="text-[10px] text-gray-400 mt-1">*Opsional. Kosongkan jika tanpa deadline.</p>
                         </div>
                     </div>
+
+                    {/* Auto-open field — only visible when status is Draft */}
+                    {formData.status === 'Draft' && (
+                        <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                            <label className="block text-xs font-bold text-amber-700 uppercase mb-1">⏰ Buka Otomatis Pada</label>
+                            <input
+                                type="datetime-local"
+                                className="w-full border border-amber-200 rounded-lg p-2 text-sm bg-white focus:ring-2 focus:ring-amber-300 outline-none"
+                                value={formData.opens_at || ''}
+                                onChange={e => setFormData({ ...formData, opens_at: e.target.value })}
+                            />
+                            <p className="text-[10px] text-amber-600 mt-1">
+                                *Opsional. Jika diisi, agenda akan otomatis berubah ke <strong>Open</strong> pada waktu tersebut.
+                            </p>
+                        </div>
+                    )}
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
