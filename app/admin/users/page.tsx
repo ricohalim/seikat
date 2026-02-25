@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Search, Shield, LogIn } from 'lucide-react'
+import { toast } from 'sonner'
 import { useUsers } from '@/app/hooks/useUsers'
 import { UserTable } from '@/app/components/admin/UserTable'
 import { UserFilters } from '@/app/components/admin/UserFilters'
@@ -92,7 +93,7 @@ export default function UserManagementPage() {
     }
 
     const handleImpersonate = async (userId: string) => {
-        if (!confirm('⚠️ Session admin kamu di tab ini akan berakhir setelah membuka akun alumni.\n\nDisarankan klik "Batal" lalu buka tab Incognito untuk menjaga session admin.\n\nLanjutkan?')) return
+        if (!confirm('Salin link akses alumni ini? (Paste di Tab Incognito agar session Admin tetap aktif)')) return
         setImpersonateLoading(userId)
         try {
             const { data: { session } } = await supabase.auth.getSession()
@@ -109,8 +110,13 @@ export default function UserManagementPage() {
             const data = await res.json()
             if (!res.ok) throw new Error(data.error)
 
-            // Buka magic link di tab baru
-            window.open(data.link, '_blank')
+            // Copy ke clipboard agar bisa di-paste di Incognito
+            await navigator.clipboard.writeText(data.link)
+            toast.success("Link akses disalin! Buka di Tab Incognito.", {
+                description: "Ini mencegah session admin kamu logout.",
+                duration: 5000
+            })
+
         } catch (err: any) {
             alert('Gagal impersonate: ' + err.message)
         } finally {

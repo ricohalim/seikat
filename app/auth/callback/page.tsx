@@ -9,17 +9,16 @@ export default function AuthCallbackPage() {
 
     useEffect(() => {
         const handleAuth = async () => {
-            // 1. Ambil token dari URL hash (#access_token=...)
+            // Ambil token dari URL hash (#access_token=...)
             const hash = window.location.hash.substring(1)
             const params = new URLSearchParams(hash)
             const accessToken = params.get('access_token')
             const refreshToken = params.get('refresh_token')
 
             if (accessToken && refreshToken) {
-                // 2. Sign out dulu untuk memastikan session lama (admin) bersih
-                await supabase.auth.signOut()
-
-                // 3. Set session baru secara manual menggunakan token alumni
+                // Set session baru secara manual menggunakan token alumni
+                // Catatan: Jika dibuka di browser yang sama dengan admin, 
+                // ini akan menimpa session admin. Disarankan buka di Incognito.
                 const { error } = await supabase.auth.setSession({
                     access_token: accessToken,
                     refresh_token: refreshToken
@@ -28,12 +27,10 @@ export default function AuthCallbackPage() {
                 if (!error) {
                     router.replace('/dashboard')
                     return
-                } else {
-                    console.error("Auth error:", error)
                 }
             }
 
-            // Fallback: Jika tidak ada token atau error, cek session aktif
+            // Fallback: Jika tidak ada token, cek session aktif
             const { data: { session } } = await supabase.auth.getSession()
             if (session) {
                 router.replace('/dashboard')
@@ -50,7 +47,6 @@ export default function AuthCallbackPage() {
             <div className="text-center space-y-4">
                 <div className="w-10 h-10 border-4 border-navy border-t-transparent rounded-full animate-spin mx-auto" />
                 <p className="text-gray-500 text-sm font-medium">Memproses login alumni...</p>
-                <p className="text-[10px] text-gray-400">Mohon tunggu sebentar</p>
             </div>
         </div>
     )
