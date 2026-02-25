@@ -24,6 +24,7 @@ export default function UserManagementPage() {
     const [saveLoading, setSaveLoading] = useState(false)
     const [resetLoading, setResetLoading] = useState(false)
     const [impersonateLoading, setImpersonateLoading] = useState<string | null>(null)
+    const [changeEmailLoading, setChangeEmailLoading] = useState(false)
 
     // Handlers
     const handleRoleChange = async (userId: string, newRole: string) => {
@@ -89,6 +90,35 @@ export default function UserManagementPage() {
             alert('Error: ' + err.message)
         } finally {
             setResetLoading(false)
+        }
+    }
+
+    const handleChangeEmail = async (userId: string, newEmail: string) => {
+        if (!newEmail) return alert('Email tidak boleh kosong!')
+        if (!confirm(`Ubah email user ini menjadi "${newEmail}"? Mereka perlu login ulang dengan email baru.`)) return
+
+        setChangeEmailLoading(true)
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) throw new Error('No active session')
+
+            const res = await fetch('/api/admin/change-email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ targetUserId: userId, newEmail })
+            })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error)
+
+            updateUserLocal({ id: userId, email: newEmail })
+            alert(`Email berhasil diubah ke ${newEmail}`)
+        } catch (err: any) {
+            alert('Gagal ubah email: ' + err.message)
+        } finally {
+            setChangeEmailLoading(false)
         }
     }
 
@@ -221,6 +251,8 @@ export default function UserManagementPage() {
                 onSave={handleSaveUser}
                 onResetPassword={handleResetPassword}
                 resetLoading={resetLoading}
+                onChangeEmail={handleChangeEmail}
+                changeEmailLoading={changeEmailLoading}
             />
         </div>
     )

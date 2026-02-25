@@ -18,9 +18,11 @@ interface EditUserModalProps {
     loading: boolean
     onResetPassword: (userId: string, password: string) => Promise<void>
     resetLoading: boolean
+    onChangeEmail: (userId: string, newEmail: string) => Promise<void>
+    changeEmailLoading: boolean
 }
 
-export function EditUserModal({ isOpen, user, onClose, onSave, loading, onResetPassword, resetLoading }: EditUserModalProps) {
+export function EditUserModal({ isOpen, user, onClose, onSave, loading, onResetPassword, resetLoading, onChangeEmail, changeEmailLoading }: EditUserModalProps) {
     const [editForm, setEditForm] = useState<any>({
         full_name: user?.full_name,
         phone: user?.phone,
@@ -68,6 +70,8 @@ export function EditUserModal({ isOpen, user, onClose, onSave, loading, onResetP
 
     const [showResetInput, setShowResetInput] = useState(false)
     const [newPassword, setNewPassword] = useState('')
+    const [showEmailInput, setShowEmailInput] = useState(false)
+    const [newEmail, setNewEmail] = useState('')
 
     if (!isOpen || !user) return null
 
@@ -236,6 +240,48 @@ export function EditUserModal({ isOpen, user, onClose, onSave, loading, onResetP
                             )}
                         </div>
                     )}
+
+                    {/* CHANGE EMAIL SECTION */}
+                    <div className="pt-4 border-t border-gray-100">
+                        {!showEmailInput ? (
+                            <button
+                                type="button"
+                                onClick={() => setShowEmailInput(true)}
+                                className="text-xs font-bold text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-lg transition flex items-center gap-2"
+                            >
+                                ✉️ Ubah Email User Ini
+                            </button>
+                        ) : (
+                            <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 animate-in fade-in slide-in-from-top-2">
+                                <label className="text-xs font-bold text-blue-800 uppercase mb-2 block">Email Baru</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="email"
+                                        placeholder="email@baru.com"
+                                        className="flex-1 p-2 text-sm border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-200 outline-none"
+                                        value={newEmail}
+                                        onChange={(e) => setNewEmail(e.target.value)}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => onChangeEmail(user.id, newEmail)}
+                                        disabled={changeEmailLoading}
+                                        className="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 disabled:opacity-70"
+                                    >
+                                        {changeEmailLoading ? '...' : 'Ubah'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setShowEmailInput(false); setNewEmail('') }}
+                                        className="text-blue-500 p-2 hover:bg-blue-100 rounded-lg"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                                <p className="text-[10px] text-blue-500 mt-1">Alumni perlu login ulang dengan email baru setelah diubah.</p>
+                            </div>
+                        )}
+                    </div>
 
                     {/* RESET PASSWORD SECTION */}
                     <div className="pt-4 border-t border-gray-100">
