@@ -49,7 +49,8 @@ export async function updateSession(request: NextRequest) {
     }
 
     // 2. Sudah login → akses /auth → redirect dashboard
-    if (user && pathname.startsWith('/auth')) {
+    // KECUALI /auth/callback karena perlu memproses token impersonasi/magiclink
+    if (user && pathname.startsWith('/auth') && pathname !== '/auth/callback') {
         const url = request.nextUrl.clone()
         url.pathname = '/dashboard'
         return NextResponse.redirect(url)
