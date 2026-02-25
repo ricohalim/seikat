@@ -1,8 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const ADMIN_ROLES = ['admin', 'superadmin', 'korwil'] as const
-
 export async function updateSession(request: NextRequest) {
     let response = NextResponse.next({
         request: {
@@ -10,7 +8,6 @@ export async function updateSession(request: NextRequest) {
         },
     })
 
-    // Create the client
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder',
@@ -34,15 +31,16 @@ export async function updateSession(request: NextRequest) {
         }
     )
 
-    // Get User (always call this to refresh session cookies)
+    // Gunakan getSession() — baca dari cookie, TANPA network call ke Supabase
+    // getUser() menyebabkan 504 timeout di Vercel Edge Runtime
     const {
-        data: { user },
-    } = await supabase.auth.getUser()
+        data: { session },
+    } = await supabase.auth.getSession()
 
+    const user = session?.user ?? null
     const pathname = request.nextUrl.pathname
 
-    // ROUTE PROTECTION RULES
-    // 1. If user is NOT logged in and tries to access /dashboard or /admin -> Redirect to login
+    // 1. Belum login → akses /dashboard atau /admin → redirect login
     if (!user && (pathname.startsWith('/dashboard') || pathname.startsWith('/admin'))) {
         const url = request.nextUrl.clone()
         url.pathname = '/auth/login'
@@ -50,29 +48,15 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url)
     }
 
-    // 2. If user IS logged in and tries to access /auth pages -> Redirect to dashboard
+    // 2. Sudah login → akses /auth → redirect dashboard
     if (user && pathname.startsWith('/auth')) {
         const url = request.nextUrl.clone()
         url.pathname = '/dashboard'
         return NextResponse.redirect(url)
     }
 
-    // 3. If user IS logged in and tries to access /admin -> Check role (server-side, before render)
-    if (user && pathname.startsWith('/admin')) {
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', user.id)
-            .single()
-
-        const userRole = profile?.role as string | undefined
-        if (!userRole || !ADMIN_ROLES.includes(userRole as typeof ADMIN_ROLES[number])) {
-            // Not an admin -> redirect to member dashboard
-            const url = request.nextUrl.clone()
-            url.pathname = '/dashboard'
-            return NextResponse.redirect(url)
-        }
-    }
+    // Catatan: role check untuk /admin dilakukan di dalam masing-masing page
+    // untuk menghindari extra DB query di Edge Runtime (penyebab timeout 504)
 
     return response
 }
