@@ -92,7 +92,7 @@ export default function UserManagementPage() {
     }
 
     const handleImpersonate = async (userId: string) => {
-        if (!confirm('Buka akun alumni ini di tab baru? Kamu akan login sebagai mereka.')) return
+        if (!confirm('⚠️ Session admin kamu di tab ini akan berakhir setelah membuka akun alumni.\n\nDisarankan klik "Batal" lalu buka tab Incognito untuk menjaga session admin.\n\nLanjutkan?')) return
         setImpersonateLoading(userId)
         try {
             const { data: { session } } = await supabase.auth.getSession()

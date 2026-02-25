@@ -8,20 +8,18 @@ export default function AuthCallbackPage() {
     const router = useRouter()
 
     useEffect(() => {
-        // Supabase client otomatis proses #access_token dari URL hash
-        // Dengarkan event SIGNED_IN lalu redirect ke dashboard
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            if (session) {
-                router.replace('/dashboard')
-            }
-        })
+        // 1. Sign out dari session saat ini (admin) supaya token alumni bisa masuk
+        supabase.auth.signOut().then(() => {
+            // 2. Setelah signout, Supabase akan proses #access_token dari URL hash
+            // dan trigger onAuthStateChange dengan session baru (alumni)
+            const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_IN' && session) {
+                    router.replace('/dashboard')
+                }
+            })
 
-        // Fallback: kalau session sudah ada langsung redirect
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session) router.replace('/dashboard')
+            return () => subscription.unsubscribe()
         })
-
-        return () => subscription.unsubscribe()
     }, [])
 
     return (
