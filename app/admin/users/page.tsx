@@ -113,8 +113,8 @@ export default function UserManagementPage() {
             // Copy ke clipboard agar bisa di-paste di Incognito
             await navigator.clipboard.writeText(data.link)
             toast.success("Link akses disalin! Buka di Tab Incognito.", {
-                description: "Ini mencegah session admin kamu logout.",
-                duration: 5000
+                description: "Link ini sangat rahasia dan akan basi dalam 5 menit.",
+                duration: 6000
             })
 
         } catch (err: any) {
