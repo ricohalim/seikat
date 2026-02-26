@@ -25,6 +25,7 @@ export default function UserManagementPage() {
     const [resetLoading, setResetLoading] = useState(false)
     const [impersonateLoading, setImpersonateLoading] = useState<string | null>(null)
     const [changeEmailLoading, setChangeEmailLoading] = useState(false)
+    const [deleteLoading, setDeleteLoading] = useState<string | null>(null)
 
     // Handlers
     const handleRoleChange = async (userId: string, newRole: string) => {
@@ -154,6 +155,42 @@ export default function UserManagementPage() {
         }
     }
 
+    const handleDeleteUser = async (userId: string, userName: string) => {
+        if (!confirm(`PERINGATAN KERAS: Yakin ingin MENGHAPUS PERMANEN akun "${userName}"? Data ini tidak bisa dikembalikan.`)) return
+        if (prompt(`Ketik "HAPUS" untuk mengonfirmasi penghapusan ${userName}:`) !== 'HAPUS') {
+            alert('Penghapusan dibatalkan.')
+            return
+        }
+
+        setDeleteLoading(userId)
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) throw new Error('No active session')
+
+            const res = await fetch('/api/admin/delete-user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ targetUserId: userId })
+            })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error)
+
+            toast.success(`User ${userName} berhasil dihapus permanen.`)
+
+            // Reload user list by triggering fetch again or decrementing totalItems and filtering
+            // For simplicity, we can do a hard refresh or reset the page
+            window.location.reload()
+
+        } catch (err: any) {
+            alert('Gagal menghapus user: ' + err.message)
+        } finally {
+            setDeleteLoading(null)
+        }
+    }
+
     if (authLoading) {
         return (
             <div className="flex h-[50vh] items-center justify-center">
@@ -207,11 +244,14 @@ export default function UserManagementPage() {
             <UserTable
                 users={users}
                 loading={loading}
+                currentUserRole={currentUserRole}
                 onRoleChange={handleRoleChange}
                 onViewDetail={setSelectedUser}
                 onEdit={setEditingUser}
                 onImpersonate={handleImpersonate}
                 impersonateLoading={impersonateLoading}
+                onDelete={handleDeleteUser}
+                deleteLoading={deleteLoading}
             />
 
             {/* Pagination Controls */}

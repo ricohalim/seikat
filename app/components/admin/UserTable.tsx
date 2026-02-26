@@ -1,14 +1,17 @@
 interface UserTableProps {
     users: any[]
     loading: boolean
+    currentUserRole: string
     onRoleChange: (userId: string, newRole: string) => void
     onViewDetail: (user: any) => void
     onEdit: (user: any) => void
     onImpersonate: (userId: string) => void
     impersonateLoading: string | null
+    onDelete: (userId: string, userName: string) => void
+    deleteLoading: string | null
 }
 
-export function UserTable({ users, loading, onRoleChange, onViewDetail, onEdit, onImpersonate, impersonateLoading }: UserTableProps) {
+export function UserTable({ users, loading, currentUserRole, onRoleChange, onViewDetail, onEdit, onImpersonate, impersonateLoading, onDelete, deleteLoading }: UserTableProps) {
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden select-none"> {/* Anti-Copy: select-none */}
             <table className="w-full text-left border-collapse">
@@ -99,6 +102,16 @@ export function UserTable({ users, loading, onRoleChange, onViewDetail, onEdit, 
                                     >
                                         Edit
                                     </button>
+                                    {currentUserRole === 'superadmin' && (
+                                        <button
+                                            onClick={() => onDelete(u.id, u.full_name)}
+                                            disabled={deleteLoading === u.id}
+                                            className="px-3 py-1.5 bg-red-600 text-white text-xs font-bold rounded hover:bg-red-700 transition disabled:opacity-60"
+                                            title="Hapus Permanen User"
+                                        >
+                                            {deleteLoading === u.id ? '...' : 'Hapus'}
+                                        </button>
+                                    )}
                                     <button
                                         onClick={() => onImpersonate(u.id)}
                                         disabled={impersonateLoading === u.id}
