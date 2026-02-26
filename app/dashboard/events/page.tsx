@@ -19,7 +19,7 @@ interface Event {
     location: string
     status: string
     quota: number
-    participants?: { status: string }[]
+    participants?: { status: string, user_id?: string, registered_at?: string }[]
     scope?: string
     province?: string[] // Changed to array
     is_online?: boolean
@@ -55,7 +55,7 @@ export default function EventsPage() {
 
         let eventQuery = supabase
             .from('events')
-            .select('*, participants:event_participants(status)')
+            .select('*, participants:event_participants(user_id, status, registered_at)')
             .order('date_start', { ascending: false })
 
         if (!isAdmin) {
@@ -352,19 +352,31 @@ export default function EventsPage() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {displayedEvents.map((event) => (
-                        <UserEventCard
-                            key={event.id}
-                            event={event}
-                            isRegistered={!!userRegistrations[event.id]}
-                            registrationStatus={userRegistrations[event.id]}
-                            isClosed={event.status !== 'Open'}
-                            isStaff={staffEventIds.includes(event.id)}
-                            isRegistering={false}
-                            onRegister={() => handleRegisterClick(event.id)}
-                            onCancel={() => handleCancelClick(event.id)}
-                        />
-                    ))}
+                    {displayedEvents.map((event) => {
+                        // Hitung nomor antrean
+                        let queueNumber = undefined;
+                        if (userRegistrations[event.id] && event.participants && currentUser) {
+                            const activeParticipants = event.participants.filter(p => p.status === 'Registered' || p.status === 'Waiting List');
+                            activeParticipants.sort((a, b) => new Date(a.registered_at || 0).getTime() - new Date(b.registered_at || 0).getTime());
+                            const index = activeParticipants.findIndex(p => p.user_id === currentUser.id);
+                            if (index !== -1) queueNumber = index + 1;
+                        }
+
+                        return (
+                            <UserEventCard
+                                key={event.id}
+                                event={event}
+                                isRegistered={!!userRegistrations[event.id]}
+                                registrationStatus={userRegistrations[event.id]}
+                                queueNumber={queueNumber}
+                                isClosed={event.status !== 'Open'}
+                                isStaff={staffEventIds.includes(event.id)}
+                                isRegistering={false}
+                                onRegister={() => handleRegisterClick(event.id)}
+                                onCancel={() => handleCancelClick(event.id)}
+                            />
+                        )
+                    })}
                 </div>
             )}
 

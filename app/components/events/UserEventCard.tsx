@@ -22,9 +22,10 @@ interface UserEventCardProps {
     onRegister: (id: string) => void
     onCancel: (id: string) => void
     registrationStatus?: string
+    queueNumber?: number
 }
 
-export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegistering, onRegister, onCancel, registrationStatus }: UserEventCardProps) {
+export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegistering, onRegister, onCancel, registrationStatus, queueNumber }: UserEventCardProps) {
     // Hitung peserta aktif: hanya 'Registered' (konsisten dengan RPC quota check)
     // Waiting List tidak dihitung sebagai "mengisi" kuota
     const registeredCount = event.participants?.filter(p =>
@@ -39,13 +40,15 @@ export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegist
             <div className="p-6 flex-1 flex flex-col">
                 <div className="flex justify-between items-start mb-4">
                     <h3 className="text-xl font-bold text-navy line-clamp-2" title={event.title}>{event.title}</h3>
-                    <span className={`text-xs font-bold px-2 py-1 rounded-full uppercase ${isRegistered ? 'bg-green-100 text-green-700' :
-                        isClosed ? 'bg-gray-100 text-gray-500' :
-                            event.status === 'Draft' ? 'bg-purple-50 text-purple-600 border border-purple-100' :
-                                'bg-blue-50 text-blue-600'
-                        }`}>
-                        {isRegistered ? 'Terdaftar' : event.status}
-                    </span>
+                    <div className="flex flex-col gap-1 items-end">
+                        <span className={`text-xs font-bold px-3 py-1 rounded-full uppercase ${isRegistered ? 'bg-[#dcfce7] text-[#16a34a]' :
+                            isClosed ? 'bg-gray-100 text-gray-500' :
+                                event.status === 'Draft' ? 'bg-purple-50 text-purple-600 border border-purple-100' :
+                                    'bg-blue-50 text-blue-600'
+                            }`}>
+                            {isRegistered ? 'Terdaftar' : event.status}
+                        </span>
+                    </div>
                 </div>
 
                 <p className="text-gray-600 text-sm mb-6 line-clamp-3 min-h-[4.5em]">
@@ -101,10 +104,10 @@ export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegist
                             onClick={() => onRegister(event.id)}
                             disabled={isClosed || isRegistering}
                             className={`w-full font-bold py-2 rounded-lg transition text-sm active:scale-95 ${isClosed
-                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                    : isQuotaFull
-                                        ? 'bg-orange/10 text-orange border border-orange/30 hover:bg-orange/20'
-                                        : 'bg-navy text-white hover:bg-navy/90 shadow-md shadow-navy/20'
+                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                : isQuotaFull
+                                    ? 'bg-orange/10 text-orange border border-orange/30 hover:bg-orange/20'
+                                    : 'bg-navy text-white hover:bg-navy/90 shadow-md shadow-navy/20'
                                 }`}
                         >
                             {isRegistering ? 'Mendaftarkan...' :
@@ -117,11 +120,19 @@ export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegist
                             {registrationStatus === 'Waiting List' ? (
                                 <div className="p-3 bg-orange/10 text-orange rounded-lg text-center font-bold text-sm border border-orange/20 animate-in fade-in zoom-in duration-300 flex flex-col gap-1">
                                     <span>⚠️ Status: Waiting List</span>
-                                    <span className="text-[10px] font-normal opacity-80">(Kuota Penuh / Sanksi Aktif)</span>
+                                    {queueNumber && <span className="text-[10px] font-normal opacity-80">(Antrean ke-{queueNumber})</span>}
+                                    {!queueNumber && <span className="text-[10px] font-normal opacity-80">(Kuota Penuh / Sanksi Aktif)</span>}
                                 </div>
                             ) : (
-                                <div className="p-3 bg-green-50 text-green-700 rounded-lg text-center font-bold text-sm border border-green-100 animate-in fade-in zoom-in duration-300">
-                                    Anda Telah Terdaftar
+                                <div className="p-3 bg-[#f2fcf5] text-[#008a3d] rounded-lg text-center border border-[#e5f5ea] animate-in fade-in zoom-in duration-300 flex flex-col gap-1 shadow-sm">
+                                    <span className="font-bold text-[15px] flex items-center justify-center gap-2">
+                                        🎉 Anda Telah Terdaftar!
+                                    </span>
+                                    {queueNumber && (
+                                        <span className="text-[13px] font-medium opacity-90">
+                                            Anda adalah peserta ke-{queueNumber} yang mengamankan kursi.
+                                        </span>
+                                    )}
                                 </div>
                             )}
 
