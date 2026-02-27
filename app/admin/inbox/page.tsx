@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { getInboxMessages, createBroadcastMessage, deleteMessage, archiveMessage, unarchiveMessage, updateMessage } from '@/app/actions/inbox'
-import { Trash2, Plus, Send, Megaphone, Loader2, X, Archive, Calendar as CalendarIcon, Clock, RefreshCcw, Pencil, Save } from 'lucide-react'
+import { Trash2, Plus, Send, Megaphone, Loader2, X, Archive, Calendar as CalendarIcon, Clock, RefreshCcw, Pencil, Save, ChevronRight } from 'lucide-react'
 import { useToast } from '@/app/context/ToastContext'
 
 import { Switch } from '@/app/components/ui/Switch'
+import { linkify } from '@/lib/linkify'
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Button } from "@/app/components/ui/button"
@@ -22,6 +23,7 @@ export default function AdminInboxPage() {
     const [isCreating, setIsCreating] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const [showArchived, setShowArchived] = useState(false)
+    const [selectedMessage, setSelectedMessage] = useState<any | null>(null)
 
     // Edit State
     const [isEditing, setIsEditing] = useState(false)
@@ -310,11 +312,15 @@ export default function AdminInboxPage() {
                 ) : (
                     <div className="divide-y divide-gray-100">
                         {messages.map((msg) => (
-                            <div key={msg.id} className={`p-4 transition group ${showArchived ? 'bg-gray-50/50' : 'hover:bg-gray-50'}`}>
-                                <div className="flex justify-between items-start">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-3 mb-1">
-                                            <h4 className="font-bold text-gray-900">{msg.title}</h4>
+                            <div
+                                key={msg.id}
+                                onClick={() => setSelectedMessage(msg)}
+                                className={`p-5 transition group border-b border-gray-100 last:border-0 cursor-pointer ${showArchived ? 'bg-gray-50/50 hover:bg-gray-100' : 'hover:bg-blue-50/50'}`}
+                            >
+                                <div className="flex justify-between items-start gap-4">
+                                    <div className="flex-1 w-full overflow-hidden">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <h4 className="font-bold text-gray-900 text-lg group-hover:text-blue-600 transition-colors">{msg.title}</h4>
                                             {msg.expires_at && (
                                                 <span className={`text-xs px-2 py-0.5 rounded-full border flex items-center gap-1 ${new Date(msg.expires_at) < new Date()
                                                     ? 'bg-red-50 text-red-600 border-red-100'
@@ -334,15 +340,25 @@ export default function AdminInboxPage() {
                                                 })}
                                             </span>
                                         </div>
-                                        <p className="text-gray-600 text-sm whitespace-pre-wrap">{msg.content}</p>
-                                        <p className="text-xs text-gray-400 mt-2">
-                                            Oleh: <span className="font-medium text-gray-600">{msg.profiles?.full_name || 'Unknown'}</span>
-                                        </p>
+                                        <div className="prose prose-sm max-w-none text-gray-500 line-clamp-2">
+                                            <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                                        </div>
+
+                                        <div className="mt-4 flex items-center justify-between gap-2">
+                                            <p className="text-xs text-gray-400">
+                                                Oleh: <span className="font-medium text-gray-600">{msg.profiles?.full_name || 'Unknown'}</span>
+                                            </p>
+                                            <span className="text-sm font-semibold text-blue-600 flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                                                Lihat Preview
+                                                <ChevronRight size={16} />
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition">
+
+                                    <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition shrink-0 bg-white shadow-sm border rounded-lg p-1" onClick={(e) => e.stopPropagation()}>
                                         <button
-                                            onClick={() => openEdit(msg)}
-                                            className="text-gray-500 hover:text-blue-600 p-2 transition"
+                                            onClick={(e) => { e.stopPropagation(); openEdit(msg); }}
+                                            className="text-gray-500 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-md transition"
                                             title="Edit Pesan"
                                         >
                                             <Pencil size={18} />
@@ -350,16 +366,16 @@ export default function AdminInboxPage() {
 
                                         {showArchived ? (
                                             <button
-                                                onClick={() => handleUnarchive(msg.id)}
-                                                className="text-gray-500 hover:text-blue-600 p-2 transition"
+                                                onClick={(e) => { e.stopPropagation(); handleUnarchive(msg.id); }}
+                                                className="text-gray-500 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-md transition"
                                                 title="Pulihkan (Unarchive)"
                                             >
                                                 <RefreshCcw size={18} />
                                             </button>
                                         ) : (
                                             <button
-                                                onClick={() => handleArchive(msg.id)}
-                                                className="text-gray-500 hover:text-orange-500 p-2 transition"
+                                                onClick={(e) => { e.stopPropagation(); handleArchive(msg.id); }}
+                                                className="text-gray-500 hover:text-orange-600 hover:bg-orange-50 p-2 rounded-md transition"
                                                 title="Arsipkan"
                                             >
                                                 <Archive size={18} />
@@ -367,8 +383,8 @@ export default function AdminInboxPage() {
                                         )}
 
                                         <button
-                                            onClick={() => handleDelete(msg.id)}
-                                            className="text-gray-500 hover:text-red-500 p-2 transition"
+                                            onClick={(e) => { e.stopPropagation(); handleDelete(msg.id); }}
+                                            className="text-gray-500 hover:text-red-600 hover:bg-red-50 p-2 rounded-md transition"
                                             title="Hapus Permanen"
                                         >
                                             <Trash2 size={18} />
@@ -380,6 +396,70 @@ export default function AdminInboxPage() {
                     </div>
                 )}
             </div>
+            {/* MESSAGE MODAL */}
+            {selectedMessage && (
+                <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setSelectedMessage(null)}>
+                    <div
+                        className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="bg-navy p-5 flex justify-between items-center text-white shrink-0">
+                            <div className="flex items-center gap-3">
+                                <Megaphone className="text-blue-300" size={20} />
+                                <h3 className="font-bold text-lg md:text-xl pr-4 leading-tight">
+                                    Preview: {selectedMessage.title}
+                                </h3>
+                            </div>
+                            <button onClick={() => setSelectedMessage(null)} className="hover:bg-white/20 p-2 rounded-full transition bg-white/10 shrink-0">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-5 overflow-y-auto w-full">
+                            <div className="flex items-center gap-4 mb-6 pb-4 border-b border-gray-100 text-sm text-gray-500">
+                                <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                                    <CalendarIcon size={14} />
+                                    {new Date(selectedMessage.created_at).toLocaleDateString('id-ID', {
+                                        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+                                    })}
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="px-2 py-1 bg-navy/5 text-navy font-medium rounded">
+                                        Pembuat: {selectedMessage.profiles?.full_name || 'Unknown'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="prose prose-sm md:prose-base max-w-none text-gray-700 leading-relaxed overflow-x-hidden">
+                                {linkify(selectedMessage.content)}
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-4 bg-gray-50 flex justify-end gap-3 border-t border-gray-100 shrink-0">
+                            <button
+                                onClick={() => {
+                                    const msg = selectedMessage;
+                                    setSelectedMessage(null);
+                                    openEdit(msg);
+                                }}
+                                className="px-5 py-2.5 bg-blue-50 text-blue-700 font-bold rounded-lg hover:bg-blue-100 transition flex items-center gap-2"
+                            >
+                                <Pencil size={18} />
+                                Edit Pesan
+                            </button>
+                            <button
+                                onClick={() => setSelectedMessage(null)}
+                                className="px-6 py-2.5 bg-navy text-white font-bold rounded-lg hover:bg-navy/90 transition"
+                            >
+                                Tutup Preview
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
