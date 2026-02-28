@@ -132,6 +132,7 @@ export default function AdminAgendasPage() {
             .from('event_participants')
             .select(`*, profiles:user_id (*)`)
             .eq('event_id', eventId)
+            .order('registered_at', { ascending: true })
 
         if (error) {
             addToast('Gagal memuat peserta: ' + error.message, 'error')

@@ -79,7 +79,7 @@ export function ParticipantsModal({ isOpen, onClose, eventName, participants, lo
                         <thead className="bg-gray-50 text-gray-500 uppercase text-xs font-bold tracking-wider">
                             <tr>
                                 <th className="p-4">Peserta</th>
-                                <th className="p-4 text-center">Status</th>
+                                <th className="p-4 text-center">Check-In</th>
                                 <th className="p-4 text-center">Aksi</th>
                             </tr>
                         </thead>
@@ -93,13 +93,14 @@ export function ParticipantsModal({ isOpen, onClose, eventName, participants, lo
                             ) : filtered.map((p, idx) => (
                                 <tr key={idx} className="hover:bg-gray-50 transition">
                                     <td className="p-4">
-                                        <div className="font-bold text-navy flex items-center gap-2">
+                                        <div className="font-bold text-navy flex items-center flex-wrap gap-2">
                                             {p.full_name}
                                             {p.isVerified && (
-                                                <Badge variant="verified" className="h-5 px-2 cursor-default">
-                                                    <CheckCircle size={12} className="mr-1" /> Verified
-                                                </Badge>
+                                                <span title="Verified Member" className="text-blue-500 mt-0.5">
+                                                    <CheckCircle size={14} />
+                                                </span>
                                             )}
+                                            <StatusBadge status={p.status} cancellationStatus={p.cancellation_status} />
                                         </div>
                                         <div className="text-xs text-gray-500 font-mono">{p.email}</div>
                                         <div className="text-xs text-gray-500">{p.phone} • Beswan {p.generation}</div>
@@ -115,13 +116,12 @@ export function ParticipantsModal({ isOpen, onClose, eventName, participants, lo
                                     </td>
 
                                     <td className="p-4 text-center">
-                                        <div className="flex justify-center">
-                                            <StatusBadge status={p.status} cancellationStatus={p.cancellation_status} />
-                                        </div>
-                                        {p.checked_in_at && (
-                                            <div className="text-[10px] text-green-600 mt-1 font-mono text-center">
+                                        {p.checked_in_at ? (
+                                            <div className="text-[12px] font-bold text-green-600 font-mono">
                                                 {new Date(p.checked_in_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                                             </div>
+                                        ) : (
+                                            <div className="text-[12px] text-gray-300">-</div>
                                         )}
                                         {p.cancellation_status === 'pending' && p.cancellation_reason && (
                                             <div className="text-[10px] mt-1 p-1 bg-yellow-50 rounded border border-yellow-100 text-yellow-800 text-center mx-auto max-w-[150px] italic">
@@ -157,8 +157,8 @@ export function ParticipantsModal({ isOpen, onClose, eventName, participants, lo
                                                         </button>
                                                         <button
                                                             onClick={() => onApproveWaitlist(p.user_id, false)}
-                                                            className="bg-red-100 hover:bg-red-200 text-red-700 p-2 rounded-lg" title="Tolak">
-                                                            <X size={16} />
+                                                            className="bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1.5 rounded-lg text-xs font-bold" title="Tolak">
+                                                            Tolak
                                                         </button>
                                                     </>
                                                 ) : (
