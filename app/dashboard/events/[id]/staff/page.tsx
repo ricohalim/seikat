@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { EventQRModal } from '@/app/components/admin/EventQRModal'
 import { supabase } from '@/lib/supabase'
 import { useParams, useRouter } from 'next/navigation'
-import { Search, Users, CheckCircle, Clock, AlertCircle, Camera, QrCode, Download, UserPlus, X } from 'lucide-react'
+import { Search, Users, CheckCircle, Clock, AlertCircle, Camera, QrCode, Download, UserPlus, X, Trophy } from 'lucide-react'
 import Link from 'next/link'
 
 export default function EventStaffPage() {
@@ -320,13 +320,24 @@ export default function EventStaffPage() {
                             Live Console Panitia
                         </p>
                     </div>
-                    <button
-                        onClick={() => setIsQROpen(true)}
-                        className="bg-navy/10 text-navy px-4 py-2 rounded-lg text-sm font-bold hover:bg-navy/20 transition flex items-center gap-2"
-                    >
-                        <QrCode size={18} />
-                        Tampilkan QR Event
-                    </button>
+                    <div className="flex gap-2 w-full md:w-auto">
+                        <a
+                            href={`/leaderboard/${eventId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 md:flex-none justify-center bg-yellow-50 text-amber-700 border border-yellow-200 px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-100 transition flex items-center gap-2"
+                        >
+                            <Trophy size={18} className="text-amber-600" />
+                            Leaderboard
+                        </a>
+                        <button
+                            onClick={() => setIsQROpen(true)}
+                            className="flex-1 md:flex-none justify-center bg-navy/10 text-navy px-4 py-2 rounded-lg text-sm font-bold hover:bg-navy/20 transition flex items-center gap-2"
+                        >
+                            <QrCode size={18} />
+                            QR Event
+                        </button>
+                    </div>
                 </div>
             </div>
 

@@ -1,6 +1,6 @@
 import {
     X, Edit2, Users, Shield, CheckSquare, Trash2,
-    Calendar, MapPin, Clock, Map, QrCode
+    Calendar, MapPin, Clock, Map, QrCode, Trophy
 } from 'lucide-react'
 
 interface AgendaDetailPanelProps {
@@ -120,7 +120,17 @@ export function AgendaDetailPanel({
                 </div>
 
                 {/* Divider */}
-                <div className="h-px bg-gray-100" />
+                <div className="h-px bg-gray-100 mt-2 mb-4" />
+
+                <a
+                    href={`/leaderboard/${event.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-yellow-50 to-amber-50 hover:from-yellow-100 hover:to-amber-100 text-amber-800 py-2.5 rounded-lg text-xs font-bold transition-all shadow-sm border border-yellow-200 mb-4"
+                >
+                    <Trophy size={14} className="text-amber-600" />
+                    BUKA LIVE LEADERBOARD
+                </a>
 
                 {/* Action buttons */}
                 <div className="grid grid-cols-2 gap-2">
