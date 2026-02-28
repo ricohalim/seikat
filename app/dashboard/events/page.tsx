@@ -31,6 +31,7 @@ export default function EventsPage() {
     const [events, setEvents] = useState<Event[]>([])
     const [loading, setLoading] = useState(true)
     const [userRegistrations, setUserRegistrations] = useState<Record<string, string>>({})
+    const [userCancellationStatus, setUserCancellationStatus] = useState<Record<string, string | null>>({})
     const [staffEventIds, setStaffEventIds] = useState<string[]>([])
 
     // UI States
@@ -64,14 +65,16 @@ export default function EventsPage() {
 
         const [eventsRes, registrationsRes, staffRes] = await Promise.all([
             eventQuery,
-            currentUser ? supabase.from('event_participants').select('event_id, status').eq('user_id', currentUser.id).neq('status', 'Cancelled').neq('status', 'Permitted') : Promise.resolve({ data: [] }),
+            currentUser ? supabase.from('event_participants').select('event_id, status, cancellation_status').eq('user_id', currentUser.id).neq('status', 'Cancelled').neq('status', 'Permitted') : Promise.resolve({ data: [] }),
             currentUser ? supabase.from('event_staff').select('event_id').eq('user_id', currentUser.id) : Promise.resolve({ data: [] })
         ])
 
         if (eventsRes.data) setEvents(eventsRes.data)
         if (registrationsRes.data) {
             const map = registrationsRes.data.reduce((acc: any, r: any) => ({ ...acc, [r.event_id]: r.status }), {})
+            const cancelMap = registrationsRes.data.reduce((acc: any, r: any) => ({ ...acc, [r.event_id]: r.cancellation_status }), {})
             setUserRegistrations(map)
+            setUserCancellationStatus(cancelMap)
         }
         if (staffRes.data) setStaffEventIds(staffRes.data.map((s: any) => s.event_id))
 
@@ -192,12 +195,13 @@ export default function EventsPage() {
         const event = events.find(e => e.id === eventId)
         if (!event) return
 
-        // Check H-2 Deadline
+        // Check H-2 Deadline - Set deadline to the end of the day H-2
         const eventDate = new Date(event.date_start)
         const today = new Date()
-        // H-2 deadline: Event Date - 2 days
         const deadline = new Date(eventDate)
+        deadline.setHours(0, 0, 0, 0)
         deadline.setDate(deadline.getDate() - 2)
+        deadline.setHours(23, 59, 59, 999)
 
         if (today > deadline) {
             addToast("Gagal: Pembatalan hanya bisa dilakukan maksimal H-2 acara.", "error")
@@ -215,16 +219,21 @@ export default function EventsPage() {
 
         try {
             // Spec says: "Alasan izin wajib melewati Approval Admin."
-            const { error } = await supabase
-                .from('event_participants')
-                .update({
-                    cancellation_reason: reason,
-                    cancellation_status: 'pending'
-                })
-                .eq('event_id', selectedEventId)
-                .eq('user_id', currentUser.id)
+            const { data, error } = await supabase.rpc('request_event_cancellation', {
+                p_event_id: selectedEventId,
+                p_reason: reason
+            })
 
             if (error) throw error
+
+            const result = data as { success: boolean; message: string }
+            if (!result.success) throw new Error(result.message)
+
+            // Optimistic update
+            setUserCancellationStatus(prev => ({
+                ...prev,
+                [selectedEventId]: 'pending'
+            }))
 
             addToast("Permohonan izin dikirim. Menunggu persetujuan admin.", "info")
             setCancellationModalOpen(false)
@@ -368,6 +377,7 @@ export default function EventsPage() {
                                 event={event}
                                 isRegistered={!!userRegistrations[event.id]}
                                 registrationStatus={userRegistrations[event.id]}
+                                cancellationStatus={userCancellationStatus[event.id] || undefined}
                                 queueNumber={queueNumber}
                                 isClosed={event.status !== 'Open'}
                                 isStaff={staffEventIds.includes(event.id)}

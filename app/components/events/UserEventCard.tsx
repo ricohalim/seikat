@@ -22,10 +22,11 @@ interface UserEventCardProps {
     onRegister: (id: string) => void
     onCancel: (id: string) => void
     registrationStatus?: string
+    cancellationStatus?: string
     queueNumber?: number
 }
 
-export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegistering, onRegister, onCancel, registrationStatus, queueNumber }: UserEventCardProps) {
+export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegistering, onRegister, onCancel, registrationStatus, cancellationStatus, queueNumber }: UserEventCardProps) {
     // Hitung peserta aktif: hanya 'Registered' (konsisten dengan RPC quota check)
     // Waiting List tidak dihitung sebagai "mengisi" kuota
     const registeredCount = event.participants?.filter(p =>
@@ -136,13 +137,18 @@ export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegist
                                 </div>
                             )}
 
-                            {!isClosed && (
+                            {!isClosed && cancellationStatus !== 'pending' && (
                                 <button
                                     onClick={() => onCancel(event.id)}
                                     className="w-full font-medium py-2 rounded-lg transition text-sm text-red-500 hover:bg-red-50 border border-transparent hover:border-red-100"
                                 >
                                     Batalkan / Izin Tidak Hadir
                                 </button>
+                            )}
+                            {cancellationStatus === 'pending' && (
+                                <div className="p-2 bg-orange/10 text-orange rounded-lg text-center font-medium text-sm border border-orange/20 animate-in fade-in duration-300">
+                                    ⏳ Menunggu Persetujuan Batal
+                                </div>
                             )}
                         </>
                     )}
