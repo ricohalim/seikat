@@ -27,13 +27,18 @@ interface UserEventCardProps {
 }
 
 export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegistering, onRegister, onCancel, registrationStatus, cancellationStatus, queueNumber }: UserEventCardProps) {
-    // Hitung peserta aktif: hanya 'Registered' (konsisten dengan RPC quota check)
-    // Waiting List tidak dihitung sebagai "mengisi" kuota
-    const registeredCount = event.participants?.filter(p =>
+    // Hitung aktif saja untuk cek apakah kuota penuh
+    const activeCount = event.participants?.filter(p =>
         p.status === 'Registered'
     ).length || 0
 
-    const isQuotaFull = event.quota > 0 && registeredCount >= event.quota
+    // Ditampilkan ke user: aktif + waiting list
+    const registeredCount = event.participants?.filter(p =>
+        p.status === 'Registered' || p.status === 'Waiting List'
+    ).length || 0
+
+    const isQuotaFull = event.quota > 0 && activeCount >= event.quota
+
 
     return (
         <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition flex flex-col group animate-in fade-in zoom-in-95 duration-500">
