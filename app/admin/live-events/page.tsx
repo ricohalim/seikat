@@ -53,6 +53,7 @@ export default function LiveEventsPage() {
                     .from('event_participants')
                     .select('*', { count: 'exact', head: true })
                     .eq('event_id', e.id)
+                    .not('status', 'in', '(Cancelled,Permitted,Waiting List,Absent,Rejected)')
 
                 const { count: checkedInCount } = await supabase
                     .from('event_participants')
