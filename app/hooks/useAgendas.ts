@@ -9,7 +9,10 @@ export interface Event {
     location: string
     status: string
     quota: number
+    active_count?: number
+    // backward compat — beberapa komponen masih baca participants?.[0]?.count
     participants?: { count: number }[]
+    [key: string]: any
 }
 
 export function useAgendas() {
@@ -17,19 +20,21 @@ export function useAgendas() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
+    const mapRpcToEvent = (row: any): Event => ({
+        ...row,
+        // Tambahkan shim backward-compat agar komponen yang baca
+        // participants?.[0]?.count tetap bisa bekerja
+        participants: [{ count: Number(row.active_count ?? 0) }],
+    })
+
     const fetchEvents = async () => {
         try {
             setLoading(true)
             const { data, error } = await supabase
-                .from('events')
-                .select(`
-                    *,
-                    participants:event_participants(count)
-                `)
-                .order('date_start', { ascending: false })
+                .rpc('get_events_with_active_count')
 
             if (error) throw error
-            if (data) setEvents(data)
+            if (data) setEvents((data as any[]).map(mapRpcToEvent))
         } catch (err: any) {
             setError(err.message)
         } finally {
@@ -57,11 +62,9 @@ export function useAgendas() {
     const fetchEventsSilent = async () => {
         try {
             const { data, error } = await supabase
-                .from('events')
-                .select(`*, participants:event_participants(count)`)
-                .order('date_start', { ascending: false })
+                .rpc('get_events_with_active_count')
             if (error) throw error
-            if (data) setEvents(data)
+            if (data) setEvents((data as any[]).map(mapRpcToEvent))
         } catch { /* silent */ }
     }
 

@@ -35,12 +35,26 @@ export async function POST(request: Request) {
             auth: { autoRefreshToken: false, persistSession: false }
         })
 
-        // 1. Update email di Supabase Auth
+        // 1. Check if email is already in use in auth.users
+        const { data: { users: existingUsers }, error: listError } = await supabaseAdmin.auth.admin.listUsers()
+        if (listError) throw listError
+
+        const isEmailTaken = existingUsers.some(u => u.email?.toLowerCase() === newEmail.toLowerCase() && u.id !== targetUserId)
+        if (isEmailTaken) {
+            return NextResponse.json({
+                error: `Email ${newEmail} sudah digunakan oleh akun lain. Jika ini adalah "akun hantu" (tanpa profile), hapus dulu dari Supabase Auth.`
+            }, { status: 409 })
+        }
+
+        // 2. Update email di Supabase Auth
         const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
             email: newEmail,
             email_confirm: true // bypass email confirmation
         })
-        if (authError) throw authError
+        if (authError) {
+            console.error('Auth update error:', authError)
+            return NextResponse.json({ error: `Gagal update di Auth: ${authError.message}` }, { status: 400 })
+        }
 
         // 2. Update email di tabel profiles juga
         await supabaseAdmin.from('profiles').update({ email: newEmail }).eq('id', targetUserId)
