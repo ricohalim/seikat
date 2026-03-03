@@ -106,105 +106,87 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
                         )}
                     </div>
 
-                    <div className="flex-1 pb-2 md:pt-6"> {/* Added spacing to avoid overlap */}
+                    <div className="flex-1 pb-2 md:pt-6 w-full"> {/* Added w-full for correct mobile sizing */}
                         <div className="flex flex-col md:flex-row md:items-center gap-2 mb-2">
                             <h2 className="text-3xl font-bold text-navy">{profile.full_name}</h2>
 
-                            {/* Verified Badge Restored */}
-                            {isVerified && (
-                                <span className="flex items-center gap-1 bg-blue-50 border border-blue-100 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                    Verified
-                                </span>
-                            )}
+                            <div className="flex flex-wrap gap-2 mt-1 md:mt-0">
+                                {/* Verified Badge Restored */}
+                                {isVerified && (
+                                    <span className="flex items-center gap-1 bg-blue-50 border border-blue-100 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                        Verified
+                                    </span>
+                                )}
 
-                            {/* Admin Badge - Only for admins */}
-                            {['admin', 'superadmin'].includes(profile.role || '') && (
-                                <Link
-                                    href="/admin"
-                                    className="hidden md:inline-flex items-center gap-1 bg-purple-50 border border-purple-100 text-purple-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider hover:bg-purple-100 transition"
-                                >
-                                    Admin Portal
-                                </Link>
-                            )}
+                                {/* Admin Badge - Only for admins */}
+                                {['admin', 'superadmin'].includes(profile.role || '') && (
+                                    <Link
+                                        href="/admin"
+                                        className="inline-flex items-center gap-1 bg-purple-50 border border-purple-100 text-purple-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider hover:bg-purple-100 transition"
+                                    >
+                                        Admin Portal
+                                    </Link>
+                                )}
 
-                            {/* Korwil Badge */}
-                            {profile.role === 'korwil' && (
-                                <Link
-                                    href="/admin"
-                                    className="hidden md:inline-flex items-center gap-1 bg-orange/10 border border-orange/20 text-orange text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider hover:bg-orange/20 transition"
-                                >
-                                    Koordinator Wilayah
-                                </Link>
-                            )}
+                                {/* Korwil Badge */}
+                                {profile.role === 'korwil' && (
+                                    <Link
+                                        href="/admin"
+                                        className="inline-flex items-center gap-1 bg-orange/10 border border-orange/20 text-orange text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider hover:bg-orange/20 transition"
+                                    >
+                                        Koordinator Wilayah
+                                    </Link>
+                                )}
+                            </div>
                         </div>
 
-                        {/* Mobile Admin Badge */}
-                        {['admin', 'superadmin'].includes(profile.role || '') && (
-                            <Link
-                                href="/admin"
-                                className="md:hidden inline-flex items-center gap-1 bg-purple-50 border border-purple-100 text-purple-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider hover:bg-purple-100 transition mb-3"
-                            >
-                                Admin
-                            </Link>
-                        )}
-                        {/* Mobile Korwil Badge */}
-                        {profile.role === 'korwil' && (
-                            <Link
-                                href="/admin"
-                                className="md:hidden inline-flex items-center gap-1 bg-orange/10 border border-orange/20 text-orange text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider hover:bg-orange/20 transition mb-3"
-                            >
-                                Korwil
-                            </Link>
-                        )}
-
-                        <div className="flex flex-wrap gap-3 text-gray-600 text-sm">
-                            <span className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded">
+                        <div className="flex flex-col md:flex-row gap-3 text-gray-600 text-sm mt-3">
+                            <span className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg w-fit">
                                 <GraduationCap size={16} className="text-orange" />
                                 Beswan Djarum {profile.generation}
                             </span>
-                            <span className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded">
+                            <span className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg w-fit">
                                 <Building2 size={16} className="text-azure" />
-                                {profile.university}
+                                <span className="truncate max-w-[200px] md:max-w-none">{profile.university}</span>
                             </span>
                         </div>
-                    </div>
 
-                    <div className="pb-2 flex flex-col items-end gap-2">
-                        {/* MEMBER ID DISPLAY - MOVED RIGHT */}
+                        {/* MEMBER ID DISPLAY - MOVED LEFT UNDER UNIV */}
                         {profile.member_id && (
-                            <div className="text-sm font-medium text-gray-500 flex items-center gap-2 mr-1">
+                            <div className="text-sm font-medium text-gray-500 flex items-center gap-2 mt-3 w-fit bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-lg">
                                 <span className="w-1.5 h-1.5 rounded-full bg-navy/40"></span>
                                 ID: <span className="font-mono text-navy font-bold tracking-wider">{profile.member_id}</span>
                             </div>
                         )}
+                    </div>
 
-                        <div className="flex flex-wrap gap-2 justify-end mt-2">
+                    <div className="pb-2 flex flex-col items-center md:items-end gap-3 w-full md:w-auto mt-4 md:mt-0">
+                        <div className="flex flex-row md:flex-wrap gap-2 justify-between md:justify-end w-full">
                             <button
                                 onClick={() => setIsPrivacyMode(!isPrivacyMode)}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition ${isPrivacyMode
+                                className={`flex flex-1 md:flex-none justify-center items-center gap-2 px-3 md:px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition ${isPrivacyMode
                                     ? 'bg-navy text-white hover:bg-navy/90 border border-navy'
                                     : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
                                     }`}
                                 title={isPrivacyMode ? "Nonaktifkan Mode Privasi" : "Aktifkan Mode Privasi"}
                             >
                                 {isPrivacyMode ? <EyeOff size={18} /> : <Eye size={18} />}
-                                <span className="hidden md:inline">{isPrivacyMode ? 'Privasi' : 'Privasi'}</span>
                             </button>
 
                             <button
                                 onClick={() => setIsScannerOpen(true)}
-                                className="bg-navy text-white border border-navy px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-navy/90 transition flex items-center gap-2"
+                                className="flex-1 md:flex-none justify-center bg-navy text-white border border-navy px-3 md:px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-navy/90 transition flex items-center gap-2"
                             >
-                                <QrCode size={16} />
-                                Scan Event
+                                <QrCode size={16} className="shrink-0" />
+                                <span className="whitespace-nowrap">Scan Event</span>
                             </button>
 
                             <button
                                 onClick={() => setShowQR(true)}
-                                className="bg-white border border-gray-200 text-navy px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-gray-50 transition flex items-center gap-2"
+                                className="flex-1 md:flex-none justify-center bg-white border border-gray-200 text-navy px-3 md:px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-gray-50 transition flex items-center gap-2"
                             >
-                                <span className="w-5 h-5 flex items-center justify-center bg-navy text-white text-[8px] rounded">QR</span>
-                                ID Member
+                                <span className="w-5 h-5 flex shrink-0 items-center justify-center bg-navy text-white text-[8px] rounded">QR</span>
+                                <span className="whitespace-nowrap">ID Member</span>
                             </button>
                         </div>
                     </div>

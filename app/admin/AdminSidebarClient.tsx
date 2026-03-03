@@ -42,24 +42,24 @@ export default function AdminSidebarClient({ userEmail, userName, userRole }: Ad
 
             {/* Mobile Header */}
             <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-                <button onClick={() => setSidebarOpen(true)} className="text-navy">
+                <button onClick={() => setSidebarOpen(true)} className="text-navy p-1">
                     <Menu size={24} />
                 </button>
                 <span className="font-bold text-navy">Admin Portal</span>
-                <div className="w-6" />
+                <div className="w-8" />
             </div>
 
             {/* Mobile Overlay */}
             {sidebarOpen && (
                 <div
-                    className="md:hidden fixed inset-0 z-20 bg-black/40"
+                    className="md:hidden fixed inset-0 z-40 bg-black/40"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}
 
             {/* Sidebar */}
             <aside
-                className={`fixed inset-y-0 left-0 z-30 w-64 bg-navy text-white transition-transform duration-300 md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative shadow-xl flex flex-col`}
+                className={`fixed inset-y-0 left-0 z-50 w-64 bg-navy text-white transition-transform duration-300 md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:static shadow-xl flex flex-col flex-shrink-0`}
             >
                 <div className="p-6 border-b border-white/10 flex items-center justify-between">
                     <div>
