@@ -142,7 +142,7 @@ export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegist
                                 </div>
                             )}
 
-                            {!isClosed && cancellationStatus !== 'pending' && (
+                            {cancellationStatus !== 'pending' && (
                                 <button
                                     onClick={() => onCancel(event.id)}
                                     className="w-full font-medium py-2 rounded-lg transition text-sm text-red-500 hover:bg-red-50 border border-transparent hover:border-red-100"

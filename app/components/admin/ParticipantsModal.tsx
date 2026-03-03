@@ -16,12 +16,21 @@ interface ParticipantsModalProps {
 
 export function ParticipantsModal({ isOpen, onClose, eventName, participants, loading, onCheckIn, onApprove, onApproveWaitlist }: ParticipantsModalProps) {
     const [searchTerm, setSearchTerm] = useState('')
+    const [statusFilter, setStatusFilter] = useState<'all' | 'Registered' | 'Permitted' | 'Waiting List'>('all')
 
-    const filtered = participants.filter(p =>
-        p.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.generation?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    const filtered = participants.filter(p => {
+        const matchSearch =
+            p.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.generation?.toLowerCase().includes(searchTerm.toLowerCase())
+
+        const matchFilter =
+            statusFilter === 'all' ? true :
+                statusFilter === 'Permitted' ? (p.cancellation_status === 'pending' || p.status === 'Permitted' || p.status === 'Cancelled') :
+                    p.status === statusFilter
+
+        return matchSearch && matchFilter
+    })
 
     // Export CSV logic
     const handleDownloadCSV = () => {
@@ -50,27 +59,60 @@ export function ParticipantsModal({ isOpen, onClose, eventName, participants, lo
             }
         >
             <div className="p-6 space-y-4">
-                {/* Search Bar */}
-                <div className="flex gap-2">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                        <input
-                            type="text"
-                            placeholder="Cari nama, email, atau angkatan..."
-                            className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-navy/20 outline-none"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            autoFocus
-                        />
+                {/* Search Bar + Filter */}
+                <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                            <input
+                                type="text"
+                                placeholder="Cari nama, email, atau angkatan..."
+                                className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-navy/20 outline-none"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                autoFocus
+                            />
+                        </div>
+                        <button
+                            onClick={handleDownloadCSV}
+                            disabled={participants.length === 0}
+                            className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition"
+                            title="Download CSV"
+                        >
+                            <Download size={18} />
+                        </button>
                     </div>
-                    <button
-                        onClick={handleDownloadCSV}
-                        disabled={participants.length === 0}
-                        className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition"
-                        title="Download CSV"
-                    >
-                        <Download size={18} />
-                    </button>
+
+                    {/* Status Filter Tabs */}
+                    <div className="flex gap-1.5 flex-wrap">
+                        {([
+                            { key: 'all', label: 'Semua', count: participants.length },
+                            { key: 'Registered', label: 'Registered', count: participants.filter(p => p.status === 'Registered').length },
+                            { key: 'Permitted', label: 'Izin / Batal', count: participants.filter(p => p.cancellation_status === 'pending' || p.status === 'Permitted' || p.status === 'Cancelled').length },
+                            { key: 'Waiting List', label: 'Waiting List', count: participants.filter(p => p.status === 'Waiting List').length },
+                        ] as const).map(tab => (
+                            <button
+                                key={tab.key}
+                                onClick={() => setStatusFilter(tab.key)}
+                                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ${statusFilter === tab.key
+                                        ? tab.key === 'Permitted'
+                                            ? 'bg-yellow-500 text-white shadow-sm'
+                                            : tab.key === 'Waiting List'
+                                                ? 'bg-orange-500 text-white shadow-sm'
+                                                : tab.key === 'Registered'
+                                                    ? 'bg-blue-600 text-white shadow-sm'
+                                                    : 'bg-navy text-white shadow-sm'
+                                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                    }`}
+                            >
+                                {tab.label}
+                                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${statusFilter === tab.key ? 'bg-white/25 text-inherit' : 'bg-white text-gray-600'
+                                    }`}>
+                                    {tab.count}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Table */}
