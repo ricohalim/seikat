@@ -1,67 +1,95 @@
-'use client'
-
-import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import { Users, UserPlus, Clock, TrendingUp } from 'lucide-react'
+import DownloadAlumniButton from '@/app/components/admin/DownloadAlumniButton'
 
-export default function AdminDashboardPage() {
-    const [stats, setStats] = useState({
-        totalActive: 0,
-        totalPending: 0,
-        todayCount: 0 // Renamed from pendingToday to reflect it's TOTAL registrations
-    })
-    const [trendData, setTrendData] = useState<{ date: string, count: number, label: string }[]>([])
-    const [loading, setLoading] = useState(true)
+// Helper: count occurrences and return sorted top-N entries
+function topEntries(arr: string[], n: number): { label: string; count: number }[] {
+    const freq: Record<string, number> = {}
+    for (const val of arr) {
+        const key = val?.trim()
+        if (key) freq[key] = (freq[key] || 0) + 1
+    }
+    return Object.entries(freq)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, n)
+        .map(([label, count]) => ({ label, count }))
+}
 
-    useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                // Check Role First - Redirect Korwil to Agenda
-                const { data: { user } } = await supabase.auth.getUser()
-                if (user) {
-                    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-                    if (profile?.role === 'korwil') {
-                        window.location.href = '/admin/agendas'
-                        return
-                    }
-                }
+// Simple horizontal bar chart (pure CSS, zero JS)
+function BarChart({ data, color }: { data: { label: string; count: number }[]; color: string }) {
+    const max = data[0]?.count || 1
+    return (
+        <ul className="space-y-2">
+            {data.map(({ label, count }) => (
+                <li key={label}>
+                    <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-xs text-gray-600 truncate max-w-[70%]">{label}</span>
+                        <span className="text-xs font-bold text-gray-800">{count}</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                            className="h-full rounded-full transition-all"
+                            style={{ width: `${(count / max) * 100}%`, backgroundColor: color }}
+                        />
+                    </div>
+                </li>
+            ))}
+        </ul>
+    )
+}
 
-                // 1. Total Active Profiles
-                const { count: activeCount } = await supabase
-                    .from('profiles')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('account_status', 'Active')
+export default async function AdminDashboardPage() {
+    const supabase = await createClient()
 
-                // 2. Total Pending in Temp Registrations
-                const { count: pendingCount } = await supabase
-                    .from('temp_registrations')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('status', 'Pending')
+    // Auth guard
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) redirect('/login')
 
-                // 3. New Registrations Today (ALL Statuses)
-                const today = new Date()
-                today.setHours(0, 0, 0, 0)
-                const { count: todayCount } = await supabase
-                    .from('temp_registrations')
-                    .select('*', { count: 'exact', head: true })
-                    .gte('submitted_at', today.toISOString())
+    const { data: selfProfile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
 
+    if (selfProfile?.role === 'korwil') redirect('/admin/agendas')
 
-                setStats({
-                    totalActive: activeCount || 0,
-                    totalPending: pendingCount || 0,
-                    todayCount: todayCount || 0
-                })
+    // ── All data fetched in PARALLEL — single round trip ──────────────────────
+    const [
+        { count: activeCount },
+        { count: pendingCount },
+        { count: todayCount },
+        { data: demoData },
+    ] = await Promise.all([
+        // 1. Total active profiles
+        supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true })
+            .eq('account_status', 'Active'),
 
-            } catch (error) {
-                console.error("Error fetching admin stats:", error)
-            } finally {
-                setLoading(false)
-            }
-        }
+        // 2. Pending verifications
+        supabase
+            .from('temp_registrations')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'Pending'),
 
-        fetchStats()
-    }, [])
+        // 3. New registrations today
+        supabase
+            .from('temp_registrations')
+            .select('*', { count: 'exact', head: true })
+            .gte('submitted_at', new Date(new Date().setHours(0, 0, 0, 0)).toISOString()),
+
+        // 4. Demographic data — only 3 lightweight columns
+        supabase
+            .from('profiles')
+            .select('generation, industry_sector, domicile_province')
+            .eq('account_status', 'Active'),
+    ])
+
+    // Aggregate demographics server-side (no client bundle cost)
+    const generations = topEntries((demoData || []).map(d => d.generation), 10)
+    const industries = topEntries((demoData || []).map(d => d.industry_sector), 5)
+    const provinces = topEntries((demoData || []).map(d => d.domicile_province), 5)
 
     return (
         <div className="max-w-6xl mx-auto space-y-8 pb-20">
@@ -72,50 +100,91 @@ export default function AdminDashboardPage() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Card 1: Pending Verification (Actionable) */}
+                {/* Pending */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-orange shadow-orange/10 relative overflow-hidden group">
                     <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:scale-110 transition">
                         <Clock size={80} className="text-orange" />
                     </div>
                     <div>
                         <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Butuh Verifikasi</p>
-                        <h2 className="text-4xl font-extrabold text-navy mt-2">{loading ? '-' : stats.totalPending}</h2>
+                        <h2 className="text-4xl font-extrabold text-navy mt-2">{pendingCount ?? 0}</h2>
                         <p className="text-xs text-orange font-bold mt-2">Menunggu Persetujuan</p>
                     </div>
                 </div>
 
-                {/* Card 2: Total Active Members */}
+                {/* Active */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-blue-500 shadow-blue-500/10 relative overflow-hidden group">
                     <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:scale-110 transition">
                         <Users size={80} className="text-blue-500" />
                     </div>
                     <div>
                         <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Alumni Aktif</p>
-                        <h2 className="text-4xl font-extrabold text-navy mt-2">{loading ? '-' : stats.totalActive}</h2>
+                        <h2 className="text-4xl font-extrabold text-navy mt-2">{activeCount ?? 0}</h2>
                         <p className="text-xs text-green-600 font-bold mt-2 flex items-center gap-1">
                             <TrendingUp size={12} /> Anggota Terverifikasi
                         </p>
                     </div>
                 </div>
 
-                {/* Card 3: Growth (Total Today) */}
+                {/* Today */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-purple-500 shadow-purple-500/10 relative overflow-hidden group">
                     <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:scale-110 transition">
                         <UserPlus size={80} className="text-purple-500" />
                     </div>
                     <div>
                         <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Pendaftar Baru</p>
-                        <h2 className="text-4xl font-extrabold text-navy mt-2">{loading ? '-' : stats.todayCount}</h2>
-                        <p className="text-xs text-purple-600 font-bold mt-2">+{stats.todayCount} Hari Ini</p>
+                        <h2 className="text-4xl font-extrabold text-navy mt-2">{todayCount ?? 0}</h2>
+                        <p className="text-xs text-purple-600 font-bold mt-2">+{todayCount ?? 0} Hari Ini</p>
                     </div>
                 </div>
             </div>
 
-            {/* Quick Actions / Recent Flow */}
+            {/* Demographics */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h3 className="font-bold text-navy mb-4 text-lg">Aktivitas Terkini</h3>
-                <div className="h-40 flex items-center justify-center text-gray-400 text-sm border-2 border-dashed border-gray-100 rounded-xl bg-gray-50">
-                    Belum ada aktivitas tercatat hari ini.
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 className="font-bold text-navy text-lg">Demografi Alumni</h3>
+                        <p className="text-xs text-gray-400 mt-0.5">{activeCount ?? 0} alumni aktif</p>
+                    </div>
+                    <DownloadAlumniButton />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {/* Generasi */}
+                    <div>
+                        <p className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />
+                            Distribusi Generasi
+                        </p>
+                        {generations.length > 0
+                            ? <BarChart data={generations} color="#3b82f6" />
+                            : <p className="text-xs text-gray-400">Belum ada data.</p>
+                        }
+                    </div>
+
+                    {/* Sektor Industri */}
+                    <div>
+                        <p className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
+                            Top 5 Sektor Industri
+                        </p>
+                        {industries.length > 0
+                            ? <BarChart data={industries} color="#22c55e" />
+                            : <p className="text-xs text-gray-400">Belum ada data.</p>
+                        }
+                    </div>
+
+                    {/* Provinsi Domisili */}
+                    <div>
+                        <p className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-purple-500 inline-block" />
+                            Top 5 Provinsi Domisili
+                        </p>
+                        {provinces.length > 0
+                            ? <BarChart data={provinces} color="#a855f7" />
+                            : <p className="text-xs text-gray-400">Belum ada data.</p>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
