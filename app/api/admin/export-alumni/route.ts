@@ -20,34 +20,48 @@ export async function GET() {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         }
 
-        // Fetch only required columns (minimal data transfer = lower bill)
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('full_name, generation, university, email, domicile_country, domicile_province, domicile_city, linkedin_url, industry_sector, job_type, job_position, company_name, phone')
-            .eq('account_status', 'Active')
-            .neq('generation', '')
-            .neq('phone', '')
+        // Fetch all rows in paginated batches (Supabase default cap = 1000/req)
+        const BATCH = 1000
+        const allRows: Record<string, string>[] = []
+        let from = 0
 
-        if (error) throw error
+        while (true) {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('full_name, generation, university, email, domicile_country, domicile_province, domicile_city, linkedin_url, industry_sector, job_type, job_position, company_name, phone')
+                .eq('account_status', 'Active')
+                .not('generation', 'is', null)   // generation IS NOT NULL
+                .neq('generation', '')            // AND generation <> ''
+                .neq('phone', '')                 // AND phone <> ''
+                .range(from, from + BATCH - 1)
 
-        // Transform to worksheet rows
-        const rows = (data || []).map(r => ({
-            'Nama Lengkap': r.full_name,
-            'Generasi': r.generation,
-            'Universitas': r.university,
-            'Email': r.email,
-            'Negara Domisili': r.domicile_country,
-            'Provinsi Domisili': r.domicile_province,
-            'Kota Domisili': r.domicile_city,
-            'LinkedIn': r.linkedin_url,
-            'Sektor Industri': r.industry_sector,
-            'Jenis Pekerjaan': r.job_type,
-            'Posisi': r.job_position,
-            'Perusahaan': r.company_name,
-        }))
+            if (error) throw error
+            if (!data || data.length === 0) break
+
+            for (const r of data) {
+                allRows.push({
+                    'Nama Lengkap': r.full_name ?? '',
+                    'Generasi': r.generation ?? '',
+                    'Universitas': r.university ?? '',
+                    'Email': r.email ?? '',
+                    'Negara Domisili': r.domicile_country ?? '',
+                    'Provinsi Domisili': r.domicile_province ?? '',
+                    'Kota Domisili': r.domicile_city ?? '',
+                    'LinkedIn': r.linkedin_url ?? '',
+                    'Sektor Industri': r.industry_sector ?? '',
+                    'Jenis Pekerjaan': r.job_type ?? '',
+                    'Posisi': r.job_position ?? '',
+                    'Perusahaan': r.company_name ?? '',
+                })
+            }
+
+            if (data.length < BATCH) break  // last page
+            from += BATCH
+        }
+
 
         const wb = XLSX.utils.book_new()
-        const ws = XLSX.utils.json_to_sheet(rows)
+        const ws = XLSX.utils.json_to_sheet(allRows)
         XLSX.utils.book_append_sheet(wb, ws, 'Alumni Aktif')
 
         const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
