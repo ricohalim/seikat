@@ -84,7 +84,7 @@ export default function ActivityLogsPage() {
                             <Clock className="text-navy" size={28} />
                             Activity Logs
                         </h1>
-                        <p className="text-gray-500 text-sm">Audit trail aktivitas user dan admin (100 Terakhir)</p>
+                        <p className="text-gray-500 text-sm">Audit trail aktivitas user, admin & event (200 Terakhir)</p>
                     </div>
                 </div>
 
@@ -92,7 +92,7 @@ export default function ActivityLogsPage() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                     <input
                         type="text"
-                        placeholder="Cari Actor (Nama / Email)..."
+                        placeholder="Cari nama, email, atau judul event..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:border-navy focus:ring-2 focus:ring-navy/20 outline-none text-sm transition-all"
@@ -126,10 +126,12 @@ export default function ActivityLogsPage() {
                                         <div className="text-xs text-gray-400 font-mono">{log.actor_email}</div>
                                     </td>
                                     <td className="p-4">
-                                        <span className={`px-2 py-1 rounded text-[10px] font-bold tracking-wide uppercase ${log.action.includes('UPDATE') ? 'bg-blue-50 text-blue-600' :
-                                            log.action.includes('VERIFY') ? 'bg-purple-50 text-purple-600' :
-                                                log.action.includes('INSERT') ? 'bg-green-50 text-green-600' :
-                                                    'bg-gray-100 text-gray-600'
+                                        <span className={`px-2 py-1 rounded text-[10px] font-bold tracking-wide uppercase ${log.action === 'EVENT_REGISTER' ? 'bg-green-50 text-green-600' :
+                                                log.action === 'EVENT_CHECKIN' ? 'bg-teal-50 text-teal-600' :
+                                                    log.action === 'EVENT_STATUS_CHANGE' ? 'bg-orange-50 text-orange-600' :
+                                                        log.action.includes('UPDATE') ? 'bg-blue-50 text-blue-600' :
+                                                            log.action.includes('VERIFY') ? 'bg-purple-50 text-purple-600' :
+                                                                'bg-gray-100 text-gray-600'
                                             }`}>
                                             {log.action}
                                         </span>
