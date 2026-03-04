@@ -22,11 +22,12 @@ interface UserEventCardProps {
     onRegister: (id: string) => void
     onCancel: (id: string) => void
     registrationStatus?: string
+    waitlistReason?: 'quota_full' | 'sanction' | null
     cancellationStatus?: string
     queueNumber?: number
 }
 
-export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegistering, onRegister, onCancel, registrationStatus, cancellationStatus, queueNumber }: UserEventCardProps) {
+export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegistering, onRegister, onCancel, registrationStatus, waitlistReason, cancellationStatus, queueNumber }: UserEventCardProps) {
     // Hitung aktif saja untuk cek apakah kuota penuh
     const activeCount = event.participants?.filter(p =>
         p.status === 'Registered'
@@ -124,11 +125,20 @@ export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegist
                     ) : (
                         <>
                             {registrationStatus === 'Waiting List' ? (
-                                <div className="p-3 bg-orange/10 text-orange rounded-lg text-center font-bold text-sm border border-orange/20 animate-in fade-in zoom-in duration-300 flex flex-col gap-1">
-                                    <span>⚠️ Status: Waiting List</span>
-                                    {queueNumber && <span className="text-[10px] font-normal opacity-80">(Antrean ke-{queueNumber})</span>}
-                                    {!queueNumber && <span className="text-[10px] font-normal opacity-80">(Kuota Penuh / Sanksi Aktif)</span>}
-                                </div>
+                                waitlistReason === 'sanction' ? (
+                                    // WL karena sanksi absensi — tidak bisa naik otomatis
+                                    <div className="p-3 bg-red-50 text-red-600 rounded-lg text-center font-bold text-sm border border-red-200 animate-in fade-in zoom-in duration-300 flex flex-col gap-1">
+                                        <span>⚠️ Waiting List (Sanksi)</span>
+                                        <span className="text-[10px] font-normal opacity-80">Harap lapor ke panitia untuk pemutihan sanksi.</span>
+                                    </div>
+                                ) : (
+                                    // WL karena kuota penuh — otomatis naik jika kuota bertambah
+                                    <div className="p-3 bg-yellow-50 text-yellow-700 rounded-lg text-center font-bold text-sm border border-yellow-200 animate-in fade-in zoom-in duration-300 flex flex-col gap-1">
+                                        <span>⏳ Waiting List (Antrean)</span>
+                                        {queueNumber && <span className="text-[10px] font-normal opacity-80">Antrean ke-{queueNumber} · Otomatis naik jika ada slot.</span>}
+                                        {!queueNumber && <span className="text-[10px] font-normal opacity-80">Otomatis naik ke Terdaftar jika ada slot tersedia.</span>}
+                                    </div>
+                                )
                             ) : (
                                 <div className="p-3 bg-[#f2fcf5] text-[#008a3d] rounded-lg text-center border border-[#e5f5ea] animate-in fade-in zoom-in duration-300 flex flex-col gap-1 shadow-sm">
                                     <span className="font-bold text-[15px] flex items-center justify-center gap-2">

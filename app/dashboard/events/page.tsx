@@ -31,6 +31,7 @@ export default function EventsPage() {
     const [events, setEvents] = useState<Event[]>([])
     const [loading, setLoading] = useState(true)
     const [userRegistrations, setUserRegistrations] = useState<Record<string, string>>({})
+    const [userWaitlistReasons, setUserWaitlistReasons] = useState<Record<string, string | null>>({})
     const [userCancellationStatus, setUserCancellationStatus] = useState<Record<string, string | null>>({})
     const [staffEventIds, setStaffEventIds] = useState<string[]>([])
 
@@ -65,7 +66,7 @@ export default function EventsPage() {
 
         const [eventsRes, registrationsRes, staffRes] = await Promise.all([
             eventQuery,
-            currentUser ? supabase.from('event_participants').select('event_id, status, cancellation_status').eq('user_id', currentUser.id).neq('status', 'Cancelled').neq('status', 'Permitted') : Promise.resolve({ data: [] }),
+            currentUser ? supabase.from('event_participants').select('event_id, status, waitlist_reason, cancellation_status').eq('user_id', currentUser.id).neq('status', 'Cancelled').neq('status', 'Permitted') : Promise.resolve({ data: [] }),
             currentUser ? supabase.from('event_staff').select('event_id').eq('user_id', currentUser.id) : Promise.resolve({ data: [] })
         ])
 
@@ -73,8 +74,10 @@ export default function EventsPage() {
         if (registrationsRes.data) {
             const map = registrationsRes.data.reduce((acc: any, r: any) => ({ ...acc, [r.event_id]: r.status }), {})
             const cancelMap = registrationsRes.data.reduce((acc: any, r: any) => ({ ...acc, [r.event_id]: r.cancellation_status }), {})
+            const reasonMap = registrationsRes.data.reduce((acc: any, r: any) => ({ ...acc, [r.event_id]: r.waitlist_reason ?? null }), {})
             setUserRegistrations(map)
             setUserCancellationStatus(cancelMap)
+            setUserWaitlistReasons(reasonMap)
         }
         if (staffRes.data) setStaffEventIds(staffRes.data.map((s: any) => s.event_id))
 
@@ -377,6 +380,7 @@ export default function EventsPage() {
                                 event={event}
                                 isRegistered={!!userRegistrations[event.id]}
                                 registrationStatus={userRegistrations[event.id]}
+                                waitlistReason={userWaitlistReasons[event.id] as 'quota_full' | 'sanction' | null}
                                 cancellationStatus={userCancellationStatus[event.id] || undefined}
                                 queueNumber={queueNumber}
                                 isClosed={event.status !== 'Open'}

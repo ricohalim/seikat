@@ -13,16 +13,43 @@ export async function selfCheckIn(eventId: string) {
             return { success: false, message: 'Unauthenticated' }
         }
 
-        // 2. Check Registration
-        const { data: participant, error: partError } = await supabase
-            .from('event_participants')
-            .select('id, status, check_in_time')
-            .eq('event_id', eventId)
-            .eq('user_id', user.id)
-            .single()
+        // 2. Check Registration + fetch event date in parallel
+        const [
+            { data: participant, error: partError },
+            { data: event, error: eventError },
+        ] = await Promise.all([
+            supabase
+                .from('event_participants')
+                .select('id, status, check_in_time')
+                .eq('event_id', eventId)
+                .eq('user_id', user.id)
+                .single(),
+            supabase
+                .from('events')
+                .select('date_start')
+                .eq('id', eventId)
+                .single(),
+        ])
 
         if (partError || !participant) {
             return { success: false, message: 'Anda belum terdaftar di event ini.' }
+        }
+
+        // 3. Validasi Hari H — hanya boleh check-in pada hari pelaksanaan event
+        if (eventError || !event?.date_start) {
+            return { success: false, message: 'Data event tidak ditemukan.' }
+        }
+
+        const todayWIB = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }) // 'YYYY-MM-DD'
+        const eventDay = event.date_start.slice(0, 10) // ambil bagian YYYY-MM-DD saja
+
+        if (todayWIB !== eventDay) {
+            const formatter = new Intl.DateTimeFormat('id-ID', { dateStyle: 'long', timeZone: 'Asia/Jakarta' })
+            const eventDateFormatted = formatter.format(new Date(eventDay))
+            return {
+                success: false,
+                message: `Check-in hanya bisa dilakukan pada Hari H event.\nEvent ini berlangsung pada ${eventDateFormatted}.`
+            }
         }
 
         // 3. Check Status — blokir semua status yang tidak boleh check-in
