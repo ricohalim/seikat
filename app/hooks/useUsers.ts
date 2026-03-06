@@ -10,12 +10,16 @@ export function useUsers(itemsPerPage: number) {
     const [filter, setFilter] = useState('')
     const [filterGeneration, setFilterGeneration] = useState('')
     const [filterGender, setFilterGender] = useState('')
+    const [filterUniversity, setFilterUniversity] = useState('')
+    const [filterProvince, setFilterProvince] = useState('')
     const [page, setPage] = useState(0)
 
     // Auth Check State
     const [currentUserRole, setCurrentUserRole] = useState('')
     const [authLoading, setAuthLoading] = useState(true)
     const [availableGenerations, setAvailableGenerations] = useState<string[]>([])
+    const [availableUniversities, setAvailableUniversities] = useState<string[]>([])
+    const [availableProvinces, setAvailableProvinces] = useState<string[]>([])
 
     // Check Role
     useEffect(() => {
@@ -40,6 +44,23 @@ export function useUsers(itemsPerPage: number) {
             }
         }
         fetchGenerations()
+    }, [])
+
+    // Fetch Universities & Provinces for Dropdowns
+    useEffect(() => {
+        const fetchOptions = async () => {
+            const { data } = await supabase
+                .from('profiles')
+                .select('university, domicile_province')
+                .neq('account_status', 'Pending')
+            if (data) {
+                const unis = Array.from(new Set(data.map((u: any) => u.university).filter(Boolean))).sort() as string[]
+                const provs = Array.from(new Set(data.map((u: any) => u.domicile_province).filter(Boolean))).sort() as string[]
+                setAvailableUniversities(unis)
+                setAvailableProvinces(provs)
+            }
+        }
+        fetchOptions()
     }, [])
 
     // Main Fetch
@@ -71,6 +92,14 @@ export function useUsers(itemsPerPage: number) {
             if (filterGender) {
                 query = query.ilike('gender', filterGender)
             }
+            // 4. University Filter
+            if (filterUniversity) {
+                query = query.eq('university', filterUniversity)
+            }
+            // 5. Province Filter
+            if (filterProvince) {
+                query = query.eq('domicile_province', filterProvince)
+            }
 
             const { data, count, error } = await query
 
@@ -92,7 +121,7 @@ export function useUsers(itemsPerPage: number) {
         if (!authLoading && ['superadmin', 'admin'].includes(currentUserRole)) {
             fetchUsers()
         }
-    }, [page, filter, filterGeneration, filterGender, authLoading, currentUserRole])
+    }, [page, filter, filterGeneration, filterGender, filterUniversity, filterProvince, authLoading, currentUserRole])
 
 
     // Actions
@@ -107,10 +136,14 @@ export function useUsers(itemsPerPage: number) {
         currentUserRole,
         authLoading,
         availableGenerations,
+        availableUniversities,
+        availableProvinces,
         // Methods to Expose State Setters
         filter, setFilter,
         filterGeneration, setFilterGeneration,
         filterGender, setFilterGender,
+        filterUniversity, setFilterUniversity,
+        filterProvince, setFilterProvince,
         page, setPage,
         fetchUsers, // Manual refetch if needed
         updateUserLocal

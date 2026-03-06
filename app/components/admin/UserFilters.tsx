@@ -1,15 +1,33 @@
 
+const ChevronDown = () => (
+    <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+)
+
 interface UserFiltersProps {
     availableGenerations: string[]
     filterGeneration: string
     setFilterGeneration: (val: string) => void
     filterGender: string
     setFilterGender: (val: string) => void
+    availableUniversities: string[]
+    filterUniversity: string
+    setFilterUniversity: (val: string) => void
+    availableProvinces: string[]
+    filterProvince: string
+    setFilterProvince: (val: string) => void
     onReset: () => void
     activeFilters: boolean
 }
 
-export function UserFilters({ availableGenerations, filterGeneration, setFilterGeneration, filterGender, setFilterGender, onReset, activeFilters }: UserFiltersProps) {
+export function UserFilters({
+    availableGenerations, filterGeneration, setFilterGeneration,
+    filterGender, setFilterGender,
+    availableUniversities, filterUniversity, setFilterUniversity,
+    availableProvinces, filterProvince, setFilterProvince,
+    onReset, activeFilters
+}: UserFiltersProps) {
     return (
         <div className="flex flex-wrap items-center gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex items-center gap-2">
@@ -28,11 +46,7 @@ export function UserFilters({ availableGenerations, filterGeneration, setFilterG
                         <option key={gen} value={gen}>Beswan {gen}</option>
                     ))}
                 </select>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                    <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                </div>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400"><ChevronDown /></div>
             </div>
 
             {/* Gender Filter */}
@@ -46,11 +60,37 @@ export function UserFilters({ availableGenerations, filterGeneration, setFilterG
                     <option value="Laki-laki">Laki-laki</option>
                     <option value="Perempuan">Perempuan</option>
                 </select>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                    <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                </div>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400"><ChevronDown /></div>
+            </div>
+
+            {/* University Filter */}
+            <div className="relative">
+                <select
+                    value={filterUniversity}
+                    onChange={(e) => setFilterUniversity(e.target.value)}
+                    className="px-4 py-2 pr-8 rounded-lg border border-gray-200 focus:border-navy outline-none text-sm bg-white appearance-none min-w-[180px] max-w-[220px]"
+                >
+                    <option value="">Semua Universitas</option>
+                    {availableUniversities.map(uni => (
+                        <option key={uni} value={uni}>{uni}</option>
+                    ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400"><ChevronDown /></div>
+            </div>
+
+            {/* Province Filter */}
+            <div className="relative">
+                <select
+                    value={filterProvince}
+                    onChange={(e) => setFilterProvince(e.target.value)}
+                    className="px-4 py-2 pr-8 rounded-lg border border-gray-200 focus:border-navy outline-none text-sm bg-white appearance-none min-w-[180px]"
+                >
+                    <option value="">Semua Provinsi</option>
+                    {availableProvinces.map(prov => (
+                        <option key={prov} value={prov}>{prov}</option>
+                    ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400"><ChevronDown /></div>
             </div>
 
             {/* Clear Filters */}

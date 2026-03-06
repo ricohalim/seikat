@@ -14,7 +14,9 @@ export default function UserManagementPage() {
     const ITEMS_PER_PAGE = 20
     const {
         users, loading, totalItems, currentUserRole, authLoading, availableGenerations,
+        availableUniversities, availableProvinces,
         filter, setFilter, filterGeneration, setFilterGeneration, filterGender, setFilterGender,
+        filterUniversity, setFilterUniversity, filterProvince, setFilterProvince,
         page, setPage, updateUserLocal
     } = useUsers(ITEMS_PER_PAGE)
 
@@ -237,8 +239,14 @@ export default function UserManagementPage() {
                 setFilterGeneration={(v) => { setFilterGeneration(v); setPage(0); }}
                 filterGender={filterGender}
                 setFilterGender={(v) => { setFilterGender(v); setPage(0); }}
-                onReset={() => { setFilter(''); setFilterGeneration(''); setFilterGender(''); setPage(0); }}
-                activeFilters={Boolean(filter || filterGeneration || filterGender)}
+                availableUniversities={availableUniversities}
+                filterUniversity={filterUniversity}
+                setFilterUniversity={(v) => { setFilterUniversity(v); setPage(0); }}
+                availableProvinces={availableProvinces}
+                filterProvince={filterProvince}
+                setFilterProvince={(v) => { setFilterProvince(v); setPage(0); }}
+                onReset={() => { setFilter(''); setFilterGeneration(''); setFilterGender(''); setFilterUniversity(''); setFilterProvince(''); setPage(0); }}
+                activeFilters={Boolean(filter || filterGeneration || filterGender || filterUniversity || filterProvince)}
             />
 
             <UserTable
