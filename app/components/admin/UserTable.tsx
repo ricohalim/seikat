@@ -68,20 +68,29 @@ export function UserTable({ users, loading, currentUserRole, onRoleChange, onVie
                             </td>
                             <td className="p-4">
                                 <div className="flex flex-col gap-2 items-start">
-                                    <select
-                                        value={u.role || 'member'}
-                                        onChange={(e) => onRoleChange(u.id, e.target.value)}
-                                        className={`px-2 py-1 rounded text-xs font-bold border-none outline-none cursor-pointer ${u.role === 'superadmin' ? 'bg-purple-100 text-purple-700' :
+                                    {currentUserRole !== 'viewer' ? (
+                                        <select
+                                            value={u.role || 'member'}
+                                            onChange={(e) => onRoleChange(u.id, e.target.value)}
+                                            className={`px-2 py-1 rounded text-xs font-bold border-none outline-none cursor-pointer ${u.role === 'superadmin' ? 'bg-purple-100 text-purple-700' :
+                                                u.role === 'admin' ? 'bg-blue-100 text-blue-700' :
+                                                    u.role === 'korwil' ? 'bg-orange/10 text-orange' :
+                                                        'bg-gray-100 text-gray-600'
+                                                }`}
+                                        >
+                                            <option value="member">Member</option>
+                                            <option value="admin">Verifikator</option>
+                                            <option value="superadmin">Super Admin</option>
+                                            <option value="korwil">Koordinator Wilayah</option>
+                                            <option value="viewer">Viewer</option>
+                                        </select>
+                                    ) : (
+                                        <span className={`px-2 py-1 rounded text-xs font-bold ${u.role === 'superadmin' ? 'bg-purple-100 text-purple-700' :
                                             u.role === 'admin' ? 'bg-blue-100 text-blue-700' :
                                                 u.role === 'korwil' ? 'bg-orange/10 text-orange' :
                                                     'bg-gray-100 text-gray-600'
-                                            }`}
-                                    >
-                                        <option value="member">Member</option>
-                                        <option value="admin">Verifikator</option>
-                                        <option value="superadmin">Super Admin</option>
-                                        <option value="korwil">Koordinator Wilayah</option>
-                                    </select>
+                                            }`}>{u.role || 'member'}</span>
+                                    )}
                                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${u.account_status === 'Active' ? 'text-green-600 border-green-200 bg-green-50' : 'text-orange border-orange/20 bg-orange/10'}`}>
                                         {u.account_status}
                                     </span>
@@ -95,31 +104,35 @@ export function UserTable({ users, loading, currentUserRole, onRoleChange, onVie
                                     >
                                         Detail
                                     </button>
-                                    <button
-                                        onClick={() => onEdit(u)}
-                                        className="px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded hover:bg-green-700 transition"
-                                        title="Edit Data User"
-                                    >
-                                        Edit
-                                    </button>
-                                    {currentUserRole === 'superadmin' && (
-                                        <button
-                                            onClick={() => onDelete(u.id, u.full_name)}
-                                            disabled={deleteLoading === u.id}
-                                            className="px-3 py-1.5 bg-red-600 text-white text-xs font-bold rounded hover:bg-red-700 transition disabled:opacity-60"
-                                            title="Hapus Permanen User"
-                                        >
-                                            {deleteLoading === u.id ? '...' : 'Hapus'}
-                                        </button>
+                                    {currentUserRole !== 'viewer' && (
+                                        <>
+                                            <button
+                                                onClick={() => onEdit(u)}
+                                                className="px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded hover:bg-green-700 transition"
+                                                title="Edit Data User"
+                                            >
+                                                Edit
+                                            </button>
+                                            {currentUserRole === 'superadmin' && (
+                                                <button
+                                                    onClick={() => onDelete(u.id, u.full_name)}
+                                                    disabled={deleteLoading === u.id}
+                                                    className="px-3 py-1.5 bg-red-600 text-white text-xs font-bold rounded hover:bg-red-700 transition disabled:opacity-60"
+                                                    title="Hapus Permanen User"
+                                                >
+                                                    {deleteLoading === u.id ? '...' : 'Hapus'}
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={() => onImpersonate(u.id)}
+                                                disabled={impersonateLoading === u.id}
+                                                className="px-3 py-1.5 bg-amber-500 text-white text-xs font-bold rounded hover:bg-amber-600 transition disabled:opacity-60"
+                                                title="Login sebagai user ini"
+                                            >
+                                                {impersonateLoading === u.id ? '...' : 'Akses Akun'}
+                                            </button>
+                                        </>
                                     )}
-                                    <button
-                                        onClick={() => onImpersonate(u.id)}
-                                        disabled={impersonateLoading === u.id}
-                                        className="px-3 py-1.5 bg-amber-500 text-white text-xs font-bold rounded hover:bg-amber-600 transition disabled:opacity-60"
-                                        title="Login sebagai user ini"
-                                    >
-                                        {impersonateLoading === u.id ? '...' : 'Akses Akun'}
-                                    </button>
                                 </div>
                             </td>
                         </tr>

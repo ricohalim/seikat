@@ -9,7 +9,8 @@ import { UserTable } from '@/app/components/admin/UserTable'
 import { UserFilters } from '@/app/components/admin/UserFilters'
 import { EditUserModal } from '@/app/components/admin/EditUserModal'
 import { UserDetailModal } from '@/app/components/admin/UserDetailModal'
-
+import { CreateAlumniModal } from '@/app/components/admin/CreateAlumniModal'
+import { UserPlus } from 'lucide-react'
 export default function UserManagementPage() {
     const ITEMS_PER_PAGE = 20
     const {
@@ -28,6 +29,7 @@ export default function UserManagementPage() {
     const [impersonateLoading, setImpersonateLoading] = useState<string | null>(null)
     const [changeEmailLoading, setChangeEmailLoading] = useState(false)
     const [deleteLoading, setDeleteLoading] = useState<string | null>(null)
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
     // Handlers
     const handleRoleChange = async (userId: string, newRole: string) => {
@@ -201,7 +203,7 @@ export default function UserManagementPage() {
         )
     }
 
-    if (!['superadmin', 'admin'].includes(currentUserRole)) {
+    if (!['superadmin', 'admin', 'viewer'].includes(currentUserRole)) {
         return (
             <div className="p-8 text-center bg-red-50 text-red-600 rounded-xl border border-red-200">
                 <Shield size={48} className="mx-auto mb-4 opacity-50" />
@@ -221,33 +223,46 @@ export default function UserManagementPage() {
                     <p className="text-gray-500 text-sm">Kelola Role Admin dan Data User (Total: {totalItems})</p>
                 </div>
 
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Cari User / Email..."
-                        value={filter}
-                        onChange={(e) => { setFilter(e.target.value); setPage(0); }}
-                        className="pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:border-navy outline-none w-64 text-sm bg-white"
-                    />
+                <div className="flex items-center gap-3">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <input
+                            type="text"
+                            placeholder="Cari User / Email..."
+                            value={filter}
+                            onChange={(e) => { setFilter(e.target.value); setPage(0); }}
+                            className="pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:border-navy outline-none w-64 text-sm bg-white"
+                        />
+                    </div>
+                    {currentUserRole !== 'viewer' && (
+                        <button
+                            onClick={() => setIsCreateModalOpen(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-navy text-white rounded-lg text-sm font-bold hover:bg-navy/90 transition-colors"
+                        >
+                            <UserPlus size={16} />
+                            <span className="hidden sm:inline">Tambah</span> Alumni
+                        </button>
+                    )}
                 </div>
             </header>
 
-            <UserFilters
-                availableGenerations={availableGenerations}
-                filterGeneration={filterGeneration}
-                setFilterGeneration={(v) => { setFilterGeneration(v); setPage(0); }}
-                filterGender={filterGender}
-                setFilterGender={(v) => { setFilterGender(v); setPage(0); }}
-                availableUniversities={availableUniversities}
-                filterUniversity={filterUniversity}
-                setFilterUniversity={(v) => { setFilterUniversity(v); setPage(0); }}
-                availableProvinces={availableProvinces}
-                filterProvince={filterProvince}
-                setFilterProvince={(v) => { setFilterProvince(v); setPage(0); }}
-                onReset={() => { setFilter(''); setFilterGeneration(''); setFilterGender(''); setFilterUniversity(''); setFilterProvince(''); setPage(0); }}
-                activeFilters={Boolean(filter || filterGeneration || filterGender || filterUniversity || filterProvince)}
-            />
+            {currentUserRole !== 'viewer' && (
+                <UserFilters
+                    availableGenerations={availableGenerations}
+                    filterGeneration={filterGeneration}
+                    setFilterGeneration={(v) => { setFilterGeneration(v); setPage(0); }}
+                    filterGender={filterGender}
+                    setFilterGender={(v) => { setFilterGender(v); setPage(0); }}
+                    availableUniversities={availableUniversities}
+                    filterUniversity={filterUniversity}
+                    setFilterUniversity={(v) => { setFilterUniversity(v); setPage(0); }}
+                    availableProvinces={availableProvinces}
+                    filterProvince={filterProvince}
+                    setFilterProvince={(v) => { setFilterProvince(v); setPage(0); }}
+                    onReset={() => { setFilter(''); setFilterGeneration(''); setFilterGender(''); setFilterUniversity(''); setFilterProvince(''); setPage(0); }}
+                    activeFilters={Boolean(filter || filterGeneration || filterGender || filterUniversity || filterProvince)}
+                />
+            )}
 
             <UserTable
                 users={users}
@@ -301,6 +316,18 @@ export default function UserManagementPage() {
                 resetLoading={resetLoading}
                 onChangeEmail={handleChangeEmail}
                 changeEmailLoading={changeEmailLoading}
+            />
+
+            <CreateAlumniModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                onSuccess={(newUser) => {
+                    // Refresh data or update local state
+                    // Simple refresh is easiest to get all proper profiles data merged
+                    window.location.reload()
+                }}
+                availableGenerations={availableGenerations}
+                availableUniversities={availableUniversities}
             />
         </div>
     )

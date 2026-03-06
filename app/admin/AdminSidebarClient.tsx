@@ -75,7 +75,7 @@ export default function AdminSidebarClient({ userEmail, userName, userRole }: Ad
                 </div>
 
                 <nav className="flex-1 p-4 space-y-2">
-                    {userRole !== 'korwil' && (
+                    {userRole !== 'korwil' && userRole !== 'viewer' && (
                         <Link
                             href="/admin"
                             className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium"
@@ -83,7 +83,7 @@ export default function AdminSidebarClient({ userEmail, userName, userRole }: Ad
                             <LayoutDashboard size={18} /> Dashboard
                         </Link>
                     )}
-                    {userRole !== 'korwil' && (
+                    {userRole !== 'korwil' && userRole !== 'viewer' && (
                         <Link
                             href="/admin/verify"
                             className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium"
@@ -91,19 +91,23 @@ export default function AdminSidebarClient({ userEmail, userName, userRole }: Ad
                             <UserCheck size={18} /> Verifikasi Member
                         </Link>
                     )}
-                    <Link
-                        href="/admin/agendas"
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium"
-                    >
-                        <Calendar size={18} /> Agenda
-                    </Link>
-                    <Link
-                        href="/admin/live-events"
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium"
-                    >
-                        <Activity size={18} /> Live Events
-                    </Link>
-                    {userRole !== 'korwil' && (
+                    {userRole !== 'viewer' && (
+                        <Link
+                            href="/admin/agendas"
+                            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium"
+                        >
+                            <Calendar size={18} /> Agenda
+                        </Link>
+                    )}
+                    {userRole !== 'viewer' && (
+                        <Link
+                            href="/admin/live-events"
+                            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium"
+                        >
+                            <Activity size={18} /> Live Events
+                        </Link>
+                    )}
+                    {userRole !== 'korwil' && userRole !== 'viewer' && (
                         <Link
                             href="/admin/inbox"
                             className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium"
@@ -111,14 +115,16 @@ export default function AdminSidebarClient({ userEmail, userName, userRole }: Ad
                             <Inbox size={18} /> Inbox Broadcast
                         </Link>
                     )}
+                    {(userRole === 'superadmin' || userRole === 'admin' || userRole === 'viewer') && (
+                        <Link
+                            href="/admin/users"
+                            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium opacity-75 hover:opacity-100"
+                        >
+                            <Users size={18} /> User Management
+                        </Link>
+                    )}
                     {userRole === 'superadmin' && (
                         <>
-                            <Link
-                                href="/admin/users"
-                                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium opacity-75 hover:opacity-100"
-                            >
-                                <Users size={18} /> User Management
-                            </Link>
                             <Link
                                 href="/admin/master-data"
                                 className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium opacity-75 hover:opacity-100"

@@ -137,6 +137,16 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
                                         Koordinator Wilayah
                                     </Link>
                                 )}
+
+                                {/* Viewer Badge */}
+                                {profile.role === 'viewer' && (
+                                    <Link
+                                        href="/admin/users"
+                                        className="inline-flex items-center gap-1 bg-teal-50 border border-teal-100 text-teal-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider hover:bg-teal-100 transition"
+                                    >
+                                        Viewer
+                                    </Link>
+                                )}
                             </div>
                         </div>
 

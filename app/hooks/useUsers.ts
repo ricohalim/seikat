@@ -77,11 +77,22 @@ export function useUsers(itemsPerPage: number) {
                 .order('created_at', { ascending: true })
                 .range(from, to)
 
-            // 1. Text Search (Sanitized)
+            // 1. Text Search — luas ke semua field penting
             if (filter) {
                 const safeFilter = filter.replace(/[,()]/g, '')
                 if (safeFilter.trim()) {
-                    query = query.or(`full_name.ilike.%${safeFilter}%,email.ilike.%${safeFilter}%`)
+                    query = query.or(
+                        `full_name.ilike.%${safeFilter}%,` +
+                        `email.ilike.%${safeFilter}%,` +
+                        `phone.ilike.%${safeFilter}%,` +
+                        `member_id.ilike.%${safeFilter}%,` +
+                        `generation.ilike.%${safeFilter}%,` +
+                        `university.ilike.%${safeFilter}%,` +
+                        `domicile_province.ilike.%${safeFilter}%,` +
+                        `domicile_city.ilike.%${safeFilter}%,` +
+                        `company_name.ilike.%${safeFilter}%,` +
+                        `job_position.ilike.%${safeFilter}%`
+                    )
                 }
             }
             // 2. Generation Filter
@@ -118,7 +129,7 @@ export function useUsers(itemsPerPage: number) {
 
     // Refetch when dependencies change
     useEffect(() => {
-        if (!authLoading && ['superadmin', 'admin'].includes(currentUserRole)) {
+        if (!authLoading && ['superadmin', 'admin', 'viewer'].includes(currentUserRole)) {
             fetchUsers()
         }
     }, [page, filter, filterGeneration, filterGender, filterUniversity, filterProvince, authLoading, currentUserRole])
