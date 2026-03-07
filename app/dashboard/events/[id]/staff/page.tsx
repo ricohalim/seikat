@@ -203,20 +203,20 @@ export default function EventStaffPage() {
     const downloadReport = async () => {
         const { data: allData } = await supabase
             .from('event_participants')
-            .select('check_in_time, status, profiles:user_id(full_name, generation, university)')
+            .select('check_in_time, status, profiles:user_id(full_name, member_id, generation, university)')
             .eq('event_id', eventId)
             .order('check_in_time', { ascending: false })
 
         if (!allData) return
 
-        const csv = "NAMA,ANGKATAN,UNIVERSITAS,WAKTU CHECK-IN,STATUS\n" +
+        const csv = "NAMA;MEMBER ID;ANGKATAN;UNIVERSITAS;WAKTU CHECK-IN;STATUS\n" +
             allData.map((row: any) => {
                 const status = row.check_in_time ? 'Hadir' : row.status === 'Sakit' ? 'Sakit' : row.status === 'Permitted' || row.status === 'Cancelled' ? 'Izin/Batal' : 'Belum Hadir';
                 const time = row.check_in_time ? new Date(row.check_in_time).toLocaleTimeString('id-ID') : '-';
-                return `"${row.profiles.full_name}","${row.profiles.generation}","${row.profiles.university}","${time}","${status}"`
+                return `"${row.profiles.full_name}";"${row.profiles.member_id || '-'}";"${row.profiles.generation}";"${row.profiles.university || '-'}";"${time}";"${status}"`
             }).join("\n")
 
-        const blob = new Blob([csv], { type: 'text/csv' })
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
         const url = window.URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
@@ -503,6 +503,7 @@ export default function EventStaffPage() {
                                                 {p.profiles?.full_name || <span className="text-gray-400 font-normal italic">Nama tidak tersedia</span>}
                                             </p>
                                             <p className="text-xs text-gray-500">
+                                                {p.profiles?.generation ? `Beswan ${p.profiles.generation} • ` : ''}
                                                 {p.profiles?.member_id || 'No ID'} • {p.profiles?.email || <span className="italic">Email tidak ada</span>}
                                             </p>
 

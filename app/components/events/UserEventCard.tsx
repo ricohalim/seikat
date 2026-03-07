@@ -24,10 +24,11 @@ interface UserEventCardProps {
     registrationStatus?: string
     waitlistReason?: 'quota_full' | 'sanction' | null
     cancellationStatus?: string
+    isCheckedIn?: boolean
     queueNumber?: number
 }
 
-export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegistering, onRegister, onCancel, registrationStatus, waitlistReason, cancellationStatus, queueNumber }: UserEventCardProps) {
+export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegistering, onRegister, onCancel, registrationStatus, waitlistReason, cancellationStatus, isCheckedIn, queueNumber }: UserEventCardProps) {
     // Hitung aktif saja untuk cek apakah kuota penuh
     const activeCount = event.participants?.filter(p =>
         p.status === 'Registered'
@@ -48,12 +49,12 @@ export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegist
                 <div className="flex justify-between items-start mb-4">
                     <h3 className="text-xl font-bold text-navy line-clamp-2" title={event.title}>{event.title}</h3>
                     <div className="flex flex-col gap-1 items-end">
-                        <span className={`text-xs font-bold px-3 py-1 rounded-full uppercase ${isRegistered ? 'bg-[#dcfce7] text-[#16a34a]' :
+                        <span className={`text-xs font-bold px-3 py-1 rounded-full uppercase ${isRegistered ? (isCheckedIn ? 'bg-[#d1fae5] text-[#059669]' : 'bg-[#dcfce7] text-[#16a34a]') :
                             isClosed ? 'bg-gray-100 text-gray-500' :
                                 event.status === 'Draft' ? 'bg-purple-50 text-purple-600 border border-purple-100' :
                                     'bg-blue-50 text-blue-600'
                             }`}>
-                            {isRegistered ? 'Terdaftar' : event.status}
+                            {isRegistered ? (isCheckedIn ? 'Sudah Hadir' : 'Terdaftar') : event.status}
                         </span>
                     </div>
                 </div>
@@ -139,6 +140,15 @@ export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegist
                                         {!queueNumber && <span className="text-[10px] font-normal opacity-80">Otomatis naik ke Terdaftar jika ada slot tersedia.</span>}
                                     </div>
                                 )
+                            ) : isCheckedIn ? (
+                                <div className="p-3 bg-[#f0fdf4] text-[#15803d] rounded-lg text-center border border-[#bbf7d0] animate-in fade-in zoom-in duration-300 flex flex-col gap-1 shadow-sm">
+                                    <span className="font-bold text-[15px] flex items-center justify-center gap-2">
+                                        ✅ Check-in Berhasil!
+                                    </span>
+                                    <span className="text-[13px] font-medium opacity-90">
+                                        Selamat mengikuti rangkaian acara.
+                                    </span>
+                                </div>
                             ) : (
                                 <div className="p-3 bg-[#f2fcf5] text-[#008a3d] rounded-lg text-center border border-[#e5f5ea] animate-in fade-in zoom-in duration-300 flex flex-col gap-1 shadow-sm">
                                     <span className="font-bold text-[15px] flex items-center justify-center gap-2">
@@ -152,7 +162,7 @@ export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegist
                                 </div>
                             )}
 
-                            {cancellationStatus !== 'pending' && (
+                            {cancellationStatus !== 'pending' && !isCheckedIn && (
                                 <button
                                     onClick={() => onCancel(event.id)}
                                     className="w-full font-medium py-2 rounded-lg transition text-sm text-red-500 hover:bg-red-50 border border-transparent hover:border-red-100"
