@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { EventQRModal } from '@/app/components/admin/EventQRModal'
 import { supabase } from '@/lib/supabase'
 import { useParams, useRouter } from 'next/navigation'
-import { Search, Users, CheckCircle, Clock, AlertCircle, Camera, QrCode, Download, UserPlus, X, Trophy } from 'lucide-react'
+import { Search, Users, CheckCircle, Clock, AlertCircle, Camera, QrCode, Download, UserPlus, X, Trophy, Thermometer } from 'lucide-react'
 import Link from 'next/link'
 
 export default function EventStaffPage() {
@@ -179,10 +179,31 @@ export default function EventStaffPage() {
         }
     }
 
+    const handleMarkSick = async (participantId: string) => {
+        setIsProcessing(true)
+        try {
+            const { error } = await supabase
+                .from('event_participants')
+                .update({ status: 'Sakit' })
+                .eq('id', participantId)
+
+            if (error) throw error
+
+            toast.success('Peserta ditandai Sakit.')
+            setAllParticipants(prev => prev.map(p =>
+                p.id === participantId ? { ...p, status: 'Sakit' } : p
+            ))
+        } catch (err: any) {
+            toast.error('Gagal: ' + err.message)
+        } finally {
+            setIsProcessing(false)
+        }
+    }
+
     const downloadReport = async () => {
         const { data: allData } = await supabase
             .from('event_participants')
-            .select('check_in_time, profiles:user_id(full_name, generation, university)')
+            .select('check_in_time, status, profiles:user_id(full_name, generation, university)')
             .eq('event_id', eventId)
             .order('check_in_time', { ascending: false })
 
@@ -190,7 +211,7 @@ export default function EventStaffPage() {
 
         const csv = "NAMA,ANGKATAN,UNIVERSITAS,WAKTU CHECK-IN,STATUS\n" +
             allData.map((row: any) => {
-                const status = row.check_in_time ? 'Hadir' : 'Belum';
+                const status = row.check_in_time ? 'Hadir' : row.status === 'Sakit' ? 'Sakit' : row.status === 'Permitted' || row.status === 'Cancelled' ? 'Izin/Batal' : 'Belum Hadir';
                 const time = row.check_in_time ? new Date(row.check_in_time).toLocaleTimeString('id-ID') : '-';
                 return `"${row.profiles.full_name}","${row.profiles.generation}","${row.profiles.university}","${time}","${status}"`
             }).join("\n")
@@ -491,6 +512,10 @@ export default function EventStaffPage() {
                                                     <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
                                                         <CheckCircle size={10} /> Hadir {new Date(p.check_in_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                                                     </span>
+                                                ) : p.status === 'Sakit' ? (
+                                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-pink-600 bg-pink-50 px-2 py-0.5 rounded-full">
+                                                        <Thermometer size={10} /> Sakit
+                                                    </span>
                                                 ) : p.status === 'Waiting List' ? (
                                                     <span className="inline-block text-[10px] font-bold text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full">Waiting List</span>
                                                 ) : p.status === 'Permitted' || p.status === 'Cancelled' ? (
@@ -503,13 +528,23 @@ export default function EventStaffPage() {
 
                                         {/* Check-in hanya untuk Registered yang belum hadir */}
                                         {p.status === 'Registered' && !p.check_in_time && (
-                                            <button
-                                                onClick={() => processAction(p.id, 'CheckIn')}
-                                                disabled={isProcessing}
-                                                className="ml-3 bg-navy text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:bg-navy/90 active:scale-95 transition shrink-0"
-                                            >
-                                                Check In
-                                            </button>
+                                            <div className="ml-3 flex gap-2 shrink-0">
+                                                <button
+                                                    onClick={() => processAction(p.id, 'CheckIn')}
+                                                    disabled={isProcessing}
+                                                    className="bg-navy text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:bg-navy/90 active:scale-95 transition"
+                                                >
+                                                    Check In
+                                                </button>
+                                                <button
+                                                    onClick={() => handleMarkSick(p.id)}
+                                                    disabled={isProcessing}
+                                                    className="bg-pink-100 text-pink-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-pink-200 active:scale-95 transition flex items-center gap-1"
+                                                    title="Tandai sebagai Sakit"
+                                                >
+                                                    <Thermometer size={12} /> Sakit
+                                                </button>
+                                            </div>
                                         )}
                                         {p.check_in_time && (
                                             <span className="ml-3 text-green-500 shrink-0">
