@@ -200,6 +200,27 @@ export default function EventStaffPage() {
         }
     }
 
+    const handleMarkPermitted = async (participantId: string) => {
+        setIsProcessing(true)
+        try {
+            const { error } = await supabase
+                .from('event_participants')
+                .update({ status: 'Permitted' })
+                .eq('id', participantId)
+
+            if (error) throw error
+
+            toast.success('Peserta ditandai Izin.')
+            setAllParticipants(prev => prev.map(p =>
+                p.id === participantId ? { ...p, status: 'Permitted' } : p
+            ))
+        } catch (err: any) {
+            toast.error('Gagal: ' + err.message)
+        } finally {
+            setIsProcessing(false)
+        }
+    }
+
     const downloadReport = async () => {
         const { data: allData } = await supabase
             .from('event_participants')
@@ -544,6 +565,14 @@ export default function EventStaffPage() {
                                                     title="Tandai sebagai Sakit"
                                                 >
                                                     <Thermometer size={12} /> Sakit
+                                                </button>
+                                                <button
+                                                    onClick={() => handleMarkPermitted(p.id)}
+                                                    disabled={isProcessing}
+                                                    className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-200 active:scale-95 transition flex items-center gap-1 border border-gray-200"
+                                                    title="Tandai sebagai Izin (Halangan / Hujan)"
+                                                >
+                                                    <X size={12} /> Izin
                                                 </button>
                                             </div>
                                         )}
