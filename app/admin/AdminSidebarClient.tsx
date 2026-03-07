@@ -75,7 +75,7 @@ export default function AdminSidebarClient({ userEmail, userName, userRole }: Ad
                 </div>
 
                 <nav className="flex-1 p-4 space-y-2">
-                    {userRole !== 'korwil' && userRole !== 'viewer' && (
+                    {['superadmin', 'admin'].includes(userRole) && (
                         <Link
                             href="/admin"
                             className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium"
@@ -83,7 +83,7 @@ export default function AdminSidebarClient({ userEmail, userName, userRole }: Ad
                             <LayoutDashboard size={18} /> Dashboard
                         </Link>
                     )}
-                    {userRole !== 'korwil' && userRole !== 'viewer' && (
+                    {['superadmin', 'admin'].includes(userRole) && (
                         <Link
                             href="/admin/verify"
                             className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium"
@@ -91,7 +91,7 @@ export default function AdminSidebarClient({ userEmail, userName, userRole }: Ad
                             <UserCheck size={18} /> Verifikasi Member
                         </Link>
                     )}
-                    {userRole !== 'viewer' && (
+                    {['superadmin', 'admin', 'korwil'].includes(userRole) && (
                         <Link
                             href="/admin/agendas"
                             className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium"
@@ -99,7 +99,7 @@ export default function AdminSidebarClient({ userEmail, userName, userRole }: Ad
                             <Calendar size={18} /> Agenda
                         </Link>
                     )}
-                    {userRole !== 'viewer' && (
+                    {['superadmin', 'admin', 'korwil'].includes(userRole) && (
                         <Link
                             href="/admin/live-events"
                             className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium"
@@ -107,7 +107,7 @@ export default function AdminSidebarClient({ userEmail, userName, userRole }: Ad
                             <Activity size={18} /> Live Events
                         </Link>
                     )}
-                    {userRole !== 'korwil' && userRole !== 'viewer' && (
+                    {['superadmin', 'admin'].includes(userRole) && (
                         <Link
                             href="/admin/inbox"
                             className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium"
@@ -115,7 +115,7 @@ export default function AdminSidebarClient({ userEmail, userName, userRole }: Ad
                             <Inbox size={18} /> Inbox Broadcast
                         </Link>
                     )}
-                    {(userRole === 'superadmin' || userRole === 'admin' || userRole === 'viewer') && (
+                    {['superadmin', 'admin', 'viewer'].includes(userRole) && (
                         <Link
                             href="/admin/users"
                             className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium opacity-75 hover:opacity-100"

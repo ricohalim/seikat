@@ -35,11 +35,25 @@ export default function UserManagementPage() {
     const handleRoleChange = async (userId: string, newRole: string) => {
         if (!confirm(`Ubah role user ini menjadi ${newRole}?`)) return
         try {
-            await supabase.from('profiles').update({ role: newRole }).eq('id', userId)
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) throw new Error('No active session')
+
+            const res = await fetch('/api/admin/change-role', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ targetUserId: userId, newRole: newRole })
+            })
+
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error || 'Gagal mengubah role')
+
             updateUserLocal({ id: userId, role: newRole })
             alert('Role berhasil diubah.')
-        } catch (err) {
-            alert('Gagal mengubah role.')
+        } catch (err: any) {
+            alert('Gagal mengubah role: ' + err.message)
         }
     }
 

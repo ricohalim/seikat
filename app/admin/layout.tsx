@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import AdminSidebarClient from './AdminSidebarClient'
 
 // Layout ini sekarang Server Component.
@@ -14,6 +15,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         .select('full_name, role, email')
         .eq('id', user!.id)
         .single()
+
+    // Proteksi: cegah role member atau tanpa role mengakses halaman admin (middleware tidak mengecek ini)
+    if (!profile || profile.role === 'member') {
+        redirect('/dashboard')
+    }
 
     return (
         <div className="min-h-screen bg-gray-100 font-sans flex relative overflow-hidden">
