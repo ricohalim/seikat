@@ -354,7 +354,7 @@ export default function EventStaffPage() {
 
             {/* Header */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
                     <div>
                         <h1 className="text-2xl font-bold text-navy">{event?.title || 'Memuat...'}</h1>
                         <p className="text-gray-500 flex items-center gap-2 text-sm mt-1">
@@ -381,7 +381,39 @@ export default function EventStaffPage() {
                         </button>
                     </div>
                 </div>
+
             </div>
+
+            {/* Pertama Mendaftar Info */}
+            {(() => {
+                // Cari partisipan aktif yang paling awal mendaftar
+                const activeParticipants = [...allParticipants].filter(p => p.status === 'Registered' || p.status === 'Waiting List')
+                activeParticipants.sort((a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime())
+                const firstParticipant = activeParticipants[0]
+
+                if (firstParticipant) {
+                    return (
+                        <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-200 mb-6 flex items-center justify-between shadow-sm">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-amber-600 font-bold text-sm shadow-sm ring-2 ring-yellow-200">
+                                    <Trophy size={20} className="text-amber-500" />
+                                </div>
+                                <div>
+                                    <p className="text-xs text-amber-700 font-bold uppercase mb-0.5 outline-none tracking-wide">Pendaftar Pertama 🎉</p>
+                                    <p className="text-base font-bold text-amber-900 truncate max-w-[200px] md:max-w-none">
+                                        {firstParticipant.profiles?.full_name}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-sm font-bold text-amber-800">Beswan {firstParticipant.profiles?.generation || '-'}</p>
+                                <p className="text-xs text-amber-600/80 font-semibold mt-0.5">{new Date(firstParticipant.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+                            </div>
+                        </div>
+                    )
+                }
+                return null
+            })()}
 
             {/* Main Console */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { X, Check, CheckCircle, AlertOctagon, XCircle, Search, Download } from 'lucide-react'
 import { Sheet } from '../ui/Sheet'
 import { Badge } from '../ui/Badge'
+import * as XLSX from 'xlsx'
 
 interface ParticipantsModalProps {
     isOpen: boolean
@@ -32,17 +33,22 @@ export function ParticipantsModal({ isOpen, onClose, eventName, participants, lo
         return matchSearch && matchFilter
     })
 
-    // Export CSV logic
-    const handleDownloadCSV = () => {
-        const csvContent = "data:text/csv;charset=utf-8,"
-            + "Nama,Email,Angkatan,No HP,Status,Izin\n"
-            + participants.map(p => `"${p.full_name}","${p.email}","${p.generation}","${p.phone}","${p.status}","${p.cancellation_reason || ''}"`).join("\n");
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `peserta_${eventName.replace(/\s+/g, '_')}.csv`);
-        document.body.appendChild(link);
-        link.click();
+    // Export Excel logic
+    const handleDownloadExcel = () => {
+        const data = participants.map(p => ({
+            "Nama": p.full_name,
+            "Email": p.email,
+            "Angkatan": p.generation,
+            "No HP": p.phone,
+            "Status": p.status,
+            "Izin": p.cancellation_reason || ''
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Peserta");
+
+        XLSX.writeFile(workbook, `peserta_${eventName.replace(/\s+/g, '_')}.xlsx`);
     }
 
     return (
@@ -74,10 +80,10 @@ export function ParticipantsModal({ isOpen, onClose, eventName, participants, lo
                             />
                         </div>
                         <button
-                            onClick={handleDownloadCSV}
+                            onClick={handleDownloadExcel}
                             disabled={participants.length === 0}
                             className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition"
-                            title="Download CSV"
+                            title="Download Excel"
                         >
                             <Download size={18} />
                         </button>

@@ -2,9 +2,10 @@ import { type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
-    const isPaused = true; // Ubah ke false untuk mengaktifkan kembali project
+    const isPaused = true; // Ubah ke false untuk mengaktifkan kembali project secara global
+    const isLocalhost = request.nextUrl.hostname === 'localhost' || request.nextUrl.hostname === '127.0.0.1';
 
-    if (isPaused) {
+    if (isPaused && !isLocalhost) {
         return new Response(
             `<!DOCTYPE html>
 <html lang="id">
