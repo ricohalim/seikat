@@ -52,7 +52,11 @@ export default async function AdminDashboardPage() {
         .eq('id', user.id)
         .single()
 
-    if (selfProfile?.role === 'korwil') redirect('/admin/agendas')
+    // Role guard: hanya admin & superadmin yang boleh akses halaman ini
+    if (!selfProfile || !['admin', 'superadmin'].includes(selfProfile.role)) {
+        if (selfProfile?.role === 'korwil') redirect('/admin/agendas')
+        redirect('/dashboard')
+    }
 
     // ── All data fetched in PARALLEL — single round trip ──────────────────────
     const [
