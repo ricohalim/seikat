@@ -181,36 +181,40 @@ export default function DirectoryPage() {
     }
 
     return (
-        <div className="space-y-6 pb-20"> {/* Added pb-20 for bottom spacing on mobile */}
-            <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold text-navy">Alumni Directory</h2>
-                    <p className="text-gray-500 text-sm">
-                        Jelajahi profil rekan-rekan Beswan Djarum dari berbagai angkatan.
-                        <span className="text-xs bg-gray-100 px-2 py-0.5 rounded ml-2 text-gray-400">
-                            Total: {totalActiveCount || members.length} Alumni
-                        </span>
-                    </p>
+        <div className="space-y-5 pb-20 animate-in fade-in duration-500">
+
+            {/* Page Header + Search */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-navy/8 flex items-center justify-center flex-shrink-0">
+                        <GraduationCap size={18} className="text-navy" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl font-black text-navy tracking-tight">Alumni Directory</h1>
+                        <p className="text-sm text-gray-400">
+                            {totalActiveCount || members.length} alumni terdaftar
+                        </p>
+                    </div>
                 </div>
 
                 {/* Search Bar */}
-                <div className="relative w-full md:w-96">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Search size={18} className="text-gray-400" />
+                <div className="relative w-full sm:w-80">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <Search size={16} className="text-gray-300" />
                     </div>
                     <input
                         type="text"
                         placeholder="Cari nama atau angkatan..."
-                        className="block w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy text-sm transition"
+                        className="w-full pl-10 pr-9 py-2.5 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 shadow-sm transition-all"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                     {searchQuery && (
                         <button
                             onClick={() => setSearchQuery('')}
-                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-300 hover:text-gray-500 transition"
                         >
-                            <X size={16} />
+                            <X size={15} />
                         </button>
                     )}
                 </div>

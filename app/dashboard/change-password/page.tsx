@@ -58,80 +58,80 @@ export default function ChangePasswordPage() {
     }
 
     return (
-        <div className="max-w-md mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-50 text-blue-600 mb-4">
-                        <Lock size={32} />
+        <div className="animate-in fade-in duration-500">
+
+            {/* Page Header */}
+            <div className="mb-6">
+                <div className="flex items-center gap-3 mb-1">
+                    <div className="w-9 h-9 rounded-xl bg-navy/8 flex items-center justify-center flex-shrink-0">
+                        <Lock size={18} className="text-navy" />
                     </div>
-                    <h2 className="text-2xl font-bold text-navy">Ganti Password</h2>
-                    <p className="text-gray-500 text-sm mt-1">Buat password baru yang aman untuk akun Anda.</p>
+                    <div>
+                        <h1 className="text-xl font-black text-navy tracking-tight">Ganti Password</h1>
+                        <p className="text-sm text-gray-400">Perbarui password akun Anda</p>
+                    </div>
                 </div>
+            </div>
 
-                {msg && (
-                    <div className={`p-4 rounded-xl flex items-center gap-3 text-sm mb-6 ${msg.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
+            {/* Card */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-navy to-azure/50 rounded-l-2xl" />
+
+                <div className="p-6">
+                    {msg && (
+                        <div className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium mb-6 ${
+                            msg.type === 'success'
+                                ? 'bg-green-50 text-green-700 border border-green-200'
+                                : 'bg-red-50 text-red-600 border border-red-100'
                         }`}>
-                        {msg.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
-                        {msg.text}
-                    </div>
-                )}
+                            {msg.type === 'success' ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
+                            {msg.text}
+                        </div>
+                    )}
 
-                <form onSubmit={handleUpdate} className="space-y-5">
-                    <div>
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Password Lama</label>
-                        <input
-                            type="password"
-                            required
-                            value={oldPassword}
-                            onChange={(e) => setOldPassword(e.target.value)}
-                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-navy focus:ring-2 focus:ring-navy/20 outline-none transition"
-                            placeholder="••••••••"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Password Baru</label>
-                        <input
-                            type="password"
-                            required
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-navy focus:ring-2 focus:ring-navy/20 outline-none transition"
-                            placeholder="••••••••"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Konfirmasi Password</label>
-                        <input
-                            type="password"
-                            required
-                            value={confirm}
-                            onChange={(e) => setConfirm(e.target.value)}
-                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-navy focus:ring-2 focus:ring-navy/20 outline-none transition"
-                            placeholder="••••••••"
-                        />
-                    </div>
+                    <form onSubmit={handleUpdate} className="space-y-4">
+                        {[
+                            { label: 'Password Lama', value: oldPassword, onChange: setOldPassword },
+                            { label: 'Password Baru', value: password, onChange: setPassword },
+                            { label: 'Konfirmasi Password Baru', value: confirm, onChange: setConfirm },
+                        ].map((field) => (
+                            <div key={field.label}>
+                                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5">
+                                    {field.label}
+                                </label>
+                                <input
+                                    type="password"
+                                    required
+                                    value={field.value}
+                                    onChange={(e) => field.onChange(e.target.value)}
+                                    placeholder="••••••••"
+                                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 shadow-sm transition-all"
+                                />
+                            </div>
+                        ))}
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full bg-navy text-white py-3 rounded-xl font-bold hover:bg-navy/90 transition shadow-lg shadow-navy/20 flex items-center justify-center gap-2"
-                    >
-                        {loading ? (
-                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        ) : (
-                            <>
-                                <Save size={18} /> Simpan Password
-                            </>
-                        )}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => router.back()}
-                        className="w-full text-gray-500 text-sm hover:text-navy transition"
-                    >
-                        Batal
-                    </button>
-                </form>
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => router.back()}
+                                className="flex-1 border border-gray-200 text-gray-500 py-3 rounded-xl font-bold hover:border-navy/30 hover:text-navy transition-all text-sm"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="flex-1 bg-navy text-white py-3 rounded-xl font-bold hover:bg-[#1a3561] hover:shadow-md hover:shadow-navy/20 transition-all active:scale-95 flex items-center justify-center gap-2 text-sm disabled:opacity-60"
+                            >
+                                {loading ? (
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                ) : (
+                                    <><Save size={16} /> Simpan</>
+                                )}
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     )

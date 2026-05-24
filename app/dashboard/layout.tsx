@@ -16,10 +16,10 @@ export default async function DashboardLayout({
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) redirect('/auth/login')
 
-    // 2. Cek account_status — blokir user Pending sebelum render
+    // 2. Fetch profile lengkap untuk sidebar (status + display info)
     const { data: profile } = await supabase
         .from('profiles')
-        .select('account_status')
+        .select('account_status, full_name, photo_url, role, generation')
         .eq('id', user.id)
         .single()
 
@@ -27,6 +27,15 @@ export default async function DashboardLayout({
         redirect('/auth/verification-pending')
     }
 
-    // 3. Render shell (Client Component) dengan children sebagai server-rendered content
-    return <DashboardShell>{children}</DashboardShell>
+    // 3. Render shell dengan data user untuk sidebar
+    return (
+        <DashboardShell
+            userName={profile?.full_name ?? ''}
+            userPhoto={profile?.photo_url ?? null}
+            userRole={profile?.role ?? 'member'}
+            userGeneration={profile?.generation ?? ''}
+        >
+            {children}
+        </DashboardShell>
+    )
 }

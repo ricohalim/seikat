@@ -16,10 +16,12 @@ interface Props {
     setFormData: React.Dispatch<React.SetStateAction<ProfileData>>
 }
 
+// Shared input/label classes
+const inputCls = 'w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 shadow-sm transition-all'
+const selectCls = 'w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 shadow-sm transition-all appearance-none'
+const labelCls = 'text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5'
+
 export default function ProfileFormContact({ formData, handleChange, handlePhoneChange, handleLinkedinChange, linkedinUsername, setFormData }: Props) {
-
-
-    // Validation
     const { validateName } = useNameValidation()
     const [nameWarning, setNameWarning] = useState<string | null>(null)
 
@@ -33,54 +35,58 @@ export default function ProfileFormContact({ formData, handleChange, handlePhone
     }, [formData.full_name, validateName])
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h3 className="text-sm font-bold text-azure uppercase mb-4 flex items-center gap-2 border-b border-gray-50 pb-2">
-                <User size={16} /> Foto & Kontak
-            </h3>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden relative">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-azure to-azure/30 rounded-l-2xl" />
+            <div className="p-6 pl-7">
+                <h3 className="font-bold text-navy text-sm mb-5 flex items-center gap-2">
+                    <User size={15} className="text-azure" />
+                    Foto &amp; Kontak
+                </h3>
 
-            <ProfileImageUpload
-                currentUrl={formData.photo_url}
-                onUploadComplete={(url) => {
-                    setFormData(p => ({ ...p, photo_url: url }))
-                    toast.success('Foto terupload! Jangan lupa klik "Simpan Perubahan".')
-                }}
-            />
+                <ProfileImageUpload
+                    currentUrl={formData.photo_url}
+                    onUploadComplete={(url) => {
+                        setFormData(p => ({ ...p, photo_url: url }))
+                        toast.success('Foto terupload! Jangan lupa klik "Simpan Perubahan".')
+                    }}
+                />
 
-            <div className="space-y-4 mt-6">
-                <div>
-                    <label className="block text-xs font-bold text-gray-500 mb-1">Nama Lengkap</label>
-                    <input type="text" name="full_name" value={formData.full_name} onChange={handleChange} required
-                        className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
-                    />
-                    {nameWarning ? (
-                        <p className="text-xs text-orange mt-1 flex items-center gap-1 font-medium bg-orange/10 p-2 rounded-lg border border-orange/20">
-                            <AlertCircle size={12} /> {nameWarning}
-                        </p>
-                    ) : (
-                        <p className="text-[10px] text-gray-400 mt-1">Isi nama lengkap sesuai KTP tanpa gelar.</p>
-                    )}
-                </div>
-                <div>
-                    <label className="block text-xs font-bold text-gray-500 mb-1">No. Whatsapp</label>
-                    <div className="relative">
-                        <span className="absolute left-3 top-2 text-gray-400 font-medium">+</span>
-                        <input type="text" name="phone" value={formData.phone} onChange={handlePhoneChange}
-                            placeholder="628123456789"
-                            className="w-full pl-6 p-2 border border-gray-200 rounded-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
+                <div className="space-y-4 mt-6">
+                    <div>
+                        <label className={labelCls}>Nama Lengkap</label>
+                        <input type="text" name="full_name" value={formData.full_name} onChange={handleChange} required
+                            className={inputCls}
                         />
+                        {nameWarning ? (
+                            <p className="text-xs text-orange mt-1.5 flex items-center gap-1.5 font-medium bg-orange/8 px-3 py-2 rounded-xl border border-orange/15">
+                                <AlertCircle size={12} /> {nameWarning}
+                            </p>
+                        ) : (
+                            <p className="text-[11px] text-gray-300 mt-1">Isi nama lengkap sesuai KTP tanpa gelar.</p>
+                        )}
                     </div>
-                    <p className="text-[10px] text-gray-400 mt-1">Gunakan kode negara (contoh: 62812...)</p>
-                </div>
-                <div>
-                    <label className="block text-xs font-bold text-gray-500 mb-1">LinkedIn Username</label>
-                    <div className="flex items-center">
-                        <span className="bg-gray-50 border border-r-0 border-gray-300 text-gray-500 text-xs p-2 rounded-l-lg">
-                            linkedin.com/in/
-                        </span>
-                        <input type="text" value={linkedinUsername} onChange={handleLinkedinChange}
-                            className="flex-1 p-2 border border-gray-200 rounded-r-lg text-sm focus:border-navy focus:ring-1 focus:ring-navy outline-none"
-                            placeholder="username"
-                        />
+                    <div>
+                        <label className={labelCls}>No. WhatsApp</label>
+                        <div className="relative">
+                            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">+</span>
+                            <input type="text" name="phone" value={formData.phone} onChange={handlePhoneChange}
+                                placeholder="628123456789"
+                                className={`${inputCls} pl-7`}
+                            />
+                        </div>
+                        <p className="text-[11px] text-gray-300 mt-1">Gunakan kode negara (contoh: 62812...)</p>
+                    </div>
+                    <div>
+                        <label className={labelCls}>LinkedIn Username</label>
+                        <div className="flex items-stretch">
+                            <span className="flex items-center bg-gray-50 border border-r-0 border-gray-200 text-gray-400 text-xs px-3 rounded-l-xl whitespace-nowrap">
+                                linkedin.com/in/
+                            </span>
+                            <input type="text" value={linkedinUsername} onChange={handleLinkedinChange}
+                                className="flex-1 px-3.5 py-2.5 bg-white border border-gray-200 rounded-r-xl text-sm outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 shadow-sm transition-all"
+                                placeholder="username"
+                            />
+                        </div>
                     </div>
                 </div>
             </div>

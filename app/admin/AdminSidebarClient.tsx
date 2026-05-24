@@ -1,10 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import Link from 'next/link'
-import { LayoutDashboard, Users, UserCheck, LogOut, ShieldAlert, Menu, Calendar, Clock, Inbox, Activity } from 'lucide-react'
+import { clsx } from 'clsx'
+import {
+    LayoutDashboard, Users, UserCheck, LogOut, ShieldAlert,
+    Menu, Calendar, Clock, Inbox, Activity, X, ChevronRight
+} from 'lucide-react'
 
 interface AdminSidebarClientProps {
     userEmail: string
@@ -12,8 +16,35 @@ interface AdminSidebarClientProps {
     userRole: string
 }
 
+const menuGroups = [
+    {
+        label: 'Overview',
+        items: [
+            { name: 'Dashboard', href: '/admin', icon: LayoutDashboard, roles: ['superadmin', 'admin'] },
+            { name: 'Verifikasi Member', href: '/admin/verify', icon: UserCheck, roles: ['superadmin', 'admin'] },
+        ]
+    },
+    {
+        label: 'Konten',
+        items: [
+            { name: 'Agenda', href: '/admin/agendas', icon: Calendar, roles: ['superadmin', 'admin', 'korwil'] },
+            { name: 'Live Events', href: '/admin/live-events', icon: Activity, roles: ['superadmin', 'admin', 'korwil'] },
+            { name: 'Inbox Broadcast', href: '/admin/inbox', icon: Inbox, roles: ['superadmin', 'admin'] },
+        ]
+    },
+    {
+        label: 'Manajemen',
+        items: [
+            { name: 'User Management', href: '/admin/users', icon: Users, roles: ['superadmin', 'admin', 'viewer'] },
+            { name: 'Master Data', href: '/admin/master-data', icon: ShieldAlert, roles: ['superadmin'] },
+            { name: 'Activity Logs', href: '/admin/logs', icon: Clock, roles: ['superadmin'] },
+        ]
+    },
+]
+
 export default function AdminSidebarClient({ userEmail, userName, userRole }: AdminSidebarClientProps) {
-    const [sidebarOpen, setSidebarOpen] = useState(true)
+    const [sidebarOpen, setSidebarOpen] = useState(false)
+    const pathname = usePathname()
     const router = useRouter()
 
     const supabase = createBrowserClient(
@@ -26,143 +57,142 @@ export default function AdminSidebarClient({ userEmail, userName, userRole }: Ad
         router.replace('/')
     }
 
+    const initials = userName?.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'A'
+
     return (
         <>
-            {/* WATERMARK OVERLAY - ANTI LEAK */}
+            {/* WATERMARK OVERLAY */}
             <div
-                className="fixed inset-0 pointer-events-none z-[9999] flex flex-wrap content-start items-start opacity-[0.03] overflow-hidden select-none"
+                className="fixed inset-0 pointer-events-none z-[9999] flex flex-wrap content-start items-start opacity-[0.025] overflow-hidden select-none"
                 style={{ transform: 'rotate(-15deg) scale(1.5)' }}
             >
-                {Array.from({ length: 100 }).map((_, i) => (
-                    <div key={i} className="p-8 text-xl font-bold text-gray-900 whitespace-nowrap">
-                        {userEmail} • {userRole} • DO NOT SHARE
+                {Array.from({ length: 80 }).map((_, i) => (
+                    <div key={i} className="p-8 text-sm font-bold text-gray-900 whitespace-nowrap">
+                        {userEmail} · {userRole} · CONFIDENTIAL
                     </div>
                 ))}
             </div>
 
-            {/* Mobile Header */}
-            <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-                <button onClick={() => setSidebarOpen(true)} className="text-navy p-1">
-                    <Menu size={24} />
-                </button>
-                <span className="font-bold text-navy">Admin Portal</span>
-                <div className="w-8" />
-            </div>
-
-            {/* Mobile Overlay */}
+            {/* Mobile overlay */}
             {sidebarOpen && (
                 <div
-                    className="md:hidden fixed inset-0 z-40 bg-black/40"
+                    className="md:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}
 
-            {/* Sidebar */}
-            <aside
-                className={`fixed inset-y-0 left-0 z-50 w-64 bg-navy text-white transition-transform duration-300 md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:static shadow-xl flex flex-col flex-shrink-0`}
-            >
-                <div className="p-6 border-b border-white/10 flex items-center justify-between">
-                    <div>
-                        <h1 className="text-xl font-bold tracking-tight">Admin Portal</h1>
-                        <p className="text-xs text-white/50">IKADBP Management</p>
+            {/* Mobile Header */}
+            <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-[#0f1e38] border-b border-white/10 px-4 py-3.5 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange to-orange/60 flex items-center justify-center">
+                        <span className="text-white font-black text-[10px]">A</span>
                     </div>
-                    <button
-                        onClick={() => setSidebarOpen(false)}
-                        className="md:hidden text-white/70 hover:text-white"
-                    >
-                        <span className="text-2xl">×</span>
+                    <span className="font-bold text-white text-sm tracking-tight">Admin Portal</span>
+                </div>
+                <button onClick={() => setSidebarOpen(true)} className="text-white/60 hover:text-white p-1 transition">
+                    <Menu size={20} />
+                </button>
+            </div>
+
+            {/* Sidebar */}
+            <aside className={clsx(
+                'flex flex-col w-64 flex-shrink-0 h-screen',
+                'fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out',
+                'md:sticky md:top-0 md:translate-x-0',
+                'bg-[#0f1e38] text-white',
+                sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            )}>
+
+                {/* Logo */}
+                <div className="px-6 pt-6 pb-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange to-orange/60 flex items-center justify-center flex-shrink-0 shadow-lg shadow-orange/20">
+                            <span className="text-white font-black text-xs">A</span>
+                        </div>
+                        <div>
+                            <h1 className="text-sm font-black text-white tracking-tight leading-none">Admin Portal</h1>
+                            <p className="text-[10px] text-white/35 font-medium leading-none mt-0.5">IKABDP Management</p>
+                        </div>
+                    </div>
+                    <button onClick={() => setSidebarOpen(false)} className="md:hidden text-white/40 hover:text-white transition p-1">
+                        <X size={18} />
                     </button>
                 </div>
 
-                <nav className="flex-1 p-4 space-y-2">
-                    {['superadmin', 'admin'].includes(userRole) && (
+                {/* Nav */}
+                <nav className="flex-1 px-3 py-2 overflow-y-auto space-y-5">
+                    {menuGroups.map(group => {
+                        const visibleItems = group.items.filter(item => item.roles.includes(userRole))
+                        if (visibleItems.length === 0) return null
+                        return (
+                            <div key={group.label}>
+                                <p className="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-widest text-white/25">
+                                    {group.label}
+                                </p>
+                                <div className="space-y-0.5">
+                                    {visibleItems.map(item => {
+                                        const Icon = item.icon
+                                        const isActive = pathname === item.href
+                                        return (
+                                            <Link
+                                                key={item.href}
+                                                href={item.href}
+                                                onClick={() => setSidebarOpen(false)}
+                                                className={clsx(
+                                                    'group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 relative',
+                                                    isActive
+                                                        ? 'bg-white/10 text-white'
+                                                        : 'text-white/55 hover:bg-white/6 hover:text-white/90'
+                                                )}
+                                            >
+                                                {isActive && (
+                                                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-orange rounded-full" />
+                                                )}
+                                                <Icon size={17} className={clsx(
+                                                    'flex-shrink-0 transition-transform duration-200',
+                                                    isActive ? 'text-white' : 'text-white/40 group-hover:text-white/70 group-hover:scale-110'
+                                                )} />
+                                                <span className="flex-1 leading-none">{item.name}</span>
+                                                {isActive && <ChevronRight size={14} className="text-white/40 flex-shrink-0" />}
+                                            </Link>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        )
+                    })}
+
+                    {/* Back to App */}
+                    <div>
+                        <p className="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-widest text-white/25">Navigasi</p>
                         <Link
-                            href="/admin"
-                            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium"
+                            href="/dashboard"
+                            className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/55 hover:bg-white/6 hover:text-white/90 transition-all duration-200"
                         >
-                            <LayoutDashboard size={18} /> Dashboard
+                            <LogOut size={17} className="flex-shrink-0 text-white/40 group-hover:text-white/70 rotate-180" />
+                            <span className="flex-1 leading-none">Kembali ke App</span>
                         </Link>
-                    )}
-                    {['superadmin', 'admin'].includes(userRole) && (
-                        <Link
-                            href="/admin/verify"
-                            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium"
-                        >
-                            <UserCheck size={18} /> Verifikasi Member
-                        </Link>
-                    )}
-                    {['superadmin', 'admin', 'korwil'].includes(userRole) && (
-                        <Link
-                            href="/admin/agendas"
-                            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium"
-                        >
-                            <Calendar size={18} /> Agenda
-                        </Link>
-                    )}
-                    {['superadmin', 'admin', 'korwil'].includes(userRole) && (
-                        <Link
-                            href="/admin/live-events"
-                            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium"
-                        >
-                            <Activity size={18} /> Live Events
-                        </Link>
-                    )}
-                    {['superadmin', 'admin'].includes(userRole) && (
-                        <Link
-                            href="/admin/inbox"
-                            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium"
-                        >
-                            <Inbox size={18} /> Inbox Broadcast
-                        </Link>
-                    )}
-                    {['superadmin', 'admin', 'viewer'].includes(userRole) && (
-                        <Link
-                            href="/admin/users"
-                            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium opacity-75 hover:opacity-100"
-                        >
-                            <Users size={18} /> User Management
-                        </Link>
-                    )}
-                    {userRole === 'superadmin' && (
-                        <>
-                            <Link
-                                href="/admin/master-data"
-                                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium opacity-75 hover:opacity-100"
-                            >
-                                <ShieldAlert size={18} /> Master Data
-                            </Link>
-                            <Link
-                                href="/admin/logs"
-                                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium opacity-75 hover:opacity-100"
-                            >
-                                <Clock size={18} /> Activity Logs
-                            </Link>
-                        </>
-                    )}
-                    <Link
-                        href="/dashboard"
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium mt-auto text-blue-200 hover:text-white"
-                    >
-                        <LogOut size={18} className="rotate-180" /> Kembali ke App
-                    </Link>
+                    </div>
                 </nav>
 
-                <div className="p-4 border-t border-white/10 bg-black/20">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-xs font-bold text-white">
-                            {userName?.charAt(0) || 'A'}
+                {/* User card */}
+                <div className="mx-3 mb-3 p-3 rounded-2xl bg-white/5 border border-white/8">
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange/80 to-orange/40 flex items-center justify-center flex-shrink-0 text-white font-bold text-sm ring-2 ring-white/10">
+                            {initials}
                         </div>
-                        <div className="overflow-hidden">
-                            <p className="text-sm font-bold truncate">{userName}</p>
-                            <p className="text-xs text-white/50 truncate capitalize">{userRole}</p>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-semibold text-white truncate leading-tight">{userName || 'Admin'}</p>
+                            <p className="text-[11px] text-orange font-medium leading-tight capitalize">{userRole}</p>
                         </div>
+                        <button
+                            onClick={handleSignOut}
+                            title="Keluar"
+                            className="flex-shrink-0 p-1.5 text-white/30 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                        >
+                            <LogOut size={15} />
+                        </button>
                     </div>
-                    <button
-                        onClick={handleSignOut}
-                        className="w-full flex items-center justify-center gap-2 bg-red-500/20 text-red-200 py-2 rounded-lg hover:bg-red-500/30 transition text-xs font-bold"
-                    >
-                        <LogOut size={14} /> Keluar
-                    </button>
                 </div>
             </aside>
         </>

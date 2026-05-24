@@ -23,7 +23,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     }
 
     return (
-        <div className="min-h-screen bg-gray-100 font-sans flex relative overflow-hidden">
+        <div className="h-screen bg-gray-50 font-sans flex overflow-hidden">
             <AdminSidebarClient
                 userEmail={user?.email ?? ''}
                 userName={profile?.full_name ?? ''}
@@ -31,7 +31,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             />
 
             {/* Main Content */}
-            <main className="flex-1 flex flex-col min-w-0 relative z-10 md:pt-0 pt-16">
+            <main className="flex-1 flex flex-col min-w-0 overflow-hidden md:pt-0 pt-14">
                 <div className="flex-1 overflow-y-auto p-4 md:p-8">
                     {/* Breadcrumb otomatis untuk semua halaman admin */}
                     <AdminBreadcrumb />

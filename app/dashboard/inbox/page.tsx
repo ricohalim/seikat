@@ -25,60 +25,66 @@ export default function InboxPage() {
     }, [])
 
     return (
-        <div className="max-w-4xl mx-auto">
-            <header className="mb-8">
-                <h1 className="text-2xl font-bold text-navy mb-2">Inbox & Pengumuman</h1>
-                <p className="text-gray-500">Informasi terbaru dari administrator IKADBP</p>
-            </header>
+        <div className="animate-in fade-in duration-500">
+
+            {/* Page Header */}
+            <div className="flex items-center gap-3 mb-6">
+                <div className="w-9 h-9 rounded-xl bg-navy/8 flex items-center justify-center flex-shrink-0">
+                    <Bell size={18} className="text-navy" />
+                </div>
+                <div>
+                    <h1 className="text-xl font-black text-navy tracking-tight">Inbox & Pengumuman</h1>
+                    <p className="text-sm text-gray-400">Informasi terbaru dari administrator IKADBP</p>
+                </div>
+            </div>
 
             {loading ? (
-                <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                    <Loader2 className="w-8 h-8 animate-spin mb-3 text-navy" />
-                    <p>Memuat pesan...</p>
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center py-14 text-gray-400">
+                    <Loader2 className="w-7 h-7 animate-spin mb-3 text-navy/40" />
+                    <p className="text-sm">Memuat pesan...</p>
                 </div>
             ) : messages.length === 0 ? (
-                <div className="bg-white rounded-xl shadow-sm p-12 text-center border border-gray-100">
-                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
-                        <Bell size={24} />
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+                    <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <Bell size={22} className="text-gray-300" />
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">Belum ada pesan</h3>
-                    <p className="text-gray-500">Anda belum memiliki pesan atau pengumuman terbaru.</p>
+                    <p className="font-bold text-gray-700 mb-1">Belum ada pesan</p>
+                    <p className="text-sm text-gray-400">Tidak ada pengumuman terbaru saat ini.</p>
                 </div>
             ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                     {messages.map((msg) => (
                         <div
                             key={msg.id}
                             onClick={() => setSelectedMessage(msg)}
-                            className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-200 transition group cursor-pointer"
+                            className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-navy/15 transition-all cursor-pointer group overflow-hidden"
                         >
-                            <div className="flex items-start gap-4">
-                                <div className="hidden sm:flex flex-col items-center min-w-[60px]">
-                                    <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-1 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                        <Bell size={20} />
+                            <div className="flex items-start gap-4 p-5">
+                                <div className="hidden sm:flex flex-shrink-0">
+                                    <div className="w-10 h-10 rounded-xl bg-navy/6 text-navy flex items-center justify-center group-hover:bg-navy group-hover:text-white transition-all">
+                                        <Bell size={18} />
                                     </div>
                                 </div>
 
                                 <div className="flex-1 w-full overflow-hidden">
-                                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                                        <h3 className="font-bold text-lg text-gray-900 leading-tight group-hover:text-blue-600 transition-colors">
+                                    <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                                        <h3 className="font-bold text-navy text-sm group-hover:text-azure transition-colors">
                                             {msg.title}
                                         </h3>
                                         <div className="flex items-center gap-2">
-                                            {/* Status Badge - Only visible if Draft or for Admins */}
                                             {msg.status === 'draft' && (
-                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-purple-100 text-purple-700 border border-purple-200">
+                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-purple-50 text-purple-600 border border-purple-100">
                                                     Draft
                                                 </span>
                                             )}
                                             {msg.expires_at && (
-                                                <div className="flex items-center gap-1.5 text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-md border border-orange-100">
-                                                    <Clock size={12} />
-                                                    Ends: {new Date(msg.expires_at).toLocaleDateString('id-ID')}
+                                                <div className="flex items-center gap-1 text-[11px] text-orange font-medium bg-orange/5 px-2 py-1 rounded-lg border border-orange/10">
+                                                    <Clock size={11} />
+                                                    {new Date(msg.expires_at).toLocaleDateString('id-ID')}
                                                 </div>
                                             )}
-                                            <div className="flex items-center gap-1.5 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
-                                                <Calendar size={12} />
+                                            <div className="flex items-center gap-1 text-[11px] text-gray-400 bg-gray-50 px-2 py-1 rounded-lg border border-gray-100">
+                                                <Calendar size={11} />
                                                 {new Date(msg.created_at).toLocaleDateString('id-ID', {
                                                     day: 'numeric', month: 'long', year: 'numeric'
                                                 })}
@@ -86,19 +92,14 @@ export default function InboxPage() {
                                         </div>
                                     </div>
 
-                                    <div className="prose prose-sm max-w-none text-gray-500 line-clamp-2">
-                                        <p className="whitespace-pre-wrap leading-relaxed">
-                                            {msg.content}
-                                        </p>
-                                    </div>
+                                    <p className="text-sm text-gray-400 line-clamp-2 leading-relaxed">
+                                        {msg.content}
+                                    </p>
 
-                                    <div className="mt-4 flex items-center justify-between gap-2">
-                                        <span className="text-xs font-medium text-navy bg-navy/5 px-2 py-1 rounded">
-                                            Administrator
-                                        </span>
-                                        <span className="text-sm font-semibold text-blue-600 flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                                            Baca Selengkapnya
-                                            <ChevronRight size={16} />
+                                    <div className="mt-3 flex items-center justify-between">
+                                        <span className="text-[11px] font-bold text-navy/40 uppercase tracking-widest">Administrator</span>
+                                        <span className="text-xs font-bold text-azure flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                                            Baca Selengkapnya <ChevronRight size={13} />
                                         </span>
                                     </div>
                                 </div>
@@ -148,7 +149,7 @@ export default function InboxPage() {
                         <div className="p-4 bg-gray-50 flex justify-end gap-3 border-t border-gray-100 shrink-0">
                             <button
                                 onClick={() => setSelectedMessage(null)}
-                                className="px-6 py-2.5 bg-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-300 transition"
+                                className="px-5 py-2.5 bg-navy text-white font-bold rounded-xl hover:bg-[#1a3561] transition-all text-sm"
                             >
                                 Tutup
                             </button>

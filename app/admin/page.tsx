@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Users, UserPlus, Clock, TrendingUp } from 'lucide-react'
+import { Users, UserPlus, Clock, TrendingUp, LayoutDashboard } from 'lucide-react'
 import DownloadAlumniButton from '@/app/components/admin/DownloadAlumniButton'
 import { hasAdminAccess } from '@/lib/roles'
 
@@ -97,97 +97,100 @@ export default async function AdminDashboardPage() {
     const provinces = topEntries((demoData || []).map(d => d.domicile_province), 5)
 
     return (
-        <div className="max-w-6xl mx-auto space-y-8 pb-20">
-            <header>
-                <h1 className="text-3xl font-bold text-navy">Monitoring Dashboard</h1>
-                <p className="text-gray-500">Ringkasan aktivitas dan status keanggotaan real-time.</p>
-            </header>
+        <div className="space-y-6 pb-10 animate-in fade-in duration-500">
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Pending */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-orange shadow-orange/10 relative overflow-hidden group">
-                    <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:scale-110 transition">
-                        <Clock size={80} className="text-orange" />
+            {/* Page Header */}
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-navy/8 flex items-center justify-center flex-shrink-0">
+                        <LayoutDashboard size={18} className="text-navy" />
                     </div>
                     <div>
-                        <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Butuh Verifikasi</p>
-                        <h2 className="text-4xl font-extrabold text-navy mt-2">{pendingCount ?? 0}</h2>
-                        <p className="text-xs text-orange font-bold mt-2">Menunggu Persetujuan</p>
+                        <h1 className="text-xl font-black text-navy tracking-tight">Monitoring Dashboard</h1>
+                        <p className="text-sm text-gray-400">Ringkasan aktivitas dan status keanggotaan real-time</p>
                     </div>
+                </div>
+                <DownloadAlumniButton />
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Pending */}
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm border-l-4 border-l-orange relative overflow-hidden group">
+                    <div className="absolute right-3 top-3 opacity-[0.07] group-hover:opacity-[0.12] transition">
+                        <Clock size={72} className="text-orange" />
+                    </div>
+                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Butuh Verifikasi</p>
+                    <h2 className="text-4xl font-black text-navy">{pendingCount ?? 0}</h2>
+                    <p className="text-xs text-orange font-bold mt-2">Menunggu Persetujuan</p>
                 </div>
 
                 {/* Active */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-blue-500 shadow-blue-500/10 relative overflow-hidden group">
-                    <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:scale-110 transition">
-                        <Users size={80} className="text-blue-500" />
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm border-l-4 border-l-azure relative overflow-hidden group">
+                    <div className="absolute right-3 top-3 opacity-[0.07] group-hover:opacity-[0.12] transition">
+                        <Users size={72} className="text-azure" />
                     </div>
-                    <div>
-                        <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Alumni Aktif</p>
-                        <h2 className="text-4xl font-extrabold text-navy mt-2">{activeCount ?? 0}</h2>
-                        <p className="text-xs text-green-600 font-bold mt-2 flex items-center gap-1">
-                            <TrendingUp size={12} /> Anggota Terverifikasi
-                        </p>
-                    </div>
+                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Alumni Aktif</p>
+                    <h2 className="text-4xl font-black text-navy">{activeCount ?? 0}</h2>
+                    <p className="text-xs text-azure font-bold mt-2 flex items-center gap-1">
+                        <TrendingUp size={11} /> Anggota Terverifikasi
+                    </p>
                 </div>
 
                 {/* Today */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-purple-500 shadow-purple-500/10 relative overflow-hidden group">
-                    <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:scale-110 transition">
-                        <UserPlus size={80} className="text-purple-500" />
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm border-l-4 border-l-purple-500 relative overflow-hidden group">
+                    <div className="absolute right-3 top-3 opacity-[0.07] group-hover:opacity-[0.12] transition">
+                        <UserPlus size={72} className="text-purple-500" />
                     </div>
-                    <div>
-                        <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Pendaftar Baru</p>
-                        <h2 className="text-4xl font-extrabold text-navy mt-2">{todayCount ?? 0}</h2>
-                        <p className="text-xs text-purple-600 font-bold mt-2">+{todayCount ?? 0} Hari Ini</p>
-                    </div>
+                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Pendaftar Baru</p>
+                    <h2 className="text-4xl font-black text-navy">{todayCount ?? 0}</h2>
+                    <p className="text-xs text-purple-500 font-bold mt-2">+{todayCount ?? 0} Hari Ini</p>
                 </div>
             </div>
 
             {/* Demographics */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <div className="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 className="font-bold text-navy text-lg">Demografi Alumni</h3>
-                        <p className="text-xs text-gray-400 mt-0.5">{activeCount ?? 0} alumni aktif</p>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="w-9 h-9 rounded-xl bg-navy/8 flex items-center justify-center flex-shrink-0">
+                        <Users size={17} className="text-navy" />
                     </div>
-                    <DownloadAlumniButton />
+                    <div>
+                        <h3 className="font-black text-navy tracking-tight">Demografi Alumni</h3>
+                        <p className="text-[11px] text-gray-400">{activeCount ?? 0} alumni aktif terdaftar</p>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {/* Generasi */}
                     <div>
-                        <p className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />
+                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-azure inline-block" />
                             Distribusi Generasi
                         </p>
                         {generations.length > 0
-                            ? <BarChart data={generations} color="#3b82f6" />
-                            : <p className="text-xs text-gray-400">Belum ada data.</p>
+                            ? <BarChart data={generations} color="#2563eb" />
+                            : <p className="text-xs text-gray-300">Belum ada data.</p>
                         }
                     </div>
 
-                    {/* Sektor Industri */}
                     <div>
-                        <p className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-1.5">
+                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
                             Top 5 Sektor Industri
                         </p>
                         {industries.length > 0
                             ? <BarChart data={industries} color="#22c55e" />
-                            : <p className="text-xs text-gray-400">Belum ada data.</p>
+                            : <p className="text-xs text-gray-300">Belum ada data.</p>
                         }
                     </div>
 
-                    {/* Provinsi Domisili */}
                     <div>
-                        <p className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-1.5">
+                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-full bg-purple-500 inline-block" />
                             Top 5 Provinsi Domisili
                         </p>
                         {provinces.length > 0
                             ? <BarChart data={provinces} color="#a855f7" />
-                            : <p className="text-xs text-gray-400">Belum ada data.</p>
+                            : <p className="text-xs text-gray-300">Belum ada data.</p>
                         }
                     </div>
                 </div>

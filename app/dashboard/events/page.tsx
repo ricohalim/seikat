@@ -304,65 +304,76 @@ export default function EventsPage() {
 
     if (!isAuthorized) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6 space-y-6 animate-in fade-in duration-500">
-                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-2">
-                    <Lock size={40} />
+            <div className="flex flex-col items-center justify-center min-h-[50vh] animate-in fade-in duration-500">
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center max-w-md w-full">
+                    <div className="w-14 h-14 bg-navy/6 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <Lock size={26} className="text-navy/50" />
+                    </div>
+                    <h2 className="text-lg font-black text-navy mb-1">Akses Terkunci</h2>
+                    <p className="text-gray-400 text-sm mb-5">Fitur Events hanya tersedia untuk anggota dengan profil 90% (Verified).</p>
+                    <div className="bg-orange/5 border border-orange/15 p-3.5 rounded-xl flex items-start gap-2.5 text-left mb-5">
+                        <AlertCircle className="text-orange flex-shrink-0 mt-0.5" size={16} />
+                        <p className="text-sm text-gray-500">Lengkapi data kontak, pekerjaan, dan akademik hingga 90% untuk mengakses fitur ini.</p>
+                    </div>
+                    <Link href="/dashboard/profile" className="block w-full bg-navy text-white py-3 rounded-xl font-bold hover:bg-[#1a3561] transition-all text-sm">
+                        Lengkapi Profil →
+                    </Link>
                 </div>
-                <div>
-                    <h2 className="text-2xl font-bold text-navy">Akses Terkunci</h2>
-                    <p className="text-gray-500 max-w-md mx-auto mt-2">
-                        Pendaftaran Event hanya dapat diakses oleh anggota yang telah melengkapi profil mereka (Verified Badge).
-                    </p>
-                </div>
-                <div className="bg-orange/5 border border-orange/20 p-4 rounded-xl max-w-md text-left flex items-start gap-3">
-                    <AlertCircle className="text-orange flex-shrink-0 mt-0.5" size={18} />
-                    <p className="text-sm text-gray-600">
-                        Profil Anda belum memenuhi syarat 90% kelengkapan. Silakan lengkapi data kontak, pekerjaan, dan akademik Anda.
-                    </p>
-                </div>
-                <Link href="/dashboard/profile" className="bg-navy text-white px-6 py-3 rounded-xl font-bold hover:bg-navy/90 transition shadow-lg hover:shadow-xl hover:-translate-y-1">
-                    Lengkapi Profil Sekarang
-                </Link>
             </div>
         )
     }
 
     return (
-        <div className="space-y-6 pb-20 animate-in fade-in duration-500">
-            <div>
-                <h2 className="text-2xl font-bold text-navy">Agenda Kegiatan</h2>
-                <p className="text-gray-500 text-sm">Informasi kegiatan dan acara mendatang untuk alumni.</p>
+        <div className="space-y-5 pb-20 animate-in fade-in duration-500">
+
+            {/* Page Header */}
+            <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-navy/8 flex items-center justify-center flex-shrink-0">
+                    <Calendar size={18} className="text-navy" />
+                </div>
+                <div>
+                    <h1 className="text-xl font-black text-navy tracking-tight">Agenda Kegiatan</h1>
+                    <p className="text-sm text-gray-400">Event dan acara mendatang untuk alumni</p>
+                </div>
             </div>
 
-            {/* Tabs */}
-            <div className="flex gap-4 border-b border-gray-100">
+            {/* Tabs — pill style */}
+            <div className="flex gap-1.5 bg-gray-100/60 p-1 rounded-xl w-fit">
                 <button
                     onClick={() => setActiveTab('upcoming')}
-                    className={`pb-3 text-sm font-bold flex items-center gap-2 transition border-b-2 ${activeTab === 'upcoming' ? 'border-navy text-navy' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                        activeTab === 'upcoming'
+                            ? 'bg-white text-navy shadow-sm'
+                            : 'text-gray-400 hover:text-gray-600'
+                    }`}
                 >
-                    <LayoutList size={16} />
+                    <LayoutList size={15} />
                     Agenda Baru
                 </button>
                 <button
                     onClick={() => setActiveTab('history')}
-                    className={`pb-3 text-sm font-bold flex items-center gap-2 transition border-b-2 ${activeTab === 'history' ? 'border-navy text-navy' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                        activeTab === 'history'
+                            ? 'bg-white text-navy shadow-sm'
+                            : 'text-gray-400 hover:text-gray-600'
+                    }`}
                 >
-                    <History size={16} />
-                    Riwayat / Terdaftar
+                    <History size={15} />
+                    Riwayat
                 </button>
             </div>
 
             {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {[...Array(4)].map((_, i) => <UserEventSkeleton key={i} />)}
                 </div>
             ) : displayedEvents.length === 0 ? (
-                <div className="bg-white rounded-xl p-12 text-center border border-gray-100 text-gray-400">
-                    <Calendar size={48} className="mx-auto mb-4 opacity-50" />
-                    <p>
-                        {activeTab === 'upcoming'
-                            ? 'Belum ada agenda kegiatan baru saat ini.'
-                            : 'Anda belum mendaftar kegiatan apapun.'}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+                    <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <Calendar size={22} className="text-gray-300" />
+                    </div>
+                    <p className="text-gray-400 text-sm font-medium">
+                        {activeTab === 'upcoming' ? 'Belum ada agenda kegiatan baru.' : 'Anda belum mendaftar kegiatan apapun.'}
                     </p>
                 </div>
             ) : (
