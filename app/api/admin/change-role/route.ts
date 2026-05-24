@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { hasAdminAccess, isSuperAdmin } from '@/lib/roles'
+import { checkRateLimit, cleanupExpired } from '@/lib/rate-limit'
 
 // Service role client bypassing RLS, requires SUPABASE_SERVICE_ROLE_KEY
 const supabaseAdmin = createClient(
@@ -18,6 +20,16 @@ export async function POST(req: NextRequest) {
         const { data: { user: callerUser }, error: callerError } = await supabaseAdmin.auth.getUser(token)
         if (callerError || !callerUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+        // Rate limiting: max 20 perubahan role per menit per admin
+        cleanupExpired()
+        const rl = checkRateLimit(`change-role:${callerUser.id}`, 20, 60_000)
+        if (!rl.allowed) {
+            return NextResponse.json(
+                { error: 'Terlalu banyak permintaan. Coba lagi dalam 1 menit.' },
+                { status: 429, headers: { 'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } }
+            )
+        }
+
         // Check caller role directly using admin privileges
         const { data: callerProfile } = await supabaseAdmin
             .from('profiles')
@@ -27,7 +39,7 @@ export async function POST(req: NextRequest) {
 
         // Viewer and Korwil are explicitly forbidden from changing roles.
         // Usually, only superadmin should change role. We allow admin as per UI, but restrict if needed.
-        if (!['superadmin', 'admin'].includes(callerProfile?.role)) {
+        if (!hasAdminAccess(callerProfile?.role)) {
             return NextResponse.json({ error: 'Forbidden: Superadmin/Admin only' }, { status: 403 })
         }
 
@@ -37,7 +49,7 @@ export async function POST(req: NextRequest) {
         }
 
         // 2. Prevent non-superadmin from promoting others to superadmin or modifying existing superadmin
-        if (callerProfile?.role !== 'superadmin') {
+        if (!isSuperAdmin(callerProfile?.role)) {
             if (newRole === 'superadmin') {
                 return NextResponse.json({ error: 'Forbidden: Only Superadmin can assign Superadmin role' }, { status: 403 })
             }
@@ -76,6 +88,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true, message: `Role berhasil diubah menjadi ${newRole}` })
 
     } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 })
+        console.error('[change-role] Error:', err)
+        const msg = process.env.NODE_ENV !== 'production' ? err.message : 'Terjadi kesalahan server.'
+        return NextResponse.json({ error: msg }, { status: 500 })
     }
 }

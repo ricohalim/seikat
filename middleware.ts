@@ -1,6 +1,10 @@
 import { type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
+// Node.js Runtime diperlukan karena updateSession() menggunakan getUser()
+// yang melakukan network call ke Supabase Auth server.
+export const runtime = 'nodejs'
+
 export async function middleware(request: NextRequest) {
     const isPaused = true; // Ubah ke false untuk mengaktifkan kembali project secara global
     const isLocalhost = request.nextUrl.hostname === 'localhost' || request.nextUrl.hostname === '127.0.0.1';

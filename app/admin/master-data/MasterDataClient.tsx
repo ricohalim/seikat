@@ -1,9 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Plus, Search, Edit2, Trash2, X, Check, Loader2 } from 'lucide-react'
 import { addUniversity, updateUniversity, deleteUniversity } from '@/app/actions/university'
-import { useToast } from '@/app/context/ToastContext'
+import { toast } from 'sonner'
+import { ConfirmDialog } from '@/app/components/ui/ConfirmDialog'
 
 interface University {
     id: number
@@ -13,9 +15,11 @@ interface University {
 }
 
 export default function MasterDataClient({ initialData }: { initialData: University[] }) {
+    const router = useRouter()
     const [universities, setUniversities] = useState(initialData)
     const [search, setSearch] = useState('')
-    const { addToast } = useToast()
+    const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
+
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false)
@@ -49,9 +53,9 @@ export default function MasterDataClient({ initialData }: { initialData: Univers
                 // Update
                 const res = await updateUniversity(editingId, formName)
                 if (res.error) {
-                    addToast(res.error, 'error')
+                    toast.error(res.error)
                 } else {
-                    addToast('Universitas berhasil diupdate', 'success')
+                    toast.success('Universitas berhasil diupdate')
                     setIsModalOpen(false)
                     // Optimistic update
                     setUniversities(prev => prev.map(u => u.id === editingId ? { ...u, name: formName.toUpperCase() } : u))
@@ -60,36 +64,29 @@ export default function MasterDataClient({ initialData }: { initialData: Univers
                 // Add
                 const res = await addUniversity(formName)
                 if (res.error) {
-                    addToast(res.error, 'error')
+                    toast.error(res.error)
                 } else {
-                    addToast('Universitas berhasil ditambahkan', 'success')
+                    toast.success('Universitas berhasil ditambahkan')
                     setIsModalOpen(false)
-                    // Optimistic update would require ID, but we revalidatePath so page might refresh. 
-                    // However server actions revalidatePath refreshes the Server Component, 
-                    // but we need to trigger a router refresh to see it in Client Component or rely on router.refresh()
-                    // Let's rely on simple state for now, but real re-fetch usually needs router.refresh() 
-                    // Since we don't have router here yet, let's just close modal. 
-                    // Ideally we should inject router but let's assume page reload or we accept optimistic slightly off until refresh.
-                    window.location.reload()
+                    router.refresh()
                 }
             }
         } catch (error) {
-            addToast('Terjadi kesalahan', 'error')
+            toast.error('Terjadi kesalahan')
         } finally {
             setLoading(false)
         }
     }
 
     const handleDelete = async (id: number) => {
-        if (!confirm('Yakin ingin menghapus universitas ini?')) return
-
         const res = await deleteUniversity(id)
         if (res.error) {
-            addToast(res.error, 'error')
+            toast.error(res.error)
         } else {
-            addToast('Universitas dihapus', 'success')
+            toast.success('Universitas dihapus')
             setUniversities(prev => prev.filter(u => u.id !== id))
         }
+        setConfirmDelete(null)
     }
 
     return (
@@ -135,7 +132,7 @@ export default function MasterDataClient({ initialData }: { initialData: Univers
                                             <Edit2 size={16} />
                                         </button>
                                         <button
-                                            onClick={() => handleDelete(uni.id)}
+                                            onClick={() => setConfirmDelete(uni.id)}
                                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
                                             title="Hapus"
                                         >
@@ -203,6 +200,16 @@ export default function MasterDataClient({ initialData }: { initialData: Univers
                     </div>
                 </div>
             )}
+
+            <ConfirmDialog
+                isOpen={confirmDelete !== null}
+                title="Hapus Universitas"
+                description="Yakin ingin menghapus universitas ini? Data tidak bisa dikembalikan."
+                variant="danger"
+                confirmText="Hapus"
+                onConfirm={() => confirmDelete !== null && handleDelete(confirmDelete)}
+                onCancel={() => setConfirmDelete(null)}
+            />
         </div>
     )
 }

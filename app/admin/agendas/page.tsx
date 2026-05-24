@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { Plus, Search } from 'lucide-react'
 import { useAgendas } from '@/app/hooks/useAgendas'
 import { calculateProfileCompleteness } from '@/lib/utils'
-import { useToast } from '@/app/context/ToastContext'
+import { toast } from 'sonner'
 import { AgendaListRow, AgendaListRowSkeleton } from '@/app/components/admin/AgendaListRow'
 import { AgendaDetailPanel } from '@/app/components/admin/AgendaDetailPanel'
 import { AgendaFormModal } from '@/app/components/admin/AgendaFormModal'
@@ -16,7 +16,7 @@ import { EventQRModal } from '@/app/components/admin/EventQRModal'
 export default function AdminAgendasPage() {
     // 1. Hook for Data
     const { events, loading, fetchEvents, deleteEvent } = useAgendas()
-    const { addToast } = useToast()
+
 
     // 2. Local UI State
     const [activeTab, setActiveTab] = useState<'active' | 'history'>('active')
@@ -59,7 +59,7 @@ export default function AdminAgendasPage() {
                 const role = profile?.role?.toLowerCase()
 
                 if (!['admin', 'superadmin', 'korwil'].includes(role)) {
-                    addToast("Akses Ditolak: Anda bukan Admin/Korwil.", "error")
+                    toast.error("Akses Ditolak: Anda bukan Admin/Korwil.")
                     window.location.href = '/dashboard'
                 }
                 setUserProfile(profile)
@@ -111,7 +111,7 @@ export default function AdminAgendasPage() {
                 setSelectedEvent(null)
             }
         } catch (error: any) {
-            addToast(`Gagal menyimpan agenda: ${error.message}`, "error")
+            toast.error(`Gagal menyimpan agenda: ${error.message}`)
         }
     }
 
@@ -135,7 +135,7 @@ export default function AdminAgendasPage() {
             .order('registered_at', { ascending: true })
 
         if (error) {
-            addToast('Gagal memuat peserta: ' + error.message, 'error')
+            toast.error('Gagal memuat peserta: ' + error.message)
         } else {
             const formatted = data.map((p: any) => ({
                 user_id: p.user_id,
@@ -165,9 +165,9 @@ export default function AdminAgendasPage() {
             })
             if (error) throw error
             viewParticipants(selectedEventId, selectedEventName)
-            addToast('Berhasil Check-in!', 'success')
+            toast.success('Berhasil Check-in!')
         } catch (e: any) {
-            addToast('Gagal check-in: ' + e.message, 'error')
+            toast.error('Gagal check-in: ' + e.message)
         }
     }
 
@@ -182,9 +182,9 @@ export default function AdminAgendasPage() {
             })
             if (error) throw error
             viewParticipants(selectedEventId, selectedEventName)
-            addToast(approve ? 'Izin disetujui.' : 'Izin ditolak.', 'success')
+            toast.success(approve ? 'Izin disetujui.' : 'Izin ditolak.')
         } catch (e: any) {
-            addToast('Gagal memproses izin: ' + e.message, 'error')
+            toast.error('Gagal memproses izin: ' + e.message)
         }
     }
 
@@ -200,9 +200,9 @@ export default function AdminAgendasPage() {
                 .eq('user_id', userId)
             if (error) throw error
             viewParticipants(selectedEventId, selectedEventName)
-            addToast(approve ? 'Peserta diterima (Registered).' : 'Peserta ditolak.', 'success')
+            toast.success(approve ? 'Peserta diterima (Registered).' : 'Peserta ditolak.')
         } catch (e: any) {
-            addToast('Gagal memproses Waiting List: ' + e.message, 'error')
+            toast.error('Gagal memproses Waiting List: ' + e.message)
         }
     }
 
@@ -211,10 +211,10 @@ export default function AdminAgendasPage() {
         try {
             const { data, error } = await supabase.rpc('finalize_event_attendance', { p_event_id: eventId })
             if (error) throw error
-            addToast(data, 'success')
+            toast.success(data)
             fetchEvents()
         } catch (e: any) {
-            addToast('Gagal finalisasi event: ' + e.message, 'error')
+            toast.error('Gagal finalisasi event: ' + e.message)
         }
     }
 
@@ -243,18 +243,18 @@ export default function AdminAgendasPage() {
         try {
             const { data: users, error: userError } = await supabase
                 .from('profiles').select('id').ilike('email', email).single()
-            if (userError || !users) { addToast('User tidak ditemukan.', 'error'); return }
+            if (userError || !users) { toast.error('User tidak ditemukan.'); return }
             const { error: insertError } = await supabase.from('event_staff').insert({
                 event_id: activeEventId, user_id: users.id, role
             })
             if (insertError) {
-                if (insertError.code === '23505') addToast('User ini sudah menjadi staff.', 'info')
+                if (insertError.code === '23505') toast.info('User ini sudah menjadi staff.')
                 else throw insertError
                 return
             }
             fetchStaff(activeEventId)
         } catch (error: any) {
-            addToast('Gagal menambah staff: ' + error.message, 'error')
+            toast.error('Gagal menambah staff: ' + error.message)
         }
     }
 

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { getInboxMessages, createBroadcastMessage, deleteMessage, archiveMessage, unarchiveMessage, updateMessage } from '@/app/actions/inbox'
 import { Trash2, Plus, Send, Megaphone, Loader2, X, Archive, Calendar as CalendarIcon, Clock, RefreshCcw, Pencil, Save, ChevronRight } from 'lucide-react'
-import { useToast } from '@/app/context/ToastContext'
+import { toast } from 'sonner'
 
 import { Switch } from '@/app/components/ui/Switch'
 import { linkify } from '@/lib/linkify'
@@ -81,14 +81,14 @@ export default function AdminInboxPage() {
         setIsEditing(true)
     }
 
-    const { addToast } = useToast()
+
 
     const handleSubmit = async (e: React.FormEvent, submitStatus: 'draft' | 'published' = 'published') => {
         e.preventDefault()
-        if (!title || !content) return addToast('Mohon isi judul dan konten', 'error')
+        if (!title || !content) return toast.error('Mohon isi judul dan konten')
 
         const expiry = isUnlimited ? null : deadline
-        if (!isUnlimited && !deadline && submitStatus === 'published') return addToast('Mohon isi tanggal deadline', 'error')
+        if (!isUnlimited && !deadline && submitStatus === 'published') return toast.error('Mohon isi tanggal deadline')
 
         setSubmitting(true)
 
@@ -101,15 +101,15 @@ export default function AdminInboxPage() {
             }
 
             if (res.error) {
-                addToast('Gagal menyimpan pesan', 'error')
+                toast.error('Gagal menyimpan pesan')
             } else {
-                addToast(submitStatus === 'draft' ? 'Disimpan sebagai Draft' : 'Berhasil dipublikasikan!', 'success')
+                toast.success(submitStatus === 'draft' ? 'Disimpan sebagai Draft' : 'Berhasil dipublikasikan!')
                 resetForm()
                 fetchMessages()
             }
         } catch (error) {
             console.error(error)
-            addToast('Terjadi kesalahan', 'error')
+            toast.error('Terjadi kesalahan')
         } finally {
             setSubmitting(false)
         }

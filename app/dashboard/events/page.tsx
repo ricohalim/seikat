@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { UserEventCard, UserEventSkeleton } from '@/app/components/events/UserEventCard'
 import { EventTermsModal } from '@/app/components/events/EventTermsModal'
 import { CancellationModal } from '@/app/components/events/CancellationModal'
-import { useToast } from '@/app/context/ToastContext'
+import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
 interface Event {
@@ -26,7 +26,7 @@ interface Event {
 }
 
 export default function EventsPage() {
-    const { addToast } = useToast()
+
     const router = useRouter()
     const [events, setEvents] = useState<Event[]>([])
     const [loading, setLoading] = useState(true)
@@ -173,7 +173,7 @@ export default function EventsPage() {
             const result = data as { success: boolean; status?: string; message: string }
 
             if (!result.success) {
-                addToast(result.message, 'error')
+                toast.error(result.message)
                 return
             }
 
@@ -181,15 +181,15 @@ export default function EventsPage() {
             setUserRegistrations(prev => ({ ...prev, [selectedEventId]: status }))
 
             if (status === 'Waiting List') {
-                addToast(result.message, 'info')
+                toast.info(result.message)
             } else {
-                addToast(result.message, 'success')
+                toast.success(result.message)
             }
 
             router.refresh()
             setTermsModalOpen(false)
         } catch (error: any) {
-            addToast('Gagal mendaftar: ' + error.message, 'error')
+            toast.error('Gagal mendaftar: ' + error.message)
         } finally {
             setRegisteringId(null)
             setSelectedEventId(null)
@@ -210,7 +210,7 @@ export default function EventsPage() {
         deadline.setHours(23, 59, 59, 999)
 
         if (today > deadline) {
-            addToast("Gagal: Pembatalan hanya bisa dilakukan maksimal H-2 acara.", "error")
+            toast.error("Gagal: Pembatalan hanya bisa dilakukan maksimal H-2 acara.")
             return
         }
 
@@ -241,10 +241,10 @@ export default function EventsPage() {
                 [selectedEventId]: 'pending'
             }))
 
-            addToast("Permohonan izin dikirim. Menunggu persetujuan admin.", "info")
+            toast.info("Permohonan izin dikirim. Menunggu persetujuan admin.")
             setCancellationModalOpen(false)
         } catch (error: any) {
-            addToast("Gagal mengirim izin: " + error.message, "error")
+            toast.error("Gagal mengirim izin: " + error.message)
         } finally {
             setCancellingId(null)
             setSelectedEventId(null)

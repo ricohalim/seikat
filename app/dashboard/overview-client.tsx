@@ -8,7 +8,8 @@ import {
 } from 'lucide-react'
 import { EventScannerModal } from '../components/EventScannerModal'
 import QRCode from 'react-qr-code'
-import { calculateProfileCompleteness } from '@/lib/utils'
+import { calculateProfileCompleteness, sanitizeExternalUrl } from '@/lib/utils'
+import { hasAdminAccess } from '@/lib/roles'
 import Link from 'next/link'
 
 // Define Profile Interface
@@ -62,6 +63,7 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
     }
 
     const displayPhoto = getOptimizedImageUrl(profile.photo_url);
+    const safeLinkedIn = sanitizeExternalUrl(profile.linkedin_url);
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -119,7 +121,7 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
                                 )}
 
                                 {/* Admin Badge - Only for admins */}
-                                {['admin', 'superadmin'].includes(profile.role || '') && (
+                                {hasAdminAccess(profile.role) && (
                                     <Link
                                         href="/admin"
                                         className="inline-flex items-center gap-1 bg-purple-50 border border-purple-100 text-purple-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider hover:bg-purple-100 transition"
@@ -235,12 +237,12 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
                                     </p>
                                 </div>
                             </div>
-                            {profile.linkedin_url && (
+                            {safeLinkedIn && (
                                 <div className="flex items-start gap-3">
                                     <Linkedin size={18} className="text-blue-600 mt-1" />
                                     <div>
                                         <p className="text-xs text-gray-400">LinkedIn</p>
-                                        <a href={profile.linkedin_url} target="_blank" className="text-sm font-medium text-blue-600 hover:underline truncate block max-w-[200px]">
+                                        <a href={safeLinkedIn} target="_blank" rel="noopener noreferrer nofollow" className="text-sm font-medium text-blue-600 hover:underline truncate block max-w-[200px]">
                                             Lihat Profil
                                         </a>
                                     </div>

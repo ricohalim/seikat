@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { hasAdminAccess } from '@/lib/roles'
 
 export async function getInboxMessages(limit = 50, showArchived = false) {
     const supabase = await createClient()
@@ -16,7 +17,7 @@ export async function getInboxMessages(limit = 50, showArchived = false) {
         .eq('id', user.id)
         .single()
 
-    const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin'
+    const isAdmin = hasAdminAccess(profile?.role)
 
     let query = supabase
         .from('inbox_messages')
@@ -64,7 +65,7 @@ export async function createBroadcastMessage(title: string, content: string, exp
         .eq('id', user.id)
         .single()
 
-    if (!profile || !['admin', 'superadmin'].includes(profile.role)) {
+    if (!profile || !hasAdminAccess(profile.role)) {
         return { error: 'Unauthorized' }
     }
 
@@ -103,7 +104,7 @@ export async function updateMessage(id: string, title: string, content: string, 
         .eq('id', user.id)
         .single()
 
-    if (!profile || !['admin', 'superadmin'].includes(profile.role)) {
+    if (!profile || !hasAdminAccess(profile.role)) {
         return { error: 'Unauthorized' }
     }
 
@@ -140,7 +141,7 @@ export async function deleteMessage(id: string) {
         .eq('id', user.id)
         .single()
 
-    if (!profile || !['admin', 'superadmin'].includes(profile.role)) {
+    if (!profile || !hasAdminAccess(profile.role)) {
         return { error: 'Unauthorized' }
     }
 

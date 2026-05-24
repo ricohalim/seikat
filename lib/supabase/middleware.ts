@@ -1,6 +1,11 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Switch dari Edge Runtime ke Node.js Runtime.
+// getUser() melakukan network call ke Supabase Auth server untuk validasi token,
+// sehingga tidak cocok untuk Edge Runtime yang memiliki batas timeout ketat.
+export const runtime = 'nodejs'
+
 export async function updateSession(request: NextRequest) {
     let response = NextResponse.next({
         request: {
@@ -31,13 +36,13 @@ export async function updateSession(request: NextRequest) {
         }
     )
 
-    // Gunakan getSession() — baca dari cookie, TANPA network call ke Supabase
-    // getUser() menyebabkan 504 timeout di Vercel Edge Runtime
+    // Gunakan getUser() — memvalidasi token ke Supabase Auth server.
+    // Lebih aman dari getSession() karena token revoked/expired akan terdeteksi.
+    // Node.js runtime (lihat export di atas) diperlukan agar tidak timeout.
     const {
-        data: { session },
-    } = await supabase.auth.getSession()
+        data: { user },
+    } = await supabase.auth.getUser()
 
-    const user = session?.user ?? null
     const pathname = request.nextUrl.pathname
 
     // 1. Belum login → akses /dashboard atau /admin → redirect login

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Search, Shield, LogIn } from 'lucide-react'
 import { toast } from 'sonner'
@@ -10,9 +11,14 @@ import { UserFilters } from '@/app/components/admin/UserFilters'
 import { EditUserModal } from '@/app/components/admin/EditUserModal'
 import { UserDetailModal } from '@/app/components/admin/UserDetailModal'
 import { CreateAlumniModal } from '@/app/components/admin/CreateAlumniModal'
+import { ConfirmDialog } from '@/app/components/ui/ConfirmDialog'
 import { UserPlus } from 'lucide-react'
+import { validatePassword } from '@/lib/utils'
+import { hasPrivilegedAccess } from '@/lib/roles'
+
 export default function UserManagementPage() {
     const ITEMS_PER_PAGE = 20
+    const router = useRouter()
     const {
         users, loading, totalItems, currentUserRole, authLoading, availableGenerations,
         availableUniversities, availableProvinces,
@@ -31,182 +37,245 @@ export default function UserManagementPage() {
     const [deleteLoading, setDeleteLoading] = useState<string | null>(null)
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
+    // ConfirmDialog state
+    const [confirmState, setConfirmState] = useState<{
+        open: boolean
+        title: string
+        description: string
+        variant: 'danger' | 'warning' | 'default'
+        confirmText: string
+        onConfirm: () => void
+    }>({
+        open: false,
+        title: '',
+        description: '',
+        variant: 'default',
+        confirmText: 'Konfirmasi',
+        onConfirm: () => { },
+    })
+
+    const closeConfirm = () => setConfirmState(s => ({ ...s, open: false }))
+
+    const showConfirm = (opts: Omit<typeof confirmState, 'open'>) =>
+        setConfirmState({ ...opts, open: true })
+
     // Handlers
     const handleRoleChange = async (userId: string, newRole: string) => {
-        if (!confirm(`Ubah role user ini menjadi ${newRole}?`)) return
-        try {
-            const { data: { session } } = await supabase.auth.getSession()
-            if (!session) throw new Error('No active session')
+        showConfirm({
+            title: 'Ubah Role User',
+            description: `Yakin ingin mengubah role user ini menjadi "${newRole}"?`,
+            variant: 'warning',
+            confirmText: 'Ubah Role',
+            onConfirm: async () => {
+                closeConfirm()
+                try {
+                    const { data: { session } } = await supabase.auth.getSession()
+                    if (!session) throw new Error('No active session')
 
-            const res = await fetch('/api/admin/change-role', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`
-                },
-                body: JSON.stringify({ targetUserId: userId, newRole: newRole })
-            })
+                    const res = await fetch('/api/admin/change-role', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${session.access_token}`
+                        },
+                        body: JSON.stringify({ targetUserId: userId, newRole })
+                    })
 
-            const data = await res.json()
-            if (!res.ok) throw new Error(data.error || 'Gagal mengubah role')
+                    const data = await res.json()
+                    if (!res.ok) throw new Error(data.error || 'Gagal mengubah role')
 
-            updateUserLocal({ id: userId, role: newRole })
-            alert('Role berhasil diubah.')
-        } catch (err: any) {
-            alert('Gagal mengubah role: ' + err.message)
-        }
+                    updateUserLocal({ id: userId, role: newRole })
+                    toast.success('Role berhasil diubah.')
+                } catch (err: any) {
+                    toast.error('Gagal mengubah role: ' + err.message)
+                }
+            }
+        })
     }
 
     const handleSaveUser = async (e: React.FormEvent, editForm: any) => {
         e.preventDefault()
-        if (!confirm('Simpan perubahan data user ini?')) return
+        showConfirm({
+            title: 'Simpan Perubahan',
+            description: 'Yakin ingin menyimpan perubahan data user ini?',
+            variant: 'default',
+            confirmText: 'Simpan',
+            onConfirm: async () => {
+                closeConfirm()
+                setSaveLoading(true)
+                try {
+                    const { error } = await supabase.rpc('admin_update_profile', {
+                        target_user_id: editingUser.id,
+                        new_data: editForm
+                    })
+                    if (error) throw error
 
-        setSaveLoading(true)
-        try {
-            const { error } = await supabase.rpc('admin_update_profile', {
-                target_user_id: editingUser.id,
-                new_data: editForm
-            })
-            if (error) throw error
-
-            updateUserLocal({ id: editingUser.id, ...editForm })
-            alert('Data user berhasil diperbarui!')
-            setEditingUser(null)
-        } catch (err: any) {
-            console.error('Update failed:', err)
-            alert('Gagal update user: ' + err.message)
-        } finally {
-            setSaveLoading(false)
-        }
+                    updateUserLocal({ id: editingUser.id, ...editForm })
+                    toast.success('Data user berhasil diperbarui!')
+                    setEditingUser(null)
+                } catch (err: any) {
+                    console.error('Update failed:', err)
+                    toast.error('Gagal update user: ' + err.message)
+                } finally {
+                    setSaveLoading(false)
+                }
+            }
+        })
     }
 
     const handleResetPassword = async (userId: string, newPassword: string) => {
-        if (!newPassword || newPassword.length < 6) return alert('Password minimal 6 karakter!')
-        if (!confirm('Yakin ingin mereset password user ini?')) return
-
-        setResetLoading(true)
-        try {
-            const { data: { session } } = await supabase.auth.getSession()
-            if (!session) throw new Error('No active session')
-
-            const res = await fetch('/api/admin/reset-password', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`
-                },
-                body: JSON.stringify({
-                    targetUserId: userId,
-                    newPassword: newPassword
-                })
-            })
-
-            const data = await res.json()
-            if (!res.ok) throw new Error(data.error || 'Gagal reset password')
-
-            alert('Password berhasil direset!')
-        } catch (err: any) {
-            alert('Error: ' + err.message)
-        } finally {
-            setResetLoading(false)
-        }
-    }
-
-    const handleChangeEmail = async (userId: string, newEmail: string) => {
-        if (!newEmail) return alert('Email tidak boleh kosong!')
-        if (!confirm(`Ubah email user ini menjadi "${newEmail}"? Mereka perlu login ulang dengan email baru.`)) return
-
-        setChangeEmailLoading(true)
-        try {
-            const { data: { session } } = await supabase.auth.getSession()
-            if (!session) throw new Error('No active session')
-
-            const res = await fetch('/api/admin/change-email', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`
-                },
-                body: JSON.stringify({ targetUserId: userId, newEmail })
-            })
-            const data = await res.json()
-            if (!res.ok) throw new Error(data.error)
-
-            updateUserLocal({ id: userId, email: newEmail })
-            alert(`Email berhasil diubah ke ${newEmail}`)
-        } catch (err: any) {
-            alert('Gagal ubah email: ' + err.message)
-        } finally {
-            setChangeEmailLoading(false)
-        }
-    }
-
-    const handleImpersonate = async (userId: string) => {
-        if (!confirm('Salin link akses alumni ini? (Paste di Tab Incognito agar session Admin tetap aktif)')) return
-        setImpersonateLoading(userId)
-        try {
-            const { data: { session } } = await supabase.auth.getSession()
-            if (!session) throw new Error('No active session')
-
-            const res = await fetch('/api/admin/impersonate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`
-                },
-                body: JSON.stringify({ targetUserId: userId })
-            })
-            const data = await res.json()
-            if (!res.ok) throw new Error(data.error)
-
-            // Copy ke clipboard agar bisa di-paste di Incognito
-            await navigator.clipboard.writeText(data.link)
-            toast.success("Link akses disalin! Buka di Tab Incognito.", {
-                description: "Link ini sangat rahasia dan akan basi dalam 5 menit.",
-                duration: 6000
-            })
-
-        } catch (err: any) {
-            alert('Gagal impersonate: ' + err.message)
-        } finally {
-            setImpersonateLoading(null)
-        }
-    }
-
-    const handleDeleteUser = async (userId: string, userName: string) => {
-        if (!confirm(`PERINGATAN KERAS: Yakin ingin MENGHAPUS PERMANEN akun "${userName}"? Data ini tidak bisa dikembalikan.`)) return
-        if (prompt(`Ketik "HAPUS" untuk mengonfirmasi penghapusan ${userName}:`) !== 'HAPUS') {
-            alert('Penghapusan dibatalkan.')
+        // Validasi password dengan helper
+        const validationError = validatePassword(newPassword)
+        if (validationError) {
+            toast.error(validationError)
             return
         }
 
-        setDeleteLoading(userId)
-        try {
-            const { data: { session } } = await supabase.auth.getSession()
-            if (!session) throw new Error('No active session')
+        showConfirm({
+            title: 'Reset Password',
+            description: 'Yakin ingin mereset password user ini? User perlu login ulang dengan password baru.',
+            variant: 'warning',
+            confirmText: 'Reset Password',
+            onConfirm: async () => {
+                closeConfirm()
+                setResetLoading(true)
+                try {
+                    const { data: { session } } = await supabase.auth.getSession()
+                    if (!session) throw new Error('No active session')
 
-            const res = await fetch('/api/admin/delete-user', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`
-                },
-                body: JSON.stringify({ targetUserId: userId })
-            })
-            const data = await res.json()
-            if (!res.ok) throw new Error(data.error)
+                    const res = await fetch('/api/admin/reset-password', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${session.access_token}`
+                        },
+                        body: JSON.stringify({ targetUserId: userId, newPassword })
+                    })
 
-            toast.success(`User ${userName} berhasil dihapus permanen.`)
+                    const data = await res.json()
+                    if (!res.ok) throw new Error(data.error || 'Gagal reset password')
 
-            // Reload user list by triggering fetch again or decrementing totalItems and filtering
-            // For simplicity, we can do a hard refresh or reset the page
-            window.location.reload()
+                    toast.success('Password berhasil direset!')
+                } catch (err: any) {
+                    toast.error('Error: ' + err.message)
+                } finally {
+                    setResetLoading(false)
+                }
+            }
+        })
+    }
 
-        } catch (err: any) {
-            alert('Gagal menghapus user: ' + err.message)
-        } finally {
-            setDeleteLoading(null)
+    const handleChangeEmail = async (userId: string, newEmail: string) => {
+        if (!newEmail) {
+            toast.error('Email tidak boleh kosong!')
+            return
         }
+
+        showConfirm({
+            title: 'Ubah Email User',
+            description: `Ubah email user ini menjadi "${newEmail}"? User perlu login ulang dengan email baru.`,
+            variant: 'warning',
+            confirmText: 'Ubah Email',
+            onConfirm: async () => {
+                closeConfirm()
+                setChangeEmailLoading(true)
+                try {
+                    const { data: { session } } = await supabase.auth.getSession()
+                    if (!session) throw new Error('No active session')
+
+                    const res = await fetch('/api/admin/change-email', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${session.access_token}`
+                        },
+                        body: JSON.stringify({ targetUserId: userId, newEmail })
+                    })
+                    const data = await res.json()
+                    if (!res.ok) throw new Error(data.error)
+
+                    updateUserLocal({ id: userId, email: newEmail })
+                    toast.success(`Email berhasil diubah ke ${newEmail}`)
+                } catch (err: any) {
+                    toast.error('Gagal ubah email: ' + err.message)
+                } finally {
+                    setChangeEmailLoading(false)
+                }
+            }
+        })
+    }
+
+    const handleImpersonate = async (userId: string) => {
+        showConfirm({
+            title: 'Akses sebagai User',
+            description: 'Link akses akan disalin ke clipboard. Paste di Tab Incognito agar session Admin tetap aktif.',
+            variant: 'warning',
+            confirmText: 'Salin Link Akses',
+            onConfirm: async () => {
+                closeConfirm()
+                setImpersonateLoading(userId)
+                try {
+                    const { data: { session } } = await supabase.auth.getSession()
+                    if (!session) throw new Error('No active session')
+
+                    const res = await fetch('/api/admin/impersonate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${session.access_token}`
+                        },
+                        body: JSON.stringify({ targetUserId: userId })
+                    })
+                    const data = await res.json()
+                    if (!res.ok) throw new Error(data.error)
+
+                    await navigator.clipboard.writeText(data.link)
+                    toast.success('Link akses disalin! Buka di Tab Incognito.', {
+                        description: 'Link ini sangat rahasia dan akan basi dalam 5 menit.',
+                        duration: 6000
+                    })
+                } catch (err: any) {
+                    toast.error('Gagal impersonate: ' + err.message)
+                } finally {
+                    setImpersonateLoading(null)
+                }
+            }
+        })
+    }
+
+    const handleDeleteUser = async (userId: string, userName: string) => {
+        showConfirm({
+            title: '⚠️ Hapus Akun Permanen',
+            description: `Akun "${userName}" akan dihapus PERMANEN dan tidak bisa dikembalikan. Yakin melanjutkan?`,
+            variant: 'danger',
+            confirmText: 'Hapus Permanen',
+            onConfirm: async () => {
+                closeConfirm()
+                setDeleteLoading(userId)
+                try {
+                    const { data: { session } } = await supabase.auth.getSession()
+                    if (!session) throw new Error('No active session')
+
+                    const res = await fetch('/api/admin/delete-user', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${session.access_token}`
+                        },
+                        body: JSON.stringify({ targetUserId: userId })
+                    })
+                    const data = await res.json()
+                    if (!res.ok) throw new Error(data.error)
+
+                    toast.success(`User ${userName} berhasil dihapus permanen.`)
+                    router.refresh() // Ganti window.location.reload() dengan router.refresh()
+                } catch (err: any) {
+                    toast.error('Gagal menghapus user: ' + err.message)
+                } finally {
+                    setDeleteLoading(null)
+                }
+            }
+        })
     }
 
     if (authLoading) {
@@ -217,7 +286,7 @@ export default function UserManagementPage() {
         )
     }
 
-    if (!['superadmin', 'admin', 'viewer'].includes(currentUserRole)) {
+    if (!hasPrivilegedAccess(currentUserRole)) {
         return (
             <div className="p-8 text-center bg-red-50 text-red-600 rounded-xl border border-red-200">
                 <Shield size={48} className="mx-auto mb-4 opacity-50" />
@@ -335,13 +404,22 @@ export default function UserManagementPage() {
             <CreateAlumniModal
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
-                onSuccess={(newUser) => {
-                    // Refresh data or update local state
-                    // Simple refresh is easiest to get all proper profiles data merged
-                    window.location.reload()
+                onSuccess={() => {
+                    router.refresh() // Ganti window.location.reload()
                 }}
                 availableGenerations={availableGenerations}
                 availableUniversities={availableUniversities}
+            />
+
+            {/* ConfirmDialog — menggantikan semua native confirm()/alert()/prompt() */}
+            <ConfirmDialog
+                isOpen={confirmState.open}
+                title={confirmState.title}
+                description={confirmState.description}
+                variant={confirmState.variant}
+                confirmText={confirmState.confirmText}
+                onConfirm={confirmState.onConfirm}
+                onCancel={closeConfirm}
             />
         </div>
     )

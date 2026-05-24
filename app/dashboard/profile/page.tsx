@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { Save, Loader2 } from 'lucide-react'
-import { useToast } from '@/app/context/ToastContext'
+import { toast } from 'sonner'
 import { ProfileData } from '@/types/profile'
 
 // Components
@@ -16,7 +16,7 @@ import ProfileFormBusiness from '@/app/components/profile/ProfileFormBusiness'
 
 export default function EditProfilePage() {
     const router = useRouter()
-    const { addToast } = useToast()
+
 
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
@@ -201,9 +201,9 @@ export default function EditProfilePage() {
             .eq('id', userId)
 
         if (error) {
-            addToast('Gagal menyimpan: ' + error.message, 'error')
+            toast.error('Gagal menyimpan: ' + error.message)
         } else {
-            addToast('Profil berhasil diperbarui!', 'success')
+            toast.success('Profil berhasil diperbarui!')
             router.refresh()
             router.push('/dashboard')
         }

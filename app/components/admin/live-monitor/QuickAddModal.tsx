@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { X, Search, UserPlus, AlertTriangle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { useToast } from '@/app/context/ToastContext'
+import { toast } from 'sonner'
 
 interface QuickAddModalProps {
     isOpen: boolean
@@ -11,7 +11,7 @@ interface QuickAddModalProps {
 }
 
 export function QuickAddModal({ isOpen, event, onClose, onSuccess }: QuickAddModalProps) {
-    const { addToast } = useToast()
+
     const [email, setEmail] = useState('')
     const [loading, setLoading] = useState(false)
     const [searchResult, setSearchResult] = useState<any>(null)
@@ -60,7 +60,7 @@ export function QuickAddModal({ isOpen, event, onClose, onSuccess }: QuickAddMod
                 .single()
 
             if (existing) {
-                addToast('User ini sudah terdaftar di event ini!', 'info')
+                toast.info('User ini sudah terdaftar di event ini!')
                 setLoading(false)
                 return
             }
@@ -79,12 +79,12 @@ export function QuickAddModal({ isOpen, event, onClose, onSuccess }: QuickAddMod
 
             if (error) throw error
 
-            addToast('Berhasil mendaftarkan & check-in peserta!', 'success')
+            toast.success('Berhasil mendaftarkan & check-in peserta!')
             onSuccess()
             onClose()
         } catch (err: any) {
             console.error(err)
-            addToast('Gagal mendaftar: ' + err.message, 'error')
+            toast.error('Gagal mendaftar: ' + err.message)
         } finally {
             setLoading(false)
         }

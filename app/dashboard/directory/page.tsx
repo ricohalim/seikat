@@ -12,7 +12,7 @@ interface Member {
     linkedin_url: string
 }
 
-import { calculateProfileCompleteness } from '@/lib/utils'
+import { calculateProfileCompleteness, sanitizeExternalUrl } from '@/lib/utils'
 import Link from 'next/link'
 import { Lock, AlertCircle } from 'lucide-react'
 
@@ -259,14 +259,17 @@ export default function DirectoryPage() {
                                         <h3 className="font-bold text-navy text-xs md:text-sm line-clamp-2 leading-tight" title={member.full_name}>
                                             {member.full_name}
                                         </h3>
-                                        {member.linkedin_url && (
-                                            <a href={member.linkedin_url} target="_blank" rel="noopener noreferrer"
-                                                className="text-[#0077b5] opacity-80 hover:opacity-100 transition flex-shrink-0"
-                                                title="Lihat LinkedIn"
-                                            >
-                                                <Linkedin size={14} />
-                                            </a>
-                                        )}
+                                        {(() => {
+                                            const safeUrl = sanitizeExternalUrl(member.linkedin_url)
+                                            return safeUrl ? (
+                                                <a href={safeUrl} target="_blank" rel="noopener noreferrer nofollow"
+                                                    className="text-[#0077b5] opacity-80 hover:opacity-100 transition flex-shrink-0"
+                                                    title="Lihat LinkedIn"
+                                                >
+                                                    <Linkedin size={14} />
+                                                </a>
+                                            ) : null
+                                        })()}
                                     </div>
                                 </div>
                             </div>

@@ -71,6 +71,9 @@ export function EventScannerModal({ isOpen, onClose }: EventScannerModalProps) {
     const handleScan = async (qrData: string) => {
         if (!scannerRef.current) return
 
+        // Haptic feedback — deteksi QR
+        if ('vibrate' in navigator) navigator.vibrate(30)
+
         // Pause scanning to prevent multiple triggers
         if (scannerRef.current.isScanning) {
             await scannerRef.current.pause(true)
@@ -82,9 +85,9 @@ export function EventScannerModal({ isOpen, onClose }: EventScannerModalProps) {
         const match = qrData.match(uuidRegex)
 
         if (!match) {
+            // Haptic — error: satu getaran panjang
+            if ('vibrate' in navigator) navigator.vibrate(300)
             setResult({ success: false, message: 'QR Code tidak valid.\nBukan QR Event Seikat.' })
-            // Resume if invalid? User might want to try again.
-            // But UI changes to result state. 
             return
         }
 
@@ -99,11 +102,15 @@ export function EventScannerModal({ isOpen, onClose }: EventScannerModalProps) {
         })
 
         if (response.success) {
+            // Haptic — sukses: dua ketukan pendek
+            if ('vibrate' in navigator) navigator.vibrate([100, 50, 100])
             toast.success(response.message)
             setTimeout(() => {
                 onClose()
             }, 2000)
         } else {
+            // Haptic — gagal: satu getaran panjang
+            if ('vibrate' in navigator) navigator.vibrate(300)
             toast.error(response.message)
         }
     }
@@ -214,16 +221,6 @@ export function EventScannerModal({ isOpen, onClose }: EventScannerModalProps) {
                     <p className="text-zinc-500 text-xs">Arahkan kamera ke QR Code Event</p>
                 </div>
             </div>
-
-            {/* Custom Keyframe for scan animation */}
-            <style jsx global>{`
-                @keyframes scan {
-                    0% { top: 0; opacity: 0; }
-                    10% { opacity: 1; }
-                    90% { opacity: 1; }
-                    100% { top: 100%; opacity: 0; }
-                }
-            `}</style>
         </div>
     )
 }

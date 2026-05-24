@@ -2,6 +2,8 @@ import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { hasAdminAccess } from '@/lib/roles'
+import { checkRateLimit, cleanupExpired } from '@/lib/rate-limit'
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,6 +21,16 @@ export async function POST(req: NextRequest) {
         const { data: { user: callerUser }, error: callerError } = await supabaseAdmin.auth.getUser(token)
         if (callerError || !callerUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+        // Rate limiting: max 5 impersonasi per menit per admin (operasi sangat sensitif)
+        cleanupExpired()
+        const rl = checkRateLimit(`impersonate:${callerUser.id}`, 5, 60_000)
+        if (!rl.allowed) {
+            return NextResponse.json(
+                { error: 'Terlalu banyak permintaan. Coba lagi dalam 1 menit.' },
+                { status: 429, headers: { 'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } }
+            )
+        }
+
         // Check caller is superadmin/admin
         const { data: callerProfile } = await supabaseAdmin
             .from('profiles')
@@ -26,7 +38,7 @@ export async function POST(req: NextRequest) {
             .eq('id', callerUser.id)
             .single()
 
-        if (!['superadmin', 'admin'].includes(callerProfile?.role)) {
+        if (!hasAdminAccess(callerProfile?.role)) {
             return NextResponse.json({ error: 'Forbidden: Superadmin/Admin only' }, { status: 403 })
         }
 
@@ -76,6 +88,8 @@ export async function POST(req: NextRequest) {
         })
 
     } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 })
+        console.error('[impersonate] Error:', err)
+        const msg = process.env.NODE_ENV !== 'production' ? err.message : 'Terjadi kesalahan server.'
+        return NextResponse.json({ error: msg }, { status: 500 })
     }
 }

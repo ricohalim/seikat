@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { User, AlertCircle } from 'lucide-react'
 import ProfileImageUpload from '@/app/components/ProfileImageUpload'
 import { ProfileData } from '@/types/profile'
-import { useToast } from '@/app/context/ToastContext'
+import { toast } from 'sonner'
 import { useNameValidation } from '@/app/hooks/useNameValidation'
 
 interface Props {
@@ -17,7 +17,7 @@ interface Props {
 }
 
 export default function ProfileFormContact({ formData, handleChange, handlePhoneChange, handleLinkedinChange, linkedinUsername, setFormData }: Props) {
-    const { addToast } = useToast()
+
 
     // Validation
     const { validateName } = useNameValidation()
@@ -42,7 +42,7 @@ export default function ProfileFormContact({ formData, handleChange, handlePhone
                 currentUrl={formData.photo_url}
                 onUploadComplete={(url) => {
                     setFormData(p => ({ ...p, photo_url: url }))
-                    addToast('Foto terupload! Jangan lupa klik "Simpan Perubahan".', 'success')
+                    toast.success('Foto terupload! Jangan lupa klik "Simpan Perubahan".')
                 }}
             />
 

@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Users, UserPlus, Clock, TrendingUp } from 'lucide-react'
 import DownloadAlumniButton from '@/app/components/admin/DownloadAlumniButton'
+import { hasAdminAccess } from '@/lib/roles'
 
 // Helper: count occurrences and return sorted top-N entries
 function topEntries(arr: string[], n: number): { label: string; count: number }[] {
@@ -53,7 +54,7 @@ export default async function AdminDashboardPage() {
         .single()
 
     // Role guard: hanya admin & superadmin yang boleh akses halaman ini
-    if (!selfProfile || !['admin', 'superadmin'].includes(selfProfile.role)) {
+    if (!selfProfile || !hasAdminAccess(selfProfile.role)) {
         if (selfProfile?.role === 'korwil') redirect('/admin/agendas')
         redirect('/dashboard')
     }

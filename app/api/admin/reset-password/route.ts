@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
-
-
-
+import { checkRateLimit, cleanupExpired } from '@/lib/rate-limit'
+import { validatePassword } from '@/lib/utils'
+import { isSuperAdmin } from '@/lib/roles'
 
 export async function POST(request: Request) {
     try {
@@ -27,6 +27,16 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
+        // Rate limiting: max 10 reset password per menit per admin
+        cleanupExpired()
+        const rl = checkRateLimit(`reset-password:${user.id}`, 10, 60_000)
+        if (!rl.allowed) {
+            return NextResponse.json(
+                { error: 'Terlalu banyak permintaan. Coba lagi dalam 1 menit.' },
+                { status: 429, headers: { 'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } }
+            )
+        }
+
         // Check Role
         const { data: profile } = await supabase
             .from('profiles')
@@ -34,7 +44,7 @@ export async function POST(request: Request) {
             .eq('id', user.id)
             .single()
 
-        if (profile?.role !== 'superadmin') {
+        if (!profile || !isSuperAdmin(profile?.role)) {
             return NextResponse.json({ error: 'Forbidden: Superadmin only' }, { status: 403 })
         }
 
@@ -44,8 +54,10 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Missing userId or password' }, { status: 400 })
         }
 
-        if (newPassword.length < 6) {
-            return NextResponse.json({ error: 'Password too short (min 6 chars)' }, { status: 400 })
+        // Validasi password dengan helper (min 8 char, 1 uppercase, 1 angka)
+        const pwError = validatePassword(newPassword)
+        if (pwError) {
+            return NextResponse.json({ error: pwError }, { status: 400 })
         }
 
         // 3. Perform Reset using Admin Client
@@ -85,7 +97,8 @@ export async function POST(request: Request) {
         })
 
     } catch (error: any) {
-        console.error('Reset Password Error:', error)
-        return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 })
+        console.error('[reset-password] Error:', error)
+        const msg = process.env.NODE_ENV !== 'production' ? error.message : 'Terjadi kesalahan server.'
+        return NextResponse.json({ error: msg }, { status: 500 })
     }
 }

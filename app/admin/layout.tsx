@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import AdminSidebarClient from './AdminSidebarClient'
+import { AdminBreadcrumb } from '@/app/components/admin/AdminBreadcrumb'
 
 // Layout ini sekarang Server Component.
 // Middleware sudah menjamin hanya admin/superadmin/korwil yang bisa masuk.
@@ -32,6 +33,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             {/* Main Content */}
             <main className="flex-1 flex flex-col min-w-0 relative z-10 md:pt-0 pt-16">
                 <div className="flex-1 overflow-y-auto p-4 md:p-8">
+                    {/* Breadcrumb otomatis untuk semua halaman admin */}
+                    <AdminBreadcrumb />
                     {children}
                 </div>
             </main>
