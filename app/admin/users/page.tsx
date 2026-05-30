@@ -231,7 +231,7 @@ export default function UserManagementPage() {
 
                     await navigator.clipboard.writeText(data.link)
                     toast.warning('Link akses disalin ke clipboard!', {
-                        description: '⚠️ Paste di Tab Incognito sekarang. Clipboard akan otomatis dihapus dalam 60 detik.',
+                        description: 'Paste di Tab Incognito sekarang. Clipboard akan otomatis dihapus dalam 60 detik.',
                         duration: 60000
                     })
 
@@ -258,7 +258,7 @@ export default function UserManagementPage() {
 
     const handleDeleteUser = async (userId: string, userName: string) => {
         showConfirm({
-            title: '⚠️ Hapus Akun Permanen',
+            title: 'Hapus Akun Permanen',
             description: `Akun "${userName}" akan dihapus PERMANEN dan tidak bisa dikembalikan. Yakin melanjutkan?`,
             variant: 'danger',
             confirmText: 'Hapus Permanen',

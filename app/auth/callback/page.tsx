@@ -43,7 +43,7 @@ export default function AuthCallbackPage() {
     }, [router])
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center">
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
             <div className="text-center space-y-4">
                 <div className="w-10 h-10 border-4 border-navy border-t-transparent rounded-full animate-spin mx-auto" />
                 <p className="text-gray-500 text-sm font-medium">Memproses login alumni...</p>

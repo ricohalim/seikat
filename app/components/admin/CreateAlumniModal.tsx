@@ -125,7 +125,7 @@ export function CreateAlumniModal({ isOpen, onClose, onSuccess, availableGenerat
                             </div>
                         ) : (
                             <div className="bg-yellow-50 text-yellow-800 text-xs p-3 rounded text-left mt-2">
-                                ⚠️ Link set password gagal digenerate. Gunakan fitur Reset Password di halaman admin untuk mengirim ulang.
+                                Link set password gagal digenerate. Gunakan fitur Reset Password di halaman admin untuk mengirim ulang.
                             </div>
                         )}
                     </div>

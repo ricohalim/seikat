@@ -36,7 +36,7 @@ export default function ProfileFormContact({ formData, handleChange, handlePhone
 
     return (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden relative">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-azure to-azure/30 rounded-l-2xl" />
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-azure rounded-l-2xl" />
             <div className="p-6 pl-7">
                 <h3 className="font-bold text-navy text-sm mb-5 flex items-center gap-2">
                     <User size={15} className="text-azure" />

@@ -29,7 +29,7 @@ export default async function Home() {
             <Link href="/auth/register" className="text-sm font-semibold text-navy hover:text-azure transition flex items-center gap-2">
               Daftar
             </Link>
-            <Link href="/auth/login" className="bg-navy text-white text-sm font-bold px-4 py-2 rounded-full hover:bg-navy/90 transition shadow-sm">
+            <Link href="/auth/login" className="bg-navy text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-navy/90 transition">
               Masuk
             </Link>
           </div>
@@ -39,15 +39,13 @@ export default async function Home() {
       {/* Hero Section */}
       <main className="flex-1">
         <section className="relative pt-20 pb-32 overflow-hidden">
-          <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-50 via-white to-white"></div>
-
           <div className="max-w-4xl mx-auto px-6 text-center">
             <div className="inline-flex items-center gap-2 bg-blue-50 text-azure px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide mb-6">
               <Award size={14} /> Resmi Ikatan Alumni
             </div>
 
             <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold text-navy leading-tight mb-6">
-              Terhubung Kembali dengan <span className="text-transparent bg-clip-text bg-gradient-to-r from-azure to-blue-400">Keluarga Beswan Djarum</span>
+              Terhubung Kembali dengan <span className="text-azure">Keluarga Beswan Djarum</span>
             </h1>
 
             {/* Dynamic Stats Badge */}
@@ -63,7 +61,7 @@ export default async function Home() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/auth/login"
-                className="group bg-orange text-white text-lg font-bold px-8 py-4 rounded-full shadow-lg hover:shadow-xl hover:bg-orange/90 transition-all flex items-center gap-2"
+                className="group bg-orange text-white text-lg font-bold px-8 py-4 rounded-xl shadow-sm hover:bg-orange/90 transition-all flex items-center gap-2"
               >
                 Masuk ke Portal
                 <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />

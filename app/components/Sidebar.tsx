@@ -123,7 +123,7 @@ export default function Sidebar({
                 <div className="px-6 pt-6 pb-4 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                         {/* Monogram mark */}
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-azure to-orange flex items-center justify-center flex-shrink-0 shadow-lg shadow-azure/30">
+                        <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/15 flex items-center justify-center flex-shrink-0">
                             <span className="text-white font-black text-xs tracking-tighter">SK</span>
                         </div>
                         <div>
@@ -227,7 +227,7 @@ export default function Sidebar({
                     <div className="flex items-center gap-3">
                         {/* Avatar */}
                         <div className="relative flex-shrink-0">
-                            <div className="w-9 h-9 rounded-xl overflow-hidden bg-gradient-to-br from-azure/80 to-navy ring-2 ring-white/10">
+                            <div className="w-9 h-9 rounded-xl overflow-hidden bg-white/10 border border-white/10 ring-2 ring-white/5">
                                 {thumbUrl ? (
                                     <img src={thumbUrl} alt={userName} className="w-full h-full object-cover" />
                                 ) : (

@@ -84,7 +84,7 @@ export default function AdminSidebarClient({ userEmail, userName, userRole }: Ad
             {/* Mobile Header */}
             <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-[#0f1e38] border-b border-white/10 px-4 py-3.5 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange to-orange/60 flex items-center justify-center">
+                    <div className="w-7 h-7 rounded-lg bg-orange/90 flex items-center justify-center">
                         <span className="text-white font-black text-[10px]">A</span>
                     </div>
                     <span className="font-bold text-white text-sm tracking-tight">Admin Portal</span>
@@ -106,12 +106,12 @@ export default function AdminSidebarClient({ userEmail, userName, userRole }: Ad
                 {/* Logo */}
                 <div className="px-6 pt-6 pb-4 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange to-orange/60 flex items-center justify-center flex-shrink-0 shadow-lg shadow-orange/20">
+                        <div className="w-8 h-8 rounded-lg bg-orange/90 border border-orange/30 flex items-center justify-center flex-shrink-0">
                             <span className="text-white font-black text-xs">A</span>
                         </div>
                         <div>
                             <h1 className="text-sm font-black text-white tracking-tight leading-none">Admin Portal</h1>
-                            <p className="text-[10px] text-white/35 font-medium leading-none mt-0.5">IKABDP Management</p>
+                            <p className="text-[10px] text-white/35 font-medium leading-none mt-0.5">IKADBP Management</p>
                         </div>
                     </div>
                     <button onClick={() => setSidebarOpen(false)} className="md:hidden text-white/40 hover:text-white transition p-1">
@@ -178,7 +178,7 @@ export default function AdminSidebarClient({ userEmail, userName, userRole }: Ad
                 {/* User card */}
                 <div className="mx-3 mb-3 p-3 rounded-2xl bg-white/5 border border-white/8">
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange/80 to-orange/40 flex items-center justify-center flex-shrink-0 text-white font-bold text-sm ring-2 ring-white/10">
+                        <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center flex-shrink-0 text-white font-bold text-sm">
                             {initials}
                         </div>
                         <div className="flex-1 min-w-0">

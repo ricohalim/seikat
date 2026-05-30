@@ -399,7 +399,7 @@ export default function EventStaffPage() {
                                     <Trophy size={20} className="text-amber-500" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-amber-700 font-bold uppercase mb-0.5 outline-none tracking-wide">Pendaftar Pertama 🎉</p>
+                                    <p className="text-xs text-amber-700 font-bold uppercase mb-0.5 outline-none tracking-wide">Pendaftar Pertama</p>
                                     <p className="text-base font-bold text-amber-900 truncate max-w-[200px] md:max-w-none">
                                         {firstParticipant.profiles?.full_name}
                                     </p>

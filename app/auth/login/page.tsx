@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react'
 
 export default function LoginPage() {
     const [email, setEmail] = useState('')
@@ -102,25 +102,9 @@ export default function LoginPage() {
             {/* ── Left Brand Panel ─────────────────────────────────── */}
             <div className="hidden lg:flex lg:w-[45%] xl:w-[42%] bg-[#0f1e38] flex-col justify-between p-12 relative overflow-hidden flex-shrink-0">
 
-                {/* Background decoration */}
-                <div className="absolute inset-0 pointer-events-none">
-                    {/* Grid dot pattern */}
-                    <svg className="absolute inset-0 w-full h-full opacity-[0.04]" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <pattern id="dots" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
-                                <circle cx="2" cy="2" r="1.5" fill="white" />
-                            </pattern>
-                        </defs>
-                        <rect width="100%" height="100%" fill="url(#dots)" />
-                    </svg>
-                    {/* Glow blobs */}
-                    <div className="absolute -top-24 -right-24 w-72 h-72 bg-azure/20 rounded-full blur-3xl" />
-                    <div className="absolute bottom-0 -left-16 w-64 h-64 bg-orange/10 rounded-full blur-3xl" />
-                </div>
-
                 {/* Logo */}
                 <div className="relative z-10 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-azure to-orange flex items-center justify-center shadow-lg shadow-azure/30 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center flex-shrink-0">
                         <span className="text-white font-black text-sm tracking-tighter">SK</span>
                     </div>
                     <div>
@@ -134,9 +118,7 @@ export default function LoginPage() {
                     <div>
                         <h2 className="text-4xl font-black text-white leading-tight tracking-tight">
                             Ruang<br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-azure to-orange">
-                                Alumni
-                            </span>
+                            <span className="text-azure">Alumni</span>
                             <br />Djarum
                         </h2>
                         <p className="mt-4 text-white/50 text-sm leading-relaxed max-w-xs">
@@ -147,15 +129,13 @@ export default function LoginPage() {
                     {/* Feature chips */}
                     <div className="space-y-3">
                         {[
-                            { icon: '🗓️', text: 'Agenda & event eksklusif alumni' },
-                            { icon: '👥', text: 'Direktori alumni seluruh Indonesia' },
-                            { icon: '📬', text: 'Broadcast & inbox langsung dari admin' },
-                        ].map((f) => (
-                            <div key={f.text} className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-white/8 flex items-center justify-center text-base flex-shrink-0">
-                                    {f.icon}
-                                </div>
-                                <p className="text-white/60 text-sm">{f.text}</p>
+                            'Agenda & event eksklusif alumni',
+                            'Direktori alumni seluruh Indonesia',
+                            'Broadcast & inbox langsung dari admin',
+                        ].map((text) => (
+                            <div key={text} className="flex items-center gap-3">
+                                <span className="w-1.5 h-1.5 rounded-full bg-white/30 flex-shrink-0" />
+                                <p className="text-white/60 text-sm">{text}</p>
                             </div>
                         ))}
                     </div>
@@ -173,7 +153,7 @@ export default function LoginPage() {
 
                     {/* Mobile logo */}
                     <div className="lg:hidden flex items-center gap-2.5 mb-10">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-azure to-orange flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
                             <span className="text-white font-black text-xs">SK</span>
                         </div>
                         <p className="font-black text-navy text-base tracking-tight">SEIKAT</p>
@@ -181,14 +161,14 @@ export default function LoginPage() {
 
                     {/* Heading */}
                     <div className="mb-8">
-                        <h1 className="text-2xl font-black text-navy tracking-tight">Selamat Datang 👋</h1>
+                        <h1 className="text-2xl font-black text-navy tracking-tight">Selamat Datang</h1>
                         <p className="text-gray-400 text-sm mt-1">Masuk ke Portal Alumni Djarum</p>
                     </div>
 
                     {/* Error banner */}
                     {error && (
                         <div className="mb-6 bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-sm font-medium flex items-start gap-2.5 animate-in slide-in-from-top-2 duration-200">
-                            <span className="flex-shrink-0 mt-0.5">⚠️</span>
+                            <AlertCircle size={15} className="flex-shrink-0 mt-0.5" />
                             <span>{error}</span>
                         </div>
                     )}
@@ -215,14 +195,12 @@ export default function LoginPage() {
                                 <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">
                                     Password
                                 </label>
-                                <a
-                                    href="https://api.whatsapp.com/send/?phone=6282398243245&text=Halo%2C+Saya+mau+mengubah+password+akun+saya.%0ANama+Lengkap%3A%0AEmail%3A&type=phone_number&app_absent=0"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                <Link
+                                    href="/auth/forgot-password"
                                     className="text-[11px] text-azure hover:text-navy font-bold transition-colors"
                                 >
                                     Lupa Password?
-                                </a>
+                                </Link>
                             </div>
                             <div className="relative">
                                 <input

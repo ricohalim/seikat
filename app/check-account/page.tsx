@@ -107,7 +107,7 @@ export default function CheckAccountPage() {
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full p-4 bg-blue-50/50 border border-blue-100 rounded-lg text-navy font-medium focus:outline-none focus:border-navy focus:ring-1 focus:ring-navy transition placeholder:text-blue-200"
+                                className="w-full p-4 bg-white border border-gray-200 rounded-lg text-navy font-medium focus:outline-none focus:border-navy focus:ring-1 focus:ring-navy transition placeholder:text-gray-300"
                                 placeholder="nama@email.com"
                             />
                         </div>
@@ -115,7 +115,7 @@ export default function CheckAccountPage() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-navy text-white text-sm font-bold py-4 rounded-lg hover:bg-navy/90 transition shadow-lg hover:shadow-xl disabled:opacity-70 tracking-widest uppercase flex justify-center items-center gap-2"
+                            className="w-full bg-navy text-white text-sm font-bold py-4 rounded-lg hover:bg-navy/90 transition shadow-sm disabled:opacity-70 tracking-widest uppercase flex justify-center items-center gap-2"
                         >
                             {loading ? <Loader2 className="animate-spin" /> : 'CARI DATA'}
                         </button>

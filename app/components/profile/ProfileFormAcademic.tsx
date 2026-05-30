@@ -21,7 +21,7 @@ export default function ProfileFormAcademic({ formData, handleChange, isSameEduc
     const { universities } = useUniversities()
     return (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden relative">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-orange to-orange/30 rounded-l-2xl" />
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-orange rounded-l-2xl" />
             <div className="p-6 pl-7">
                 <h3 className="font-bold text-navy text-sm mb-5 flex items-center gap-2">
                     <GraduationCap size={15} className="text-orange" />

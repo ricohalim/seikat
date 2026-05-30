@@ -43,8 +43,8 @@ export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegist
 
 
     return (
-        <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition flex flex-col group animate-in fade-in zoom-in-95 duration-500">
-            <div className={`h-2 ${isClosed ? 'bg-gray-300' : 'bg-gradient-to-r from-orange to-red-500'}`}></div>
+        <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition flex flex-col group">
+            <div className={`h-2 ${isClosed ? 'bg-gray-300' : 'bg-orange'}`}></div>
             <div className="p-6 flex-1 flex flex-col">
                 <div className="flex justify-between items-start mb-4">
                     <h3 className="text-xl font-bold text-navy line-clamp-2" title={event.title}>{event.title}</h3>
@@ -65,7 +65,7 @@ export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegist
 
                 <div className="mt-auto space-y-3 pt-6 border-t border-gray-50 text-sm text-gray-500">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-azure">
+                        <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-azure">
                             <Calendar size={16} />
                         </div>
                         <div className="flex flex-col">
@@ -79,7 +79,7 @@ export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegist
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-orange/10 flex items-center justify-center text-orange">
+                        <div className="w-8 h-8 rounded-lg bg-orange/10 flex items-center justify-center text-orange">
                             <MapPin size={16} />
                         </div>
                         <div className="flex flex-col">
@@ -91,7 +91,7 @@ export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegist
                     {/* Quota Info */}
                     {(event.quota > 0) && (
                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
+                            <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600">
                                 <Clock size={16} />
                             </div>
                             <div className="flex flex-col">
@@ -128,31 +128,31 @@ export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegist
                             {registrationStatus === 'Waiting List' ? (
                                 waitlistReason === 'sanction' ? (
                                     // WL karena sanksi absensi — tidak bisa naik otomatis
-                                    <div className="p-3 bg-red-50 text-red-600 rounded-lg text-center font-bold text-sm border border-red-200 animate-in fade-in zoom-in duration-300 flex flex-col gap-1">
-                                        <span>⚠️ Waiting List (Sanksi)</span>
+                                    <div className="p-3 bg-red-50 text-red-600 rounded-lg text-center font-bold text-sm border border-red-200 flex flex-col gap-1">
+                                        <span>Waiting List (Sanksi)</span>
                                         <span className="text-[10px] font-normal opacity-80">Harap lapor ke panitia untuk pemutihan sanksi.</span>
                                     </div>
                                 ) : (
                                     // WL karena kuota penuh — otomatis naik jika kuota bertambah
-                                    <div className="p-3 bg-yellow-50 text-yellow-700 rounded-lg text-center font-bold text-sm border border-yellow-200 animate-in fade-in zoom-in duration-300 flex flex-col gap-1">
-                                        <span>⏳ Waiting List (Antrean)</span>
+                                    <div className="p-3 bg-yellow-50 text-yellow-700 rounded-lg text-center font-bold text-sm border border-yellow-200 flex flex-col gap-1">
+                                        <span>Waiting List (Antrean)</span>
                                         {queueNumber && <span className="text-[10px] font-normal opacity-80">Antrean ke-{queueNumber} · Otomatis naik jika ada slot.</span>}
                                         {!queueNumber && <span className="text-[10px] font-normal opacity-80">Otomatis naik ke Terdaftar jika ada slot tersedia.</span>}
                                     </div>
                                 )
                             ) : isCheckedIn ? (
-                                <div className="p-3 bg-[#f0fdf4] text-[#15803d] rounded-lg text-center border border-[#bbf7d0] animate-in fade-in zoom-in duration-300 flex flex-col gap-1 shadow-sm">
+                                <div className="p-3 bg-[#f0fdf4] text-[#15803d] rounded-lg text-center border border-[#bbf7d0] flex flex-col gap-1 shadow-sm">
                                     <span className="font-bold text-[15px] flex items-center justify-center gap-2">
-                                        ✅ Check-in Berhasil!
+                                        Check-in Berhasil!
                                     </span>
                                     <span className="text-[13px] font-medium opacity-90">
                                         Selamat mengikuti rangkaian acara.
                                     </span>
                                 </div>
                             ) : (
-                                <div className="p-3 bg-[#f2fcf5] text-[#008a3d] rounded-lg text-center border border-[#e5f5ea] animate-in fade-in zoom-in duration-300 flex flex-col gap-1 shadow-sm">
+                                <div className="p-3 bg-[#f2fcf5] text-[#008a3d] rounded-lg text-center border border-[#e5f5ea] flex flex-col gap-1 shadow-sm">
                                     <span className="font-bold text-[15px] flex items-center justify-center gap-2">
-                                        🎉 Anda Telah Terdaftar!
+                                        Anda Telah Terdaftar!
                                     </span>
                                     {queueNumber && (
                                         <span className="text-[13px] font-medium opacity-90">
@@ -171,8 +171,8 @@ export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegist
                                 </button>
                             )}
                             {cancellationStatus === 'pending' && (
-                                <div className="p-2 bg-orange/10 text-orange rounded-lg text-center font-medium text-sm border border-orange/20 animate-in fade-in duration-300">
-                                    ⏳ Menunggu Persetujuan Batal
+                                <div className="p-2 bg-orange/10 text-orange rounded-lg text-center font-medium text-sm border border-orange/20">
+                                    Menunggu Persetujuan Batal
                                 </div>
                             )}
                         </>
@@ -185,7 +185,7 @@ export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegist
                         className="w-full mt-2 block text-center bg-orange text-white font-bold py-2 rounded-lg transition text-sm hover:bg-orange/90 shadow-sm active:scale-95"
                     >
                         <span className="flex items-center justify-center gap-2">
-                            🛡️ Console Panitia
+                            Console Panitia
                         </span>
                     </Link>
                 )}

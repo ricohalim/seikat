@@ -9,10 +9,10 @@ export default function VerificationPendingPage() {
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 animate-in fade-in duration-500">
             <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center border border-gray-100 relative overflow-hidden">
                 {/* Decorative BG */}
-                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-orange to-yellow-400"></div>
+                <div className="absolute top-0 left-0 w-full h-1 bg-orange"></div>
 
                 <div className="w-20 h-20 bg-orange/10 text-orange rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Clock size={40} className="animate-pulse" />
+                    <Clock size={40} />
                 </div>
 
                 <h2 className="text-2xl font-bold text-navy mb-2">Menunggu Verifikasi</h2>

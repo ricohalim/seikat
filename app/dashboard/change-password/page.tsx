@@ -75,7 +75,7 @@ export default function ChangePasswordPage() {
 
             {/* Card */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-navy to-azure/50 rounded-l-2xl" />
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-navy rounded-l-2xl" />
 
                 <div className="p-6">
                     {msg && (

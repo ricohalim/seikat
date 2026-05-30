@@ -33,7 +33,7 @@ export function AgendaListRow({ event, isSelected, isDetailOpen, onClick }: Agen
             onClick={onClick}
             className={`cursor-pointer border-b border-gray-50 transition-colors duration-100 group
                 ${isSelected
-                    ? 'bg-indigo-50/70'
+                    ? 'bg-navy/5'
                     : 'hover:bg-gray-50/80'
                 }`}
         >
@@ -41,7 +41,7 @@ export function AgendaListRow({ event, isSelected, isDetailOpen, onClick }: Agen
             <td className="w-9 pl-3 pr-0">
                 <div className={`w-3.5 h-3.5 rounded border flex-shrink-0 transition-colors
                     ${isSelected
-                        ? 'bg-indigo-600 border-indigo-600'
+                        ? 'bg-navy border-navy'
                         : 'border-gray-300 group-hover:border-gray-400'
                     }`}
                 />
@@ -52,7 +52,7 @@ export function AgendaListRow({ event, isSelected, isDetailOpen, onClick }: Agen
                 {/* Selected highlight bar */}
                 <div className="flex items-start gap-2">
                     {isSelected && (
-                        <div className="w-0.5 h-full bg-indigo-600 rounded-full absolute left-0 top-0" />
+                        <div className="w-0.5 h-full bg-navy rounded-full absolute left-0 top-0" />
                     )}
                     <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${dotClass(event.status)}`} />
                     <div className="min-w-0">

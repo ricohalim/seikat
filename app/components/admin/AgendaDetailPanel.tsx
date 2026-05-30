@@ -126,7 +126,7 @@ export function AgendaDetailPanel({
                     href={`/leaderboard/${event.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-yellow-50 to-amber-50 hover:from-yellow-100 hover:to-amber-100 text-amber-800 py-2.5 rounded-lg text-xs font-bold transition-all shadow-sm border border-yellow-200 mb-4"
+                    className="flex items-center justify-center gap-2 w-full bg-amber-50 hover:bg-amber-100 text-amber-800 py-2.5 rounded-lg text-xs font-bold transition border border-yellow-200 mb-4"
                 >
                     <Trophy size={14} className="text-amber-600" />
                     BUKA LIVE LEADERBOARD

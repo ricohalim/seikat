@@ -64,25 +64,12 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
     const displayPhoto = getOptimizedImageUrl(profile.photo_url);
     const safeLinkedIn = sanitizeExternalUrl(profile.linkedin_url);
 
-    // ── Banner color berdasarkan angkatan ─────────────────────────────────
-    const getBannerGradient = (generation: string) => {
-        const yearMatch = generation?.match(/\d{4}/)
-        const year = yearMatch ? parseInt(yearMatch[0]) : 0
-        if (year >= 2022) return 'from-[#0f1e38] via-[#162B52] to-[#0068C7]'
-        if (year >= 2019) return 'from-[#1a1a2e] via-[#16213e] to-[#0f3460]'
-        if (year >= 2016) return 'from-[#0d1b2a] via-[#1b263b] to-[#415a77]'
-        if (year >= 2013) return 'from-[#2d1b69] via-[#11998e] to-[#38ef7d]'
-        return 'from-[#0f1e38] via-[#162B52] to-[#0068C7]'
-    }
-
-    const bannerGradient = getBannerGradient(profile.generation)
-
     return (
         <div className="space-y-5 animate-in fade-in duration-500">
 
             {/* ── Completion Banner ────────────────────────────── */}
             {!isVerified && (
-                <div className="bg-gradient-to-r from-orange/8 to-orange/4 border border-orange/15 rounded-2xl p-4 flex items-center justify-between gap-4">
+                <div className="bg-orange/6 border border-orange/15 rounded-2xl p-4 flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3 min-w-0">
                         <div className="w-9 h-9 rounded-xl bg-orange/10 border border-orange/20 flex items-center justify-center flex-shrink-0">
                             <AlertCircle size={18} className="text-orange" />
@@ -115,18 +102,7 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
 
                 {/* Banner */}
-                <div className={`relative h-28 md:h-36 bg-gradient-to-r ${bannerGradient}`}>
-                    {/* SVG hex pattern overlay */}
-                    <svg className="absolute inset-0 w-full h-full opacity-[0.07]" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <pattern id="hex" x="0" y="0" width="40" height="46" patternUnits="userSpaceOnUse">
-                                <polygon points="20,2 38,12 38,34 20,44 2,34 2,12" fill="none" stroke="white" strokeWidth="1" />
-                            </pattern>
-                        </defs>
-                        <rect width="100%" height="100%" fill="url(#hex)" />
-                    </svg>
-                    {/* Glow spot */}
-                    <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full blur-2xl -translate-y-12 translate-x-12 pointer-events-none" />
+                <div className="relative h-28 md:h-36 bg-[#0f1e38]">
 
                     {/* Angkatan label di banner */}
                     {profile.generation && (
@@ -146,7 +122,7 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
                                 {displayPhoto ? (
                                     <img src={displayPhoto} alt="Profile" className="w-full h-full object-cover" />
                                 ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-navy/10 to-azure/10">
+                                    <div className="w-full h-full flex items-center justify-center bg-navy/5">
                                         <UserIcon size={36} className="text-navy/30" />
                                     </div>
                                 )}
@@ -234,7 +210,7 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
 
                     {/* Kontak */}
                     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden relative h-full">
-                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-azure to-azure/30 rounded-l-2xl" />
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-azure rounded-l-2xl" />
                         <div className="p-5 pl-6">
                             <h3 className="font-bold text-navy text-sm mb-4 flex items-center gap-2">
                                 <Mail size={15} className="text-azure" />
@@ -281,7 +257,7 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
                 {/* Right: Karir */}
                 <div className="h-full">
                     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden relative h-full">
-                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-navy to-azure/50 rounded-l-2xl" />
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-navy rounded-l-2xl" />
                         <div className="p-5 pl-6 relative">
                             <h3 className="font-bold text-navy text-sm mb-4 flex items-center gap-2">
                                 <Building2 size={15} className="text-navy" />

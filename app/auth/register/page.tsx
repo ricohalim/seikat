@@ -274,7 +274,7 @@ export default function RegisterPage() {
     if (success) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 animate-in fade-in duration-500">
-                <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 text-center border border-gray-100">
+                <div className="max-w-md w-full bg-white rounded-2xl shadow-sm p-8 text-center border border-gray-100">
                     <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
                         <CheckCircle size={40} />
                     </div>
@@ -366,14 +366,10 @@ export default function RegisterPage() {
                 </div>
             )}
 
-            <div className="max-w-4xl w-full bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 flex flex-col md:flex-row shadow-lg">
+            <div className="max-w-4xl w-full bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 flex flex-col md:flex-row">
 
                 {/* Visual Side (Left) */}
                 <div className="hidden md:flex md:w-1/3 bg-navy text-white p-8 flex-col justify-between relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-navy to-blue-900 opacity-90"></div>
-                    {/* Decorative Circles */}
-                    <div className="absolute top-10 right-10 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
-                    <div className="absolute bottom-10 left-10 w-40 h-40 bg-blue-500/10 rounded-full blur-2xl"></div>
 
                     <div className="relative z-10">
                         <h2 className="text-3xl font-bold mb-2">Portal<br />IKADBP</h2>
@@ -410,7 +406,7 @@ export default function RegisterPage() {
                                 <Link href="/" className="inline-flex items-center gap-2 text-gray-400 hover:text-navy text-xs font-bold mb-4">
                                     <ArrowLeft size={14} /> KEMBALI
                                 </Link>
-                                <h2 className="text-2xl font-bold text-navy mb-1">Mulai Pendaftaran 👋</h2>
+                                <h2 className="text-2xl font-bold text-navy mb-1">Mulai Pendaftaran</h2>
                                 <p className="text-gray-500 text-sm">Masukkan email untuk memulai.</p>
                             </div>
 

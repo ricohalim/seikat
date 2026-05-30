@@ -13,7 +13,7 @@ interface AgendaCardProps {
 
 export function AgendaCard({ event, onEdit, onDelete, onViewParticipants, onManageStaff, onShowQR, onFinalize }: AgendaCardProps) {
     return (
-        <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 flex flex-col group animate-in fade-in zoom-in-95 duration-300">
+        <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 flex flex-col group">
             <div className={`h-2 ${event.status === 'Open' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
             <div className="p-6 flex-1 flex flex-col">
                 <div className="flex justify-between items-start mb-2">
