@@ -6,7 +6,7 @@ import { updateSession } from '@/lib/supabase/middleware'
 export const runtime = 'nodejs'
 
 export async function middleware(request: NextRequest) {
-    const isPaused = true; // Ubah ke false untuk mengaktifkan kembali project secara global
+    const isPaused = false; // Ubah ke true untuk maintenance, false untuk normal
     const isLocalhost = request.nextUrl.hostname === 'localhost' || request.nextUrl.hostname === '127.0.0.1';
 
     if (isPaused && !isLocalhost) {
