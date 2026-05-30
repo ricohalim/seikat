@@ -19,11 +19,9 @@ export default async function Home() {
       {/* ── Navbar ────────────────────────────────────────── */}
       <nav className="border-b border-gray-100 bg-white sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 bg-navy rounded-md flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-black text-[10px] tracking-tighter">SK</span>
-            </div>
+          <div className="flex flex-col leading-none">
             <span className="text-lg font-black text-navy tracking-tight">SEIKAT</span>
+            <span className="text-[9px] font-bold text-gray-400 tracking-[0.18em] uppercase">IKADBP</span>
           </div>
           <div className="flex items-center gap-3">
             <Link
@@ -208,11 +206,9 @@ export default async function Home() {
       <footer className="bg-navy py-10 border-t border-white/5">
         <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-6 h-6 bg-white/10 rounded-md flex items-center justify-center">
-                <span className="text-white font-black text-[9px]">SK</span>
-              </div>
+            <div className="flex flex-col leading-none mb-2">
               <span className="text-white font-black text-base tracking-tight">SEIKAT</span>
+              <span className="text-[9px] font-bold text-white/40 tracking-[0.18em] uppercase">IKADBP</span>
             </div>
             <p className="text-white/30 text-xs">
               © {new Date().getFullYear()} Ikatan Alumni Djarum Beasiswa Plus. All rights reserved.

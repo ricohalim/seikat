@@ -103,14 +103,9 @@ export default function LoginPage() {
             <div className="hidden lg:flex lg:w-[45%] xl:w-[42%] bg-[#0f1e38] flex-col justify-between p-12 relative overflow-hidden flex-shrink-0">
 
                 {/* Logo */}
-                <div className="relative z-10 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center flex-shrink-0">
-                        <span className="text-white font-black text-sm tracking-tighter">SK</span>
-                    </div>
-                    <div>
-                        <p className="text-white font-black text-lg tracking-tight leading-none">SEIKAT</p>
-                        <p className="text-white/40 text-[11px] font-medium leading-none mt-0.5">Portal Alumni Djarum</p>
-                    </div>
+                <div className="relative z-10 flex flex-col leading-none">
+                    <p className="text-white font-black text-xl tracking-tight leading-none">SEIKAT</p>
+                    <p className="text-white/40 text-[10px] font-bold tracking-[0.18em] uppercase mt-1">IKADBP</p>
                 </div>
 
                 {/* Hero text */}
@@ -152,11 +147,9 @@ export default function LoginPage() {
                 <div className="w-full max-w-sm animate-in fade-in zoom-in-95 duration-300">
 
                     {/* Mobile logo */}
-                    <div className="lg:hidden flex items-center gap-2.5 mb-10">
-                        <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
-                            <span className="text-white font-black text-xs">SK</span>
-                        </div>
-                        <p className="font-black text-navy text-base tracking-tight">SEIKAT</p>
+                    <div className="lg:hidden flex flex-col leading-none mb-10">
+                        <p className="font-black text-navy text-base tracking-tight leading-none">SEIKAT</p>
+                        <p className="text-[9px] font-bold text-gray-400 tracking-[0.18em] uppercase mt-1">IKADBP</p>
                     </div>
 
                     {/* Heading */}

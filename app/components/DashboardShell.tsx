@@ -40,7 +40,10 @@ export default function DashboardShell({
             <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 {/* Mobile Header */}
                 <div className="md:hidden bg-white border-b border-gray-100 p-4 flex items-center justify-between sticky top-0 z-30">
-                    <span className="font-bold text-navy tracking-tight">SEIKAT</span>
+                    <div className="flex flex-col leading-none">
+                        <span className="font-black text-navy tracking-tight text-sm leading-none">SEIKAT</span>
+                        <span className="text-[8px] font-bold text-gray-400 tracking-[0.18em] uppercase mt-0.5">IKADBP</span>
+                    </div>
                     <button
                         onClick={() => setSidebarOpen(true)}
                         className="text-navy p-1.5 rounded-lg hover:bg-gray-100 transition"

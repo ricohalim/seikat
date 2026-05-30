@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Search, MapPin, Building2, GraduationCap, X, Linkedin } from 'lucide-react'
 
@@ -10,6 +10,10 @@ interface Member {
     generation: string
     photo_url: string
     linkedin_url: string
+    university: string
+    major: string
+    company_name: string
+    job_position: string
 }
 
 import { calculateProfileCompleteness, sanitizeExternalUrl } from '@/lib/utils'
@@ -23,6 +27,7 @@ export default function DirectoryPage() {
     const [filteredMembers, setFilteredMembers] = useState<Member[]>([])
     const [loading, setLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState('')
+    const gridRef = useRef<HTMLDivElement>(null)
 
     // Authorization State
     const [isAuthorized, setIsAuthorized] = useState(false)
@@ -71,7 +76,7 @@ export default function DirectoryPage() {
 
     // Pagination State
     const [page, setPage] = useState(0)
-    const ITEMS_PER_PAGE = 25
+    const ITEMS_PER_PAGE = 21
 
     async function fetchTotalCount() {
         const { data } = await supabase.rpc('get_active_alumni_count')
@@ -181,10 +186,10 @@ export default function DirectoryPage() {
     }
 
     return (
-        <div className="space-y-5 pb-20 animate-in fade-in duration-500">
+        <div className="flex flex-col h-full animate-in fade-in duration-500">
 
-            {/* Page Header + Search */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {/* Header + Search */}
+            <div className="flex-shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4">
                 <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-navy/8 flex items-center justify-center flex-shrink-0">
                         <GraduationCap size={18} className="text-navy" />
@@ -207,11 +212,11 @@ export default function DirectoryPage() {
                         placeholder="Cari nama atau angkatan..."
                         className="w-full pl-10 pr-9 py-2.5 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 shadow-sm transition-all"
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(e) => { setSearchQuery(e.target.value); setPage(0) }}
                     />
                     {searchQuery && (
                         <button
-                            onClick={() => setSearchQuery('')}
+                            onClick={() => { setSearchQuery(''); setPage(0) }}
                             className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-300 hover:text-gray-500 transition"
                         >
                             <X size={15} />
@@ -220,64 +225,65 @@ export default function DirectoryPage() {
                 </div>
             </div>
 
+            {/* Scrollable grid area */}
+            <div ref={gridRef} className="flex-1 overflow-y-auto min-h-0">
             {loading ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 lg:grid-cols-5 gap-4">
-                    {[...Array(10)].map((_, i) => (
-                        <div key={i} className="bg-white rounded-xl h-32 animate-pulse shadow-sm border border-gray-100"></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1">
+                    {[...Array(9)].map((_, i) => (
+                        <div key={i} className="bg-white rounded-xl h-16 animate-pulse border border-gray-100"></div>
                     ))}
                 </div>
             ) : (
                 <>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4"> {/* More Compact Grid */}
-                        {paginatedMembers.map((member) => (
-                            <div key={member.id} className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition border border-gray-100 group relative flex flex-col items-center p-4 text-center">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1">
+                        {paginatedMembers.map((member) => {
+                            const safeUrl = sanitizeExternalUrl(member.linkedin_url)
+                            const photoUrl = getOptimizedImageUrl(member.photo_url)
+                            const genLabel = member.generation?.split('(')[0].trim()
+                            return (
+                            <div key={member.id} className="bg-white rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all flex items-center gap-3 px-3 py-3">
 
-                                {/* Photo - Compact Size with Overlay Badge */}
-                                <div className="relative mb-3">
-                                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-gray-100 bg-gray-50 overflow-hidden shadow-sm group-hover:scale-105 transition duration-300">
-                                        {member.photo_url ? (
-                                            <img
-                                                src={getOptimizedImageUrl(member.photo_url) || ''}
-                                                alt={member.full_name}
-                                                className="w-full h-full object-cover"
-                                                loading="lazy"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-gray-300 font-bold text-xl">
-                                                {member.full_name?.charAt(0)}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Badge Overlaid on Bottom of Image */}
-                                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                                        <span className="bg-navy text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-white shadow-sm">
-                                            Beswan {member.generation?.split('(')[0].trim()}
-                                        </span>
-                                    </div>
+                                {/* Avatar */}
+                                <div className="w-10 h-10 rounded-xl bg-gray-100 overflow-hidden flex-shrink-0">
+                                    {photoUrl ? (
+                                        <img
+                                            src={photoUrl}
+                                            alt={member.full_name}
+                                            className="w-full h-full object-cover"
+                                            loading="lazy"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-gray-400 font-semibold text-sm">
+                                            {member.full_name?.charAt(0)}
+                                        </div>
+                                    )}
                                 </div>
 
-                                {/* Name & LinkedIn */}
-                                <div className="w-full mt-1">
-                                    <div className="flex items-center justify-center gap-1.5">
-                                        <h3 className="font-bold text-navy text-xs md:text-sm line-clamp-2 leading-tight" title={member.full_name}>
-                                            {member.full_name}
-                                        </h3>
-                                        {(() => {
-                                            const safeUrl = sanitizeExternalUrl(member.linkedin_url)
-                                            return safeUrl ? (
-                                                <a href={safeUrl} target="_blank" rel="noopener noreferrer nofollow"
-                                                    className="text-[#0077b5] opacity-80 hover:opacity-100 transition flex-shrink-0"
-                                                    title="Lihat LinkedIn"
-                                                >
-                                                    <Linkedin size={14} />
-                                                </a>
-                                            ) : null
-                                        })()}
+                                {/* Info */}
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-semibold text-navy text-sm leading-snug truncate">
+                                        {member.full_name}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                        {genLabel && (
+                                            <span className="text-xs text-gray-400">Ang. {genLabel}</span>
+                                        )}
+                                        {safeUrl && (
+                                            <a
+                                                href={safeUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer nofollow"
+                                                className="text-[#0077b5]/60 hover:text-[#0077b5] transition"
+                                                title="LinkedIn"
+                                            >
+                                                <Linkedin size={11} />
+                                            </a>
+                                        )}
                                     </div>
                                 </div>
                             </div>
-                        ))}
+                            )
+                        })}
                     </div>
 
                     {filteredMembers.length === 0 && (
@@ -297,30 +303,31 @@ export default function DirectoryPage() {
                             )}
                         </div>
                     )}
-
-                    {/* Pagination Controls */}
-                    {filteredMembers.length > ITEMS_PER_PAGE && (
-                        <div className="flex items-center justify-center gap-4 pt-8 border-t border-gray-100 mt-8">
-                            <button
-                                onClick={() => { setPage(p => Math.max(0, p - 1)); scrollToTop(); }}
-                                disabled={page === 0}
-                                className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 transition"
-                            >
-                                Sebelumnya
-                            </button>
-                            <span className="text-sm font-medium text-gray-500">
-                                Halaman <span className="text-navy font-bold">{page + 1}</span> dari {totalPages}
-                            </span>
-                            <button
-                                onClick={() => { setPage(p => Math.min(totalPages - 1, p + 1)); scrollToTop(); }}
-                                disabled={page >= totalPages - 1}
-                                className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 transition"
-                            >
-                                Selanjutnya
-                            </button>
-                        </div>
-                    )}
                 </>
+            )}
+            </div>
+
+            {/* Pagination — pinned bottom */}
+            {filteredMembers.length > ITEMS_PER_PAGE && (
+                <div className="flex-shrink-0 border-t border-gray-100 pt-3 pb-1 flex items-center justify-center gap-3">
+                    <button
+                        onClick={() => { setPage(p => Math.max(0, p - 1)); gridRef.current?.scrollTo({ top: 0 }) }}
+                        disabled={page === 0}
+                        className="px-5 py-2.5 rounded-xl text-sm font-bold border border-gray-200 bg-white text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 transition"
+                    >
+                        ← Sebelumnya
+                    </button>
+                    <span className="text-sm text-gray-400 px-2">
+                        <span className="text-navy font-bold">{page + 1}</span> / {totalPages}
+                    </span>
+                    <button
+                        onClick={() => { setPage(p => Math.min(totalPages - 1, p + 1)); gridRef.current?.scrollTo({ top: 0 }) }}
+                        disabled={page >= totalPages - 1}
+                        className="px-5 py-2.5 rounded-xl text-sm font-bold bg-navy text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-navy/90 transition"
+                    >
+                        Selanjutnya →
+                    </button>
+                </div>
             )}
         </div>
     )

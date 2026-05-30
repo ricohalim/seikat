@@ -122,13 +122,9 @@ export default function Sidebar({
                 {/* ── Logo ─────────────────────────────────────── */}
                 <div className="px-6 pt-6 pb-4 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                        {/* Monogram mark */}
-                        <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/15 flex items-center justify-center flex-shrink-0">
-                            <span className="text-white font-black text-xs tracking-tighter">SK</span>
-                        </div>
-                        <div>
+                        <div className="flex flex-col leading-none">
                             <h1 className="text-base font-black text-white tracking-tight leading-none">SEIKAT</h1>
-                            <p className="text-[10px] text-white/40 font-medium leading-none mt-0.5">Portal Alumni Djarum</p>
+                            <p className="text-[9px] text-white/40 font-bold tracking-[0.18em] uppercase mt-1">IKADBP</p>
                         </div>
                     </div>
                     <button
