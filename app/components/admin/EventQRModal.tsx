@@ -11,6 +11,16 @@ interface EventQRModalProps {
     eventId: string
 }
 
+// Escape karakter HTML khusus untuk mencegah XSS saat diinterpolasi ke document.write
+function escapeHtml(str: string): string {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+}
+
 export function EventQRModal({ isOpen, onClose, eventName, eventId }: EventQRModalProps) {
     const qrRef = useRef<HTMLDivElement>(null)
 
@@ -63,9 +73,9 @@ export function EventQRModal({ isOpen, onClose, eventName, eventId }: EventQRMod
                             </style>
                         </head>
                         <body>
-                            <h1>${eventName}</h1>
+                            <h1>${escapeHtml(eventName)}</h1>
                             ${printContent.innerHTML}
-                            <div class="id">ID: ${eventId}</div>
+                            <div class="id">ID: ${escapeHtml(eventId)}</div>
                             <p style="margin-top: 40px; font-size: 12px; color: #aaa;">Scan untuk Check-in Mandiri</p>
                         </body>
                     </html>

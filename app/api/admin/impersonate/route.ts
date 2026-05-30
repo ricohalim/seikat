@@ -81,11 +81,20 @@ export async function POST(req: NextRequest) {
             }
         }).then(() => { }) // non-blocking, ignore error if table doesn't exist
 
-        return NextResponse.json({
-            link: data.properties.action_link,
-            email: targetProfile.email,
-            name: targetProfile.full_name
-        })
+        return NextResponse.json(
+            {
+                link: data.properties.action_link,
+                email: targetProfile.email,
+                name: targetProfile.full_name
+            },
+            {
+                headers: {
+                    // Mencegah link sensitif ter-cache di browser, CDN, atau proxy manapun
+                    'Cache-Control': 'no-store, no-cache, must-revalidate',
+                    'Pragma': 'no-cache'
+                }
+            }
+        )
 
     } catch (err: any) {
         console.error('[impersonate] Error:', err)

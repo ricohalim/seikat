@@ -208,9 +208,9 @@ export default function UserManagementPage() {
     const handleImpersonate = async (userId: string) => {
         showConfirm({
             title: 'Akses sebagai User',
-            description: 'Link akses akan disalin ke clipboard. Paste di Tab Incognito agar session Admin tetap aktif.',
+            description: 'Link akses sekali-pakai akan digenerate. Buka di Tab Incognito agar session Admin tetap aktif. Link otomatis dihapus dari clipboard dalam 60 detik.',
             variant: 'warning',
-            confirmText: 'Salin Link Akses',
+            confirmText: 'Generate Link Akses',
             onConfirm: async () => {
                 closeConfirm()
                 setImpersonateLoading(userId)
@@ -230,10 +230,23 @@ export default function UserManagementPage() {
                     if (!res.ok) throw new Error(data.error)
 
                     await navigator.clipboard.writeText(data.link)
-                    toast.success('Link akses disalin! Buka di Tab Incognito.', {
-                        description: 'Link ini sangat rahasia dan akan basi dalam 5 menit.',
-                        duration: 6000
+                    toast.warning('Link akses disalin ke clipboard!', {
+                        description: '⚠️ Paste di Tab Incognito sekarang. Clipboard akan otomatis dihapus dalam 60 detik.',
+                        duration: 60000
                     })
+
+                    // Auto-clear clipboard setelah 60 detik agar link tidak tersisa
+                    setTimeout(async () => {
+                        try {
+                            const current = await navigator.clipboard.readText()
+                            if (current === data.link) {
+                                await navigator.clipboard.writeText('')
+                            }
+                        } catch {
+                            // Clipboard read mungkin diblokir browser — tidak apa-apa
+                        }
+                    }, 60_000)
+
                 } catch (err: any) {
                     toast.error('Gagal impersonate: ' + err.message)
                 } finally {

@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import AdminSidebarClient from './AdminSidebarClient'
 import { AdminBreadcrumb } from '@/app/components/admin/AdminBreadcrumb'
+import { hasPrivilegedAccess } from '@/lib/roles'
 
 // Layout ini sekarang Server Component.
 // Middleware sudah menjamin hanya admin/superadmin/korwil yang bisa masuk.
@@ -17,8 +18,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         .eq('id', user!.id)
         .single()
 
-    // Proteksi: cegah role member atau tanpa role mengakses halaman admin (middleware tidak mengecek ini)
-    if (!profile || profile.role === 'member') {
+    // Proteksi: hanya role privileged (superadmin, admin, korwil, viewer) yang boleh masuk
+    // Menggunakan inclusion-based check agar role baru tidak otomatis dapat akses
+    if (!profile || !hasPrivilegedAccess(profile.role)) {
         redirect('/dashboard')
     }
 

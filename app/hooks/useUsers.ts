@@ -79,8 +79,10 @@ export function useUsers(itemsPerPage: number) {
 
             // 1. Text Search — luas ke semua field penting
             if (filter) {
-                const safeFilter = filter.replace(/[,()]/g, '')
-                if (safeFilter.trim()) {
+                // Hapus semua karakter non-alphanumeric kecuali spasi dan @
+                // untuk mencegah injeksi PostgREST operator (., !, *, dll)
+                const safeFilter = filter.replace(/[^a-zA-Z0-9\s@]/g, '').trim()
+                if (safeFilter) {
                     query = query.or(
                         `full_name.ilike.%${safeFilter}%,` +
                         `email.ilike.%${safeFilter}%,` +

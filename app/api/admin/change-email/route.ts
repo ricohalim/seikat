@@ -35,12 +35,9 @@ export async function POST(request: Request) {
             auth: { autoRefreshToken: false, persistSession: false }
         })
 
-        // 1. Check if email is already in use in auth.users
-        const { data: { users: existingUsers }, error: listError } = await supabaseAdmin.auth.admin.listUsers()
-        if (listError) throw listError
-
-        const isEmailTaken = existingUsers.some(u => u.email?.toLowerCase() === newEmail.toLowerCase() && u.id !== targetUserId)
-        if (isEmailTaken) {
+        // 1. Check if email is already in use — query langsung, tidak perlu fetch semua user
+        const { data: existingUser } = await supabaseAdmin.auth.admin.getUserByEmail(newEmail.toLowerCase())
+        if (existingUser?.user && existingUser.user.id !== targetUserId) {
             return NextResponse.json({
                 error: `Email ${newEmail} sudah digunakan oleh akun lain. Jika ini adalah "akun hantu" (tanpa profile), hapus dulu dari Supabase Auth.`
             }, { status: 409 })

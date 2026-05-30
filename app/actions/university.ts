@@ -2,6 +2,22 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { hasAdminAccess } from '@/lib/roles'
+
+// Helper: ambil user dan cek apakah ia admin/superadmin
+async function requireAdmin() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { supabase, user: null, authorized: false }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+    return { supabase, user, authorized: hasAdminAccess(profile?.role) }
+}
 
 export async function getUniversities() {
     const supabase = await createClient()
@@ -22,13 +38,8 @@ export async function getUniversities() {
 }
 
 export async function addUniversity(name: string) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) return { error: 'Unauthorized' }
-
-    // Double check role prevents bypassing UI, but RLS is the real gatekeeper
-    // Ideally we assume RLS handles it to keep this function clean OR we manually check role here for faster feedback
+    const { supabase, authorized } = await requireAdmin()
+    if (!authorized) return { error: 'Forbidden' }
 
     const { error } = await supabase
         .from('master_universities')
@@ -44,7 +55,8 @@ export async function addUniversity(name: string) {
 }
 
 export async function updateUniversity(id: number, name: string) {
-    const supabase = await createClient()
+    const { supabase, authorized } = await requireAdmin()
+    if (!authorized) return { error: 'Forbidden' }
 
     const { error } = await supabase
         .from('master_universities')
@@ -61,10 +73,9 @@ export async function updateUniversity(id: number, name: string) {
 }
 
 export async function deleteUniversity(id: number) {
-    const supabase = await createClient()
+    const { supabase, authorized } = await requireAdmin()
+    if (!authorized) return { error: 'Forbidden' }
 
-    // Soft delete usually safer for referential integrity, but for this simpler implementation hard delete or is_active=false
-    // The table schema has is_active, let's use that (Soft Delete)
     const { error } = await supabase
         .from('master_universities')
         .update({ is_active: false })

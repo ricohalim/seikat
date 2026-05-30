@@ -48,12 +48,14 @@ export function CreateAlumniModal({ isOpen, onClose, onSuccess, availableGenerat
 
     const handleCopy = async () => {
         if (!successData) return
-        const textToCopy = `Halo ${fullName},\n\nAkun Alumni Anda telah berhasil dibuat. Berikut adalah informasi login sementara Anda:\n\nEmail: ${email}\nPassword: ${successData.password}\n\nSilakan segera login dan lengkapi profil Anda.`
+        const textToCopy = successData.setupLink
+            ? `Halo ${fullName},\n\nAkun Alumni Anda telah berhasil dibuat.\n\nEmail: ${email}\n\nSilakan set password Anda melalui link berikut (berlaku 24 jam):\n${successData.setupLink}\n\nSetelah set password, login di: ${window.location.origin}/auth/login`
+            : `Halo ${fullName},\n\nAkun Alumni Anda telah berhasil dibuat.\n\nEmail: ${email}\n\nSilakan hubungi admin untuk mendapatkan link set password.`
         try {
             await navigator.clipboard.writeText(textToCopy)
             setCopied(true)
             setTimeout(() => setCopied(false), 2000)
-            toast.success('Informasi login disalin ke clipboard')
+            toast.success('Informasi disalin ke clipboard')
         } catch (err) {
             toast.error('Gagal menyalin teks')
         }
@@ -111,14 +113,21 @@ export function CreateAlumniModal({ isOpen, onClose, onSuccess, availableGenerat
                         </p>
 
                         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-left space-y-2 mt-4">
-                            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Kredensial Login</p>
+                            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Info Akun</p>
                             <p className="text-sm"><span className="font-semibold w-20 inline-block">Email</span>: {email}</p>
-                            <p className="text-sm"><span className="font-semibold w-20 inline-block">Password</span>: <span className="font-mono bg-yellow-100 px-1 rounded">{successData.password}</span></p>
                         </div>
 
-                        <div className="bg-yellow-50 text-yellow-800 text-xs p-3 rounded text-left mt-2">
-                            ⚠️ <b>Penting:</b> Sampaikan kredensial sementara ini kepada user. User diwajibkan mengganti password setelah login.
-                        </div>
+                        {successData.setupLink ? (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left space-y-2 mt-2">
+                                <p className="text-xs text-blue-700 font-bold uppercase tracking-wider">Link Set Password (berlaku 24 jam)</p>
+                                <p className="text-xs text-blue-600 break-all font-mono bg-white border border-blue-100 rounded p-2">{successData.setupLink}</p>
+                                <p className="text-xs text-blue-600">Kirimkan link ini kepada user. Link hanya bisa digunakan sekali.</p>
+                            </div>
+                        ) : (
+                            <div className="bg-yellow-50 text-yellow-800 text-xs p-3 rounded text-left mt-2">
+                                ⚠️ Link set password gagal digenerate. Gunakan fitur Reset Password di halaman admin untuk mengirim ulang.
+                            </div>
+                        )}
                     </div>
 
                     <div className="p-4 bg-gray-50 border-t flex justify-end gap-3 rounded-b-2xl">

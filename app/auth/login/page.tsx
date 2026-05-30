@@ -73,9 +73,11 @@ export default function LoginPage() {
             // Router refresh to ensure middleware state is updated
             router.refresh()
 
-            // Handle Redirect
-            const nextUrl = new URLSearchParams(window.location.search).get('next')
-            router.push(nextUrl || '/dashboard')
+            // Handle Redirect — hanya izinkan path internal (harus dimulai dengan /)
+            // mencegah Open Redirect ke situs eksternal via ?next=https://evil.com
+            const nextParam = new URLSearchParams(window.location.search).get('next')
+            const safePath = nextParam?.startsWith('/') ? nextParam : '/dashboard'
+            router.push(safePath)
         } catch (err) {
             if (err instanceof Error) {
                 // Translate common Supabase errors

@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { randomBytes } from 'crypto'
 
 export async function POST(request: Request) {
     try {
@@ -36,23 +37,21 @@ export async function POST(request: Request) {
             auth: { autoRefreshToken: false, persistSession: false }
         })
 
-        // 1. Check if email is already in use in auth.users
-        const { data: { users: existingUsers }, error: listError } = await supabaseAdmin.auth.admin.listUsers()
-        if (listError) throw listError
-
-        const isEmailTaken = existingUsers.some(u => u.email?.toLowerCase() === email.toLowerCase())
-        if (isEmailTaken) {
+        // 1. Check if email is already in use — query langsung, tidak perlu fetch semua user
+        const { data: existingUser } = await supabaseAdmin.auth.admin.getUserByEmail(email.toLowerCase())
+        if (existingUser?.user) {
             return NextResponse.json({
                 error: `Email ${email} sudah terdaftar di sistem. Anda tidak bisa menggunakan email ini lagi.`
             }, { status: 409 })
         }
 
         // 2. Create User in Supabase Auth
-        const password = '123456' // Sesuai permintaan: password default 123456
+        // Generate password random yang kuat — tidak pernah dikembalikan ke client
+        const internalPassword = randomBytes(32).toString('hex')
 
         const { data: newUserAuth, error: createAuthError } = await supabaseAdmin.auth.admin.createUser({
             email: email,
-            password: password,
+            password: internalPassword,
             email_confirm: true, // Bypass email confirmation
             user_metadata: {
                 full_name: fullName
@@ -86,13 +85,26 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: `Gagal menyimpan data profil: ${upsertProfileError.message}` }, { status: 500 })
         }
 
+        // 4. Generate one-time recovery link agar user bisa set password sendiri
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://seikat.vercel.app'
+        const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+            type: 'recovery',
+            email: email,
+            options: { redirectTo: `${siteUrl}/auth/callback` }
+        })
+
+        if (linkError) {
+            console.error('Generate recovery link error:', linkError)
+            // Akun sudah dibuat, tapi link gagal — tetap return sukses, admin bisa reset manual
+        }
+
         return NextResponse.json({
             success: true,
             message: `Akun alumni berhasil dibuat.`,
             user: {
                 id: newUserAuth.user.id,
                 email: newUserAuth.user.email,
-                password: password
+                setupLink: linkData?.properties?.action_link ?? null
             }
         })
 
