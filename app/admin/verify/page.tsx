@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
-import { Search, Eye, Filter } from 'lucide-react'
+import { Search, Eye, UserCheck } from 'lucide-react'
 
 export default function VerifyListPage() {
     const [registrants, setRegistrants] = useState<any[]>([])
@@ -42,24 +42,29 @@ export default function VerifyListPage() {
     )
 
     return (
-        <div className="max-w-6xl mx-auto space-y-6">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-navy">Antrian Verifikasi</h1>
-                    <p className="text-gray-500 text-sm">Validasi pendaftar baru sebelum masuk ke database alumni.</p>
+        <div className="space-y-6 pb-10 animate-in fade-in duration-500">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-navy/8 flex items-center justify-center flex-shrink-0">
+                        <UserCheck size={18} className="text-navy" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl font-black text-navy tracking-tight">Antrian Verifikasi</h1>
+                        <p className="text-sm text-gray-400">Validasi pendaftar baru sebelum masuk ke database alumni.</p>
+                    </div>
                 </div>
 
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     <input
                         type="text"
-                        placeholder="Cari Nama..."
+                        placeholder="Cari nama atau email..."
                         value={filter}
                         onChange={(e) => setFilter(e.target.value)}
-                        className="pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:border-navy outline-none w-64 text-sm bg-white"
+                        className="pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 focus:border-navy/40 focus:ring-2 focus:ring-navy/10 outline-none w-64 text-sm bg-white"
                     />
                 </div>
-            </header>
+            </div>
 
             {/* TABS */}
             <div className="flex gap-4 border-b border-gray-200">
@@ -83,28 +88,58 @@ export default function VerifyListPage() {
                 </button>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <table className="w-full text-left border-collapse">
                     <thead>
-                        <tr className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider border-b border-gray-100">
+                        <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b border-gray-100">
                             <th className="p-4 font-bold">Nama Lengkap</th>
                             <th className="p-4 font-bold">Angkatan</th>
                             <th className="p-4 font-bold">Universitas / Jurusan</th>
                             <th className="p-4 font-bold">Status</th>
                             {activeTab === 'on-hold' && <th className="p-4 font-bold">Catatan</th>}
-                            <th className="p-4 font-bold text-right pt-4">Aksi</th>
+                            <th className="p-4 font-bold text-right">Aksi</th>
                         </tr>
                     </thead>
                     <tbody className="text-sm divide-y divide-gray-50">
                         {loading ? (
-                            <tr><td colSpan={5} className="p-8 text-center text-gray-400">Loading...</td></tr>
+                            [...Array(5)].map((_, i) => (
+                                <tr key={i} className="animate-pulse">
+                                    <td className="p-4">
+                                        <div className="h-4 bg-gray-100 rounded w-32 mb-1.5" />
+                                        <div className="h-3 bg-gray-100 rounded w-20" />
+                                    </td>
+                                    <td className="p-4"><div className="h-4 bg-gray-100 rounded w-16" /></td>
+                                    <td className="p-4">
+                                        <div className="h-4 bg-gray-100 rounded w-28 mb-1.5" />
+                                        <div className="h-3 bg-gray-100 rounded w-20" />
+                                    </td>
+                                    <td className="p-4"><div className="h-6 bg-gray-100 rounded-full w-20" /></td>
+                                    {activeTab === 'on-hold' && <td className="p-4"><div className="h-4 bg-gray-100 rounded w-24" /></td>}
+                                    <td className="p-4 text-right"><div className="h-8 bg-gray-100 rounded-xl w-20 ml-auto" /></td>
+                                </tr>
+                            ))
                         ) : filtered.length === 0 ? (
-                            <tr><td colSpan={5} className="p-8 text-center text-gray-400">Tidak ada pending verification.</td></tr>
+                            <tr>
+                                <td colSpan={activeTab === 'on-hold' ? 6 : 5}>
+                                    <div className="py-12 text-center">
+                                        <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                            <UserCheck size={20} className="text-gray-300" />
+                                        </div>
+                                        <p className="font-bold text-gray-500 text-sm">
+                                            {filter
+                                                ? 'Tidak ada hasil pencarian.'
+                                                : activeTab === 'pending'
+                                                    ? 'Tidak ada pendaftar menunggu verifikasi.'
+                                                    : 'Tidak ada pendaftar yang ditunda.'}
+                                        </p>
+                                    </div>
+                                </td>
+                            </tr>
                         ) : filtered.map((r) => {
                             // Extract metadata from raw_json if columns are missing
                             const meta = r.raw_data || {}
                             return (
-                                <tr key={r.id} className="hover:bg-blue-50/50 transition group">
+                                <tr key={r.id} className="hover:bg-navy/[0.02] transition group">
                                     <td className="p-4 font-bold text-navy">
                                         {r.full_name}
                                         <div className="text-xs text-gray-400 font-normal mt-0.5">{new Date(r.submitted_at).toLocaleDateString()}</div>
@@ -133,7 +168,7 @@ export default function VerifyListPage() {
                                         </td>
                                     )}
                                     <td className="p-4 text-right">
-                                        <Link href={`/admin/verify/${r.id}`} className="inline-flex items-center gap-2 px-4 py-2 bg-navy text-white text-xs font-bold rounded-lg hover:bg-navy/90 transition shadow-sm">
+                                        <Link href={`/admin/verify/${r.id}`} className="inline-flex items-center gap-2 px-4 py-2 bg-navy text-white text-xs font-bold rounded-xl hover:bg-[#1a3561] transition shadow-sm">
                                             <Eye size={14} /> Tinjau
                                         </Link>
                                     </td>

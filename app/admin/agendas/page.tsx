@@ -41,7 +41,6 @@ export default function AdminAgendasPage() {
     const [activeEventId, setActiveEventId] = useState<string | null>(null)
 
     // Role Check
-    const [roleLoading, setRoleLoading] = useState(true)
     const [userProfile, setUserProfile] = useState<any>(null)
 
     // QR Modal State
@@ -50,26 +49,17 @@ export default function AdminAgendasPage() {
     const [qrEventName, setQrEventName] = useState('')
 
     useEffect(() => {
-        const checkRole = async () => {
-            try {
-                const { data: { user } } = await supabase.auth.getUser()
-                if (!user) return
-
-                const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-                const role = profile?.role?.toLowerCase()
-
-                if (!['admin', 'superadmin', 'korwil'].includes(role)) {
-                    toast.error("Akses Ditolak: Anda bukan Admin/Korwil.")
-                    window.location.href = '/dashboard'
-                }
-                setUserProfile(profile)
-            } catch (error) {
-                console.error("Auth check error", error)
-            } finally {
-                setRoleLoading(false)
-            }
+        const fetchProfile = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) return
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('id, full_name, email, role')
+                .eq('id', user.id)
+                .single()
+            if (profile) setUserProfile(profile)
         }
-        checkRole()
+        fetchProfile()
     }, [])
 
     // When tab changes, close the detail panel
@@ -269,8 +259,6 @@ export default function AdminAgendasPage() {
         setQrEventName(title)
         setIsQRModalOpen(true)
     }
-
-    if (roleLoading) return null
 
     const isDetailOpen = !!selectedEvent
 

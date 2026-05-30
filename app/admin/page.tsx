@@ -138,13 +138,13 @@ export default async function AdminDashboardPage() {
                 </div>
 
                 {/* Today */}
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm border-l-4 border-l-purple-500 relative overflow-hidden group">
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm border-l-4 border-l-navy relative overflow-hidden group">
                     <div className="absolute right-3 top-3 opacity-[0.07] group-hover:opacity-[0.12] transition">
-                        <UserPlus size={72} className="text-purple-500" />
+                        <UserPlus size={72} className="text-navy" />
                     </div>
                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Pendaftar Baru</p>
                     <h2 className="text-4xl font-black text-navy">{todayCount ?? 0}</h2>
-                    <p className="text-xs text-purple-500 font-bold mt-2">+{todayCount ?? 0} Hari Ini</p>
+                    <p className="text-xs text-navy font-bold mt-2">+{todayCount ?? 0} Hari Ini</p>
                 </div>
             </div>
 
@@ -167,29 +167,29 @@ export default async function AdminDashboardPage() {
                             Distribusi Generasi
                         </p>
                         {generations.length > 0
-                            ? <BarChart data={generations} color="#2563eb" />
+                            ? <BarChart data={generations} color="#0068C7" />
                             : <p className="text-xs text-gray-300">Belum ada data.</p>
                         }
                     </div>
 
                     <div>
                         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
+                            <span className="w-2 h-2 rounded-full bg-orange inline-block" />
                             Top 5 Sektor Industri
                         </p>
                         {industries.length > 0
-                            ? <BarChart data={industries} color="#22c55e" />
+                            ? <BarChart data={industries} color="#FF8817" />
                             : <p className="text-xs text-gray-300">Belum ada data.</p>
                         }
                     </div>
 
                     <div>
                         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-purple-500 inline-block" />
+                            <span className="w-2 h-2 rounded-full bg-navy inline-block" />
                             Top 5 Provinsi Domisili
                         </p>
                         {provinces.length > 0
-                            ? <BarChart data={provinces} color="#a855f7" />
+                            ? <BarChart data={provinces} color="#162B52" />
                             : <p className="text-xs text-gray-300">Belum ada data.</p>
                         }
                     </div>

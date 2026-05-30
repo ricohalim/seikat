@@ -149,8 +149,8 @@ export default function AdminSidebarClient({ userEmail, userName, userRole }: Ad
                                                     <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-orange rounded-full" />
                                                 )}
                                                 <Icon size={17} className={clsx(
-                                                    'flex-shrink-0 transition-transform duration-200',
-                                                    isActive ? 'text-white' : 'text-white/40 group-hover:text-white/70 group-hover:scale-110'
+                                                    'flex-shrink-0',
+                                                    isActive ? 'text-white' : 'text-white/40 group-hover:text-white/70'
                                                 )} />
                                                 <span className="flex-1 leading-none">{item.name}</span>
                                                 {isActive && <ChevronRight size={14} className="text-white/40 flex-shrink-0" />}
