@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import {
-    Building2, MapPin, GraduationCap, Mail, Phone,
-    Linkedin, User as UserIcon, Eye, EyeOff,
-    AlertCircle, CheckCircle, X, QrCode
+    GraduationCap, Mail,
+    Linkedin, User as UserIcon,
+    AlertCircle, CheckCircle, X, QrCode, Calendar, Building2
 } from 'lucide-react'
 import { EventScannerModal } from '../components/EventScannerModal'
 import QRCode from 'react-qr-code'
@@ -39,11 +39,18 @@ export interface Profile {
     role?: string
 }
 
-export default function OverviewClient({ profile }: { profile: Profile }) {
-    const [showPrivacy, setShowPrivacy] = useState(false)
-    const [isScannerOpen, setIsScannerOpen] = useState(false) // State for Event Scanner
-    const [showQR, setShowQR] = useState(false) // State for Member ID QR
-    const [isPrivacyMode, setIsPrivacyMode] = useState(false) // State for Privacy Mode
+export interface UpcomingEvent {
+    id: string
+    title: string
+    date_start: string
+    location: string
+    is_online: boolean
+    registration_deadline: string | null
+}
+
+export default function OverviewClient({ profile, upcomingEvents }: { profile: Profile, upcomingEvents: UpcomingEvent[] }) {
+    const [isScannerOpen, setIsScannerOpen] = useState(false)
+    const [showQR, setShowQR] = useState(false)
 
     // Calculate Integrity
     const completionPercentage = calculateProfileCompleteness(profile)
@@ -171,18 +178,6 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
                         {/* Action buttons */}
                         <div className="flex items-center gap-2 flex-wrap mt-1 md:mt-0">
                             <button
-                                onClick={() => setIsPrivacyMode(!isPrivacyMode)}
-                                title={isPrivacyMode ? 'Nonaktifkan Mode Privasi' : 'Aktifkan Mode Privasi'}
-                                className={`p-2.5 rounded-xl border text-sm font-bold transition-all duration-200 ${
-                                    isPrivacyMode
-                                        ? 'bg-navy text-white border-navy shadow-md shadow-navy/20'
-                                        : 'bg-white text-gray-400 border-gray-200 hover:text-navy hover:border-navy/30'
-                                }`}
-                            >
-                                {isPrivacyMode ? <EyeOff size={17} /> : <Eye size={17} />}
-                            </button>
-
-                            <button
                                 onClick={() => setIsScannerOpen(true)}
                                 className="flex items-center gap-2 bg-navy text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:bg-[#1a3561] hover:shadow-md hover:shadow-navy/20 transition-all duration-200 active:scale-95"
                             >
@@ -202,98 +197,53 @@ export default function OverviewClient({ profile }: { profile: Profile }) {
                 </div>
             </div>
 
-            {/* ── Info Grid ────────────────────────────────────── */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-                {/* Left: Kontak */}
-                <div className="h-full">
-
-                    {/* Kontak */}
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden relative h-full">
-                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-azure rounded-l-2xl" />
-                        <div className="p-5 pl-6">
-                            <h3 className="font-bold text-navy text-sm mb-4 flex items-center gap-2">
-                                <Mail size={15} className="text-azure" />
-                                Informasi Kontak
-                            </h3>
-                            <div className={`space-y-3.5 transition-all duration-300 ${isPrivacyMode ? 'blur-sm select-none pointer-events-none' : ''}`}>
-                                {[
-                                    { icon: <Mail size={15} className="text-gray-300" />, label: 'Email', value: profile.email },
-                                    { icon: <Phone size={15} className="text-gray-300" />, label: 'WhatsApp', value: profile.phone || '-' },
-                                    { icon: <MapPin size={15} className="text-gray-300" />, label: 'Domisili', value: `${profile.domicile_city || '-'}, ${profile.domicile_province || '-'}` },
-                                ].map(item => (
-                                    <div key={item.label} className="flex items-start gap-3">
-                                        <div className="mt-0.5 flex-shrink-0">{item.icon}</div>
-                                        <div className="min-w-0">
-                                            <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">{item.label}</p>
-                                            <p className="text-sm text-gray-700 font-medium truncate">{item.value}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                                {safeLinkedIn && (
-                                    <div className="flex items-start gap-3">
-                                        <Linkedin size={15} className="text-blue-500 mt-0.5 flex-shrink-0" />
-                                        <div>
-                                            <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">LinkedIn</p>
-                                            <a href={safeLinkedIn} target="_blank" rel="noopener noreferrer nofollow" className="text-sm text-azure hover:underline font-medium">
-                                                Lihat Profil →
-                                            </a>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                            {isPrivacyMode && (
-                                <div className="absolute inset-0 flex items-center justify-center z-10">
-                                    <span className="bg-white/90 border border-gray-200 text-gray-400 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm">
-                                        <EyeOff size={12} /> Disembunyikan
-                                    </span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
+            {/* ── Agenda Terdekat ──────────────────────────── */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-navy text-sm flex items-center gap-2">
+                        <Calendar size={15} className="text-azure" />
+                        Agenda Terdekat
+                    </h3>
+                    <Link href="/dashboard/events" className="text-xs text-azure font-semibold hover:underline">
+                        Lihat Semua →
+                    </Link>
                 </div>
 
-                {/* Right: Karir */}
-                <div className="h-full">
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden relative h-full">
-                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-navy rounded-l-2xl" />
-                        <div className="p-5 pl-6 relative">
-                            <h3 className="font-bold text-navy text-sm mb-4 flex items-center gap-2">
-                                <Building2 size={15} className="text-navy" />
-                                Pekerjaan & Karir
-                            </h3>
-                            <div className={`transition-all duration-300 ${isPrivacyMode ? 'blur-sm select-none pointer-events-none' : ''}`}>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {[
-                                        { label: 'Posisi / Jabatan', value: profile.job_position, large: true },
-                                        { label: 'Perusahaan / Instansi', value: profile.company_name, large: true },
-                                    ].map(item => (
-                                        <div key={item.label} className="bg-gray-50/60 border border-gray-100 rounded-xl p-3.5">
-                                            <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest mb-1">{item.label}</p>
-                                            <p className="text-sm font-semibold text-gray-800">{item.value || '—'}</p>
-                                        </div>
-                                    ))}
-                                    {profile.industry_sector && (
-                                        <div className="sm:col-span-2">
-                                            <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest mb-1.5">Sektor Industri</p>
-                                            <span className="inline-flex items-center gap-1.5 bg-azure/8 text-azure border border-azure/15 text-xs font-bold px-3 py-1.5 rounded-full">
-                                                {profile.industry_sector}
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                            {isPrivacyMode && (
-                                <div className="absolute inset-0 flex items-center justify-center z-10">
-                                    <span className="bg-white/90 border border-gray-200 text-gray-400 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm">
-                                        <EyeOff size={12} /> Disembunyikan
-                                    </span>
-                                </div>
-                            )}
-                        </div>
+                {upcomingEvents.length === 0 ? (
+                    <div className="text-center py-6 text-gray-400">
+                        <p className="text-sm">Tidak ada agenda mendatang saat ini.</p>
+                        <Link href="/dashboard/events" className="text-xs text-azure font-semibold hover:underline mt-1 inline-block">Cek halaman Events →</Link>
                     </div>
-                </div>
+                ) : (
+                    <div className="space-y-1">
+                        {upcomingEvents.map(event => {
+                            const d = new Date(event.date_start)
+                            const day = d.getDate()
+                            const month = d.toLocaleDateString('id-ID', { month: 'short' })
+                            return (
+                                <Link
+                                    key={event.id}
+                                    href="/dashboard/events"
+                                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition group"
+                                >
+                                    <div className="w-11 h-11 rounded-xl bg-navy/6 flex-shrink-0 flex flex-col items-center justify-center">
+                                        <span className="text-[9px] font-bold text-navy/50 uppercase tracking-wide">{month}</span>
+                                        <span className="text-base font-black text-navy leading-none">{day}</span>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-semibold text-navy text-sm truncate group-hover:text-azure transition">{event.title}</p>
+                                        <p className="text-xs text-gray-400 truncate mt-0.5">
+                                            {event.is_online ? 'Online' : (event.location || '—')}
+                                        </p>
+                                    </div>
+                                    <span className="flex-shrink-0 text-[10px] font-bold text-azure bg-azure/8 border border-azure/15 px-2 py-0.5 rounded-md">
+                                        Open
+                                    </span>
+                                </Link>
+                            )
+                        })}
+                    </div>
+                )}
             </div>
 
             {/* QR Modal */}

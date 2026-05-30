@@ -28,6 +28,15 @@ export default async function DashboardPage() {
         email: user.email
     }
 
-    // 3. Render Client View (No spinner!)
-    return <OverviewClient profile={fullProfile} />
+    // 3. Fetch upcoming events
+    const { data: upcomingEvents } = await supabase
+        .from('events')
+        .select('id, title, date_start, location, is_online, registration_deadline')
+        .eq('status', 'Open')
+        .gte('date_start', new Date().toISOString())
+        .order('date_start', { ascending: true })
+        .limit(3)
+
+    // Render Client View (No spinner!)
+    return <OverviewClient profile={fullProfile} upcomingEvents={upcomingEvents || []} />
 }
