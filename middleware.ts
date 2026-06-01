@@ -1,4 +1,4 @@
-import { type NextRequest } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
 // Node.js Runtime diperlukan karena updateSession() menggunakan getUser()
@@ -8,6 +8,15 @@ export const runtime = 'nodejs'
 export async function middleware(request: NextRequest) {
     const isPaused = false; // Ubah ke true untuk maintenance, false untuk normal
     const isLocalhost = request.nextUrl.hostname === 'localhost' || request.nextUrl.hostname === '127.0.0.1';
+
+    // Guard: reject unauthenticated requests to /api/admin/* at the edge
+    if (request.nextUrl.pathname.startsWith('/api/admin/')) {
+        const authHeader = request.headers.get('Authorization')
+        // API routes using Bearer token — must have an Authorization header
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+    }
 
     if (isPaused && !isLocalhost) {
         return new Response(

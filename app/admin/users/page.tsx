@@ -106,7 +106,8 @@ export default function UserManagementPage() {
                 try {
                     const { error } = await supabase.rpc('admin_update_profile', {
                         target_user_id: editingUser.id,
-                        new_data: editForm
+                        // Strip sensitive fields — role changes must go through /api/admin/change-role
+                        new_data: (({ role, account_status, member_id, ...safe }) => safe)(editForm)
                     })
                     if (error) throw error
 

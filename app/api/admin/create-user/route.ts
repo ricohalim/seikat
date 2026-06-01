@@ -1,25 +1,46 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
+import { checkRateLimit, cleanupExpired } from '@/lib/rate-limit'
+import { hasAdminAccess } from '@/lib/roles'
+
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+)
 
 export async function POST(request: Request) {
     try {
         const authHeader = request.headers.get('Authorization')
-        if (!authHeader) return NextResponse.json({ error: 'Missing Authorization header' }, { status: 401 })
+        if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-        // Verify caller is superadmin or admin
-        const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            { global: { headers: { Authorization: authHeader } }, auth: { persistSession: false } }
-        )
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        // Verify caller JWT via service_role (bypasses RLS — cannot be spoofed)
+        const token = authHeader.replace('Bearer ', '')
+        const { data: { user: callerUser }, error: callerError } = await supabaseAdmin.auth.getUser(token)
+        if (callerError || !callerUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-        if (!['superadmin', 'admin'].includes(profile?.role)) {
+        // Rate limiting: max 20 create per menit per admin
+        cleanupExpired()
+        const rl = checkRateLimit(`create-user:${callerUser.id}`, 20, 60_000)
+        if (!rl.allowed) {
+            return NextResponse.json(
+                { error: 'Terlalu banyak permintaan. Coba lagi dalam 1 menit.' },
+                { status: 429, headers: { 'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } }
+            )
+        }
+
+        // Fetch caller role via service_role
+        const { data: profile } = await supabaseAdmin
+            .from('profiles')
+            .select('role')
+            .eq('id', callerUser.id)
+            .single()
+
+        if (!hasAdminAccess(profile?.role)) {
             return NextResponse.json({ error: 'Forbidden: Admin only' }, { status: 403 })
         }
+
 
         const { fullName, email, phone, generation, university } = await request.json()
 
@@ -29,13 +50,6 @@ export async function POST(request: Request) {
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             return NextResponse.json({ error: 'Format email tidak valid' }, { status: 400 })
         }
-
-        const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-        if (!serviceRoleKey) throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY')
-
-        const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceRoleKey, {
-            auth: { autoRefreshToken: false, persistSession: false }
-        })
 
         // 1. Check if email is already in use via profiles table
         const { data: existingProfile } = await supabaseAdmin
@@ -113,7 +127,8 @@ export async function POST(request: Request) {
         })
 
     } catch (error: any) {
-        console.error('Create User API Error:', error)
-        return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 })
+        console.error('[create-user]', error)
+        const isDev = process.env.NODE_ENV === 'development'
+        return NextResponse.json({ error: isDev ? error.message : 'Internal Server Error' }, { status: 500 })
     }
 }

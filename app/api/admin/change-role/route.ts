@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
-import { hasAdminAccess, isSuperAdmin } from '@/lib/roles'
+import { hasAdminAccess, isSuperAdmin, isValidRole, isValidUUID } from '@/lib/roles'
 import { checkRateLimit, cleanupExpired } from '@/lib/rate-limit'
 
 // Service role client bypassing RLS, requires SUPABASE_SERVICE_ROLE_KEY
@@ -46,6 +46,16 @@ export async function POST(req: NextRequest) {
         const { targetUserId, newRole } = await req.json()
         if (!targetUserId || !newRole) {
             return NextResponse.json({ error: 'targetUserId and newRole required' }, { status: 400 })
+        }
+        if (!isValidUUID(targetUserId)) {
+            return NextResponse.json({ error: 'targetUserId tidak valid' }, { status: 400 })
+        }
+        if (!isValidRole(newRole)) {
+            return NextResponse.json({ error: `Role tidak valid. Pilihan: ${['superadmin','admin','korwil','viewer','member'].join(', ')}` }, { status: 400 })
+        }
+        // Prevent self-demotion to avoid lockout
+        if (targetUserId === callerUser.id && newRole !== callerProfile?.role) {
+            return NextResponse.json({ error: 'Tidak boleh mengubah role akun sendiri' }, { status: 403 })
         }
 
         // 2. Prevent non-superadmin from promoting others to superadmin or modifying existing superadmin

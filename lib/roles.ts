@@ -8,6 +8,14 @@
 export const ROLES = ['superadmin', 'admin', 'korwil', 'viewer', 'member'] as const
 export type Role = typeof ROLES[number]
 
+/** Validasi bahwa string adalah UUID v4 yang valid */
+export const isValidUUID = (id: string): boolean =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
+
+/** Validasi bahwa string adalah role yang diizinkan */
+export const isValidRole = (role: string): role is Role =>
+    (ROLES as readonly string[]).includes(role)
+
 /** Role yang punya akses admin penuh (kelola user, event, konten) */
 export const ADMIN_ROLES: readonly Role[] = ['superadmin', 'admin']
 
