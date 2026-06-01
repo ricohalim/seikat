@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, AlertCircle, CheckCircle, Lock } from 'lucide-react'
+import { Loader2, AlertCircle, Lock } from 'lucide-react'
 
-type PageState = 'loading' | 'ready' | 'success' | 'invalid'
+type PageState = 'loading' | 'ready' | 'invalid'
 
 export default function ResetPasswordPage() {
     const [pageState, setPageState] = useState<PageState>('loading')
@@ -76,7 +76,7 @@ export default function ResetPasswordPage() {
         }
 
         await supabase.auth.signOut()
-        setPageState('success')
+        router.replace('/auth/login')
     }
 
     return (
@@ -106,25 +106,6 @@ export default function ResetPasswordPage() {
                             className="mt-6 inline-block w-full text-center bg-navy text-white font-bold py-3 rounded-xl text-sm hover:bg-navy/90 transition"
                         >
                             Minta Link Baru
-                        </Link>
-                    </div>
-                )}
-
-                {/* Success */}
-                {pageState === 'success' && (
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
-                        <div className="w-14 h-14 bg-green-50 rounded-xl flex items-center justify-center mx-auto mb-4">
-                            <CheckCircle size={28} className="text-green-600" />
-                        </div>
-                        <h1 className="text-xl font-black text-navy tracking-tight mb-2">Password Berhasil Diubah</h1>
-                        <p className="text-sm text-gray-500 leading-relaxed">
-                            Password baru Anda sudah aktif. Silakan login kembali.
-                        </p>
-                        <Link
-                            href="/auth/login"
-                            className="mt-6 inline-block w-full text-center bg-navy text-white font-bold py-3 rounded-xl text-sm hover:bg-navy/90 transition"
-                        >
-                            Login Sekarang
                         </Link>
                     </div>
                 )}
