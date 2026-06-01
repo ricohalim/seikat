@@ -18,25 +18,37 @@ export default function ResetPasswordPage() {
     const router = useRouter()
 
     useEffect(() => {
-        const hash = window.location.hash.substring(1)
-        const params = new URLSearchParams(hash)
-        const accessToken = params.get('access_token')
-        const refreshToken = params.get('refresh_token')
-        const type = params.get('type')
+        const handleAuth = async () => {
+            // PKCE flow (default Supabase): ?code=... in query string
+            const searchParams = new URLSearchParams(window.location.search)
+            const code = searchParams.get('code')
 
-        if (!accessToken || !refreshToken || type !== 'recovery') {
-            setPageState('invalid')
-            return
+            if (code) {
+                const { error } = await supabase.auth.exchangeCodeForSession(code)
+                setPageState(error ? 'invalid' : 'ready')
+                return
+            }
+
+            // Implicit flow (legacy): #access_token=...&type=recovery in hash
+            const hash = window.location.hash.substring(1)
+            const params = new URLSearchParams(hash)
+            const accessToken = params.get('access_token')
+            const refreshToken = params.get('refresh_token')
+            const type = params.get('type')
+
+            if (!accessToken || !refreshToken || type !== 'recovery') {
+                setPageState('invalid')
+                return
+            }
+
+            const { error } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken,
+            })
+            setPageState(error ? 'invalid' : 'ready')
         }
 
-        supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
-            .then(({ error }) => {
-                if (error) {
-                    setPageState('invalid')
-                } else {
-                    setPageState('ready')
-                }
-            })
+        handleAuth()
     }, [])
 
     const handleSubmit = async (e: React.FormEvent) => {
