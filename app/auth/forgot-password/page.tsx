@@ -62,14 +62,14 @@ export default function ForgotPasswordPage() {
                         <div className="w-14 h-14 bg-green-50 rounded-xl flex items-center justify-center mx-auto mb-4">
                             <CheckCircle size={28} className="text-green-600" />
                         </div>
-                        <h1 className="text-xl font-black text-navy tracking-tight mb-2">Email Terkirim</h1>
+                        <h1 className="text-xl font-black text-navy tracking-tight mb-2">Magic Link Terkirim</h1>
                         <p className="text-sm text-gray-500 leading-relaxed">
-                            Link reset password telah dikirim ke{' '}
+                            Magic link telah dikirim ke{' '}
                             <span className="font-bold text-navy">{email}</span>.
-                            Cek folder inbox dan spam.
+                            Klik link di email untuk langsung masuk dan atur password baru.
                         </p>
                         <p className="text-xs text-gray-400 mt-4">
-                            Link berlaku selama 1 jam.
+                            Link berlaku selama 1 jam. Cek folder inbox dan spam.
                         </p>
                         <Link
                             href="/auth/login"
@@ -84,7 +84,7 @@ export default function ForgotPasswordPage() {
                         <div className="mb-7">
                             <h1 className="text-2xl font-black text-navy tracking-tight">Lupa Password</h1>
                             <p className="text-gray-400 text-sm mt-1">
-                                Masukkan email terdaftar. Kami akan kirimkan link untuk membuat password baru.
+                                Masukkan email terdaftar. Kami akan kirimkan magic link — klik linknya untuk langsung masuk dan atur password baru.
                             </p>
                         </div>
 
@@ -124,7 +124,7 @@ export default function ForgotPasswordPage() {
                                         Mengirim...
                                     </>
                                 ) : (
-                                    'Kirim Link Reset Password'
+                                    'Kirim Magic Link'
                                 )}
                             </button>
                         </form>
