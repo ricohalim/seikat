@@ -9,6 +9,8 @@ export default function AuthCallbackPage() {
 
     useEffect(() => {
         const handleAuth = async () => {
+            const next = new URLSearchParams(window.location.search).get('next') || '/dashboard'
+
             // Ambil token dari URL hash (#access_token=...)
             const hash = window.location.hash.substring(1)
             const params = new URLSearchParams(hash)
@@ -16,16 +18,13 @@ export default function AuthCallbackPage() {
             const refreshToken = params.get('refresh_token')
 
             if (accessToken && refreshToken) {
-                // Set session baru secara manual menggunakan token alumni
-                // Catatan: Jika dibuka di browser yang sama dengan admin, 
-                // ini akan menimpa session admin. Disarankan buka di Incognito.
                 const { error } = await supabase.auth.setSession({
                     access_token: accessToken,
                     refresh_token: refreshToken
                 })
 
                 if (!error) {
-                    router.replace('/dashboard')
+                    router.replace(next)
                     return
                 }
             }
@@ -33,7 +32,7 @@ export default function AuthCallbackPage() {
             // Fallback: Jika tidak ada token, cek session aktif
             const { data: { session } } = await supabase.auth.getSession()
             if (session) {
-                router.replace('/dashboard')
+                router.replace(next)
             } else {
                 router.replace('/auth/login')
             }
