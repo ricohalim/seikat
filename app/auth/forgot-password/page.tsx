@@ -16,8 +16,12 @@ export default function ForgotPasswordPage() {
         setLoading(true)
         setError(null)
 
-        const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-            redirectTo: `${window.location.origin}/auth/reset-password`,
+        const { error } = await supabase.auth.signInWithOtp({
+            email: email.trim().toLowerCase(),
+            options: {
+                shouldCreateUser: false,
+                emailRedirectTo: `${window.location.origin}/api/auth/callback?next=%2Fdashboard%2Fchange-password%3Ffrom%3Dreset`,
+            },
         })
 
         setLoading(false)

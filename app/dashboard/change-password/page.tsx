@@ -1,11 +1,15 @@
 'use client'
 
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { Lock, Save, AlertCircle, CheckCircle } from 'lucide-react'
 
 export default function ChangePasswordPage() {
+    const searchParams = useSearchParams()
+    const fromReset = searchParams.get('from') === 'reset'
+
     const [oldPassword, setOldPassword] = useState('')
     const [password, setPassword] = useState('')
     const [confirm, setConfirm] = useState('')
@@ -19,8 +23,8 @@ export default function ChangePasswordPage() {
             setMsg({ type: 'error', text: 'Password konfirmasi tidak sama.' })
             return
         }
-        if (password.length < 6) {
-            setMsg({ type: 'error', text: 'Password minimal 6 karakter.' })
+        if (password.length < 8) {
+            setMsg({ type: 'error', text: 'Password minimal 8 karakter.' })
             return
         }
 
@@ -28,21 +32,18 @@ export default function ChangePasswordPage() {
         setMsg(null)
 
         try {
-            // Get current user email
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user || !user.email) throw new Error('User tidak ditemukan.')
+            if (!fromReset) {
+                // Normal flow: verify old password first
+                const { data: { user } } = await supabase.auth.getUser()
+                if (!user || !user.email) throw new Error('User tidak ditemukan.')
 
-            // 1. Verify Old Password by attempting re-login
-            const { error: signInError } = await supabase.auth.signInWithPassword({
-                email: user.email,
-                password: oldPassword
-            })
-
-            if (signInError) {
-                throw new Error('Password lama salah.')
+                const { error: signInError } = await supabase.auth.signInWithPassword({
+                    email: user.email,
+                    password: oldPassword
+                })
+                if (signInError) throw new Error('Password lama salah.')
             }
 
-            // 2. Update to New Password
             const { error: updateError } = await supabase.auth.updateUser({ password })
             if (updateError) throw updateError
 
@@ -91,7 +92,7 @@ export default function ChangePasswordPage() {
 
                     <form onSubmit={handleUpdate} className="space-y-4">
                         {[
-                            { label: 'Password Lama', value: oldPassword, onChange: setOldPassword },
+                            ...(!fromReset ? [{ label: 'Password Lama', value: oldPassword, onChange: setOldPassword }] : []),
                             { label: 'Password Baru', value: password, onChange: setPassword },
                             { label: 'Konfirmasi Password Baru', value: confirm, onChange: setConfirm },
                         ].map((field) => (
