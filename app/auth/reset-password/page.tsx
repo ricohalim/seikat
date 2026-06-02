@@ -19,33 +19,41 @@ export default function ResetPasswordPage() {
 
     useEffect(() => {
         const handleAuth = async () => {
-            // PKCE flow (default Supabase): ?code=... in query string
+            // PKCE flow: ?code=... in query string
             const searchParams = new URLSearchParams(window.location.search)
             const code = searchParams.get('code')
 
             if (code) {
                 const { error } = await supabase.auth.exchangeCodeForSession(code)
-                setPageState(error ? 'invalid' : 'ready')
-                return
+                if (!error) { setPageState('ready'); return }
+                // PKCE exchange failed (e.g. different browser) — fall through to other checks
             }
 
-            // Implicit flow (legacy): #access_token=...&type=recovery in hash
+            // Implicit flow: #access_token=...&type=recovery in hash
             const hash = window.location.hash.substring(1)
             const params = new URLSearchParams(hash)
             const accessToken = params.get('access_token')
             const refreshToken = params.get('refresh_token')
             const type = params.get('type')
 
-            if (!accessToken || !refreshToken || type !== 'recovery') {
-                setPageState('invalid')
+            if (accessToken && refreshToken && type === 'recovery') {
+                const { error } = await supabase.auth.setSession({
+                    access_token: accessToken,
+                    refresh_token: refreshToken,
+                })
+                setPageState(error ? 'invalid' : 'ready')
                 return
             }
 
-            const { error } = await supabase.auth.setSession({
-                access_token: accessToken,
-                refresh_token: refreshToken,
-            })
-            setPageState(error ? 'invalid' : 'ready')
+            // No token in URL — check if user already has an active session
+            // (happens when logged-in user clicks a recovery link in the same browser)
+            const { data: { session } } = await supabase.auth.getSession()
+            if (session) {
+                setPageState('ready')
+                return
+            }
+
+            setPageState('invalid')
         }
 
         handleAuth()
