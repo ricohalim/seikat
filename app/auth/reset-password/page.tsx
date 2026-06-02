@@ -45,14 +45,6 @@ export default function ResetPasswordPage() {
                 return
             }
 
-            // No token in URL — check if user already has an active session
-            // (happens when logged-in user clicks a recovery link in the same browser)
-            const { data: { session } } = await supabase.auth.getSession()
-            if (session) {
-                setPageState('ready')
-                return
-            }
-
             setPageState('invalid')
         }
 
