@@ -9,9 +9,21 @@ export default function AuthCallbackPage() {
 
     useEffect(() => {
         const handleAuth = async () => {
-            const next = new URLSearchParams(window.location.search).get('next') || '/dashboard'
+            const searchParams = new URLSearchParams(window.location.search)
+            const next = searchParams.get('next') || '/dashboard'
+            const code = searchParams.get('code')
 
-            // Ambil token dari URL hash (#access_token=...)
+            // PKCE flow: ?code=... (Supabase may still send this regardless of flowType)
+            if (code) {
+                const { error } = await supabase.auth.exchangeCodeForSession(code)
+                if (!error) {
+                    router.replace(next)
+                    return
+                }
+                // code exchange failed — fall through to hash check
+            }
+
+            // Implicit flow: #access_token=...
             const hash = window.location.hash.substring(1)
             const params = new URLSearchParams(hash)
             const accessToken = params.get('access_token')
@@ -29,7 +41,7 @@ export default function AuthCallbackPage() {
                 }
             }
 
-            // Fallback: Jika tidak ada token, cek session aktif
+            // Fallback: cek session aktif
             const { data: { session } } = await supabase.auth.getSession()
             if (session) {
                 router.replace(next)
