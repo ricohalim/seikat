@@ -36,7 +36,7 @@ export default function ResetPasswordPage() {
             const refreshToken = params.get('refresh_token')
             const type = params.get('type')
 
-            if (accessToken && refreshToken && type === 'recovery') {
+            if (accessToken && refreshToken && (type === 'recovery' || type === 'magiclink')) {
                 const { error } = await supabase.auth.setSession({
                     access_token: accessToken,
                     refresh_token: refreshToken,
