@@ -1,9 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, AlertCircle, Mail, CheckCircle } from 'lucide-react'
+
+// Gunakan supabase-js langsung (bukan SSR) agar bisa pakai flowType: 'implicit'.
+// @supabase/ssr selalu pakai PKCE sehingga magic link hanya berfungsi di browser yang sama.
+const supabaseImplicit = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { flowType: 'implicit' } }
+)
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('')
@@ -16,11 +24,12 @@ export default function ForgotPasswordPage() {
         setLoading(true)
         setError(null)
 
-        const { error } = await supabase.auth.signInWithOtp({
+        const { error } = await supabaseImplicit.auth.signInWithOtp({
             email: email.trim().toLowerCase(),
             options: {
                 shouldCreateUser: false,
-                emailRedirectTo: `${window.location.origin}/api/auth/callback?next=%2Fdashboard%2Fchange-password%3Ffrom%3Dreset`,
+                emailRedirectTo: `${window.location.origin}/auth/callback?next=%2Fdashboard%2Fchange-password%3Ffrom%3Dreset`,
+                
             },
         })
 
