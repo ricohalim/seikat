@@ -14,5 +14,5 @@ export async function GET(request: NextRequest) {
         }
     }
 
-    return NextResponse.redirect(`${origin}/auth/reset-password?error=invalid_link`)
+    return NextResponse.redirect(`${origin}/auth/forgot-password`)
 }
