@@ -23,7 +23,7 @@ export function AgendaCard({ event, onEdit, onDelete, onViewParticipants, onMana
                         {event.status}
                     </span>
                 </div>
-                <p className="text-gray-500 text-xs mb-4 line-clamp-2 min-h-[2.5em]">{event.description}</p>
+                <p className="text-gray-500 text-xs mb-4 line-clamp-2 min-h-[2.5em] whitespace-pre-wrap">{event.description}</p>
 
                 <div className="space-y-2 text-sm text-gray-600 mb-6">
                     <div className="flex items-center gap-2">

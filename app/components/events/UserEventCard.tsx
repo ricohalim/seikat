@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from 'react'
 import { Calendar, MapPin, Clock } from 'lucide-react'
 import Link from 'next/link'
 import { Skeleton } from '../ui/Skeleton'
@@ -29,6 +32,8 @@ interface UserEventCardProps {
 }
 
 export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegistering, onRegister, onCancel, registrationStatus, waitlistReason, cancellationStatus, isCheckedIn, queueNumber }: UserEventCardProps) {
+    const [descExpanded, setDescExpanded] = useState(false)
+
     // Hitung aktif saja untuk cek apakah kuota penuh
     const activeCount = event.participants?.filter(p =>
         p.status === 'Registered'
@@ -59,9 +64,19 @@ export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegist
                     </div>
                 </div>
 
-                <p className="text-gray-600 text-sm mb-6 line-clamp-3 min-h-[4.5em]">
-                    {event.description || 'Tidak ada deskripsi.'}
-                </p>
+                <div className="mb-6">
+                    <p className={`text-gray-600 text-sm whitespace-pre-wrap ${descExpanded ? '' : 'line-clamp-3 min-h-[4.5em]'}`}>
+                        {event.description || 'Tidak ada deskripsi.'}
+                    </p>
+                    {event.description && event.description.length > 120 && (
+                        <button
+                            onClick={() => setDescExpanded(prev => !prev)}
+                            className="text-xs text-navy/60 hover:text-navy font-semibold mt-1 transition"
+                        >
+                            {descExpanded ? 'Sembunyikan' : 'Lihat selengkapnya'}
+                        </button>
+                    )}
+                </div>
 
                 <div className="mt-auto space-y-3 pt-6 border-t border-gray-50 text-sm text-gray-500">
                     <div className="flex items-center gap-3">

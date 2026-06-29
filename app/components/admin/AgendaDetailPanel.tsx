@@ -70,7 +70,7 @@ export function AgendaDetailPanel({
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {/* Description */}
                 {event.description && (
-                    <p className="text-xs text-gray-500 leading-relaxed">{event.description}</p>
+                    <p className="text-xs text-gray-500 leading-relaxed whitespace-pre-wrap">{event.description}</p>
                 )}
 
                 {/* Info rows */}
