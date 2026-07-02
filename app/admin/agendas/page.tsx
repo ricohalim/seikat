@@ -12,6 +12,7 @@ import { AgendaFormModal } from '@/app/components/admin/AgendaFormModal'
 import { ParticipantsModal } from '@/app/components/admin/ParticipantsModal'
 import { StaffModal } from '@/app/components/admin/StaffModal'
 import { EventQRModal } from '@/app/components/admin/EventQRModal'
+import { SurveyModal } from '@/app/components/admin/SurveyModal'
 
 export default function AdminAgendasPage() {
     // 1. Hook for Data
@@ -47,6 +48,10 @@ export default function AdminAgendasPage() {
     const [isQRModalOpen, setIsQRModalOpen] = useState(false)
     const [qrEventId, setQrEventId] = useState('')
     const [qrEventName, setQrEventName] = useState('')
+
+    // Survey Modal State
+    const [isSurveyModalOpen, setIsSurveyModalOpen] = useState(false)
+    const [surveyEvent, setSurveyEvent] = useState<any>(null)
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -205,9 +210,23 @@ export default function AdminAgendasPage() {
             if (error) throw error
             toast.success(data)
             fetchEvents()
+
+            // Prompt to open survey
+            const event = events.find(e => e.id === eventId)
+            if (event) {
+                toast('Buka Survey untuk kirim notifikasi ke peserta?', {
+                    action: { label: 'Buka Survey', onClick: () => { setSurveyEvent(event); setIsSurveyModalOpen(true) } },
+                    duration: 8000,
+                })
+            }
         } catch (e: any) {
             toast.error('Gagal finalisasi event: ' + e.message)
         }
+    }
+
+    const handleOpenSurvey = (event: any) => {
+        setSurveyEvent(event)
+        setIsSurveyModalOpen(true)
     }
 
     // --- Staff ---
@@ -395,6 +414,7 @@ export default function AdminAgendasPage() {
                             onManageStaff={handleManageStaff}
                             onShowQR={handleShowQR}
                             onFinalize={handleFinalizeEvent}
+                            onSurvey={handleOpenSurvey}
                         />
                     </div>
                 )}
@@ -436,6 +456,14 @@ export default function AdminAgendasPage() {
                 onClose={() => setIsQRModalOpen(false)}
                 eventName={qrEventName}
                 eventId={qrEventId}
+            />
+
+            <SurveyModal
+                isOpen={isSurveyModalOpen}
+                onClose={() => setIsSurveyModalOpen(false)}
+                eventId={surveyEvent?.id ?? ''}
+                eventTitle={surveyEvent?.title ?? ''}
+                eventFinalized={surveyEvent ? new Date(surveyEvent.date_start) < new Date() : false}
             />
         </div>
     )

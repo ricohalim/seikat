@@ -35,6 +35,7 @@ export default function EventsPage() {
     const [userCancellationStatus, setUserCancellationStatus] = useState<Record<string, string | null>>({})
     const [userCheckInStatus, setUserCheckInStatus] = useState<Record<string, boolean>>({}) // Menyimpan status kehadiran
     const [staffEventIds, setStaffEventIds] = useState<string[]>([])
+    const [userSurveyStatus, setUserSurveyStatus] = useState<Record<string, { hasSurvey: boolean; completed: boolean }>>({})
 
     // UI States
     const [activeTab, setActiveTab] = useState<'upcoming' | 'history'>('upcoming')
@@ -83,6 +84,32 @@ export default function EventsPage() {
             setUserCheckInStatus(checkInMap)
         }
         if (staffRes.data) setStaffEventIds(staffRes.data.map((s: any) => s.event_id))
+
+        // Fetch survey status for attended events
+        const attendedEventIds = (registrationsRes.data || []).filter((r: any) => r.check_in_time).map((r: any) => r.event_id)
+        if (attendedEventIds.length > 0 && currentUser) {
+            const { data: surveys } = await supabase
+                .from('event_surveys')
+                .select('id, event_id, status')
+                .in('event_id', attendedEventIds)
+                .eq('status', 'active')
+
+            if (surveys && surveys.length > 0) {
+                const surveyIds = surveys.map((s: any) => s.id)
+                const { data: responses } = await supabase
+                    .from('survey_responses')
+                    .select('event_survey_id')
+                    .eq('user_id', currentUser.id)
+                    .in('event_survey_id', surveyIds)
+
+                const completedSurveyIds = new Set((responses || []).map((r: any) => r.event_survey_id))
+                const surveyMap: Record<string, { hasSurvey: boolean; completed: boolean }> = {}
+                surveys.forEach((s: any) => {
+                    surveyMap[s.event_id] = { hasSurvey: true, completed: completedSurveyIds.has(s.id) }
+                })
+                setUserSurveyStatus(surveyMap)
+            }
+        }
 
         setLoading(false)
     }, [isAuthorized, isAdmin, currentUser])
@@ -403,6 +430,8 @@ export default function EventsPage() {
                                 isRegistering={false}
                                 onRegister={() => handleRegisterClick(event.id)}
                                 onCancel={() => handleCancelClick(event.id)}
+                                hasSurvey={userSurveyStatus[event.id]?.hasSurvey}
+                                surveyCompleted={userSurveyStatus[event.id]?.completed}
                             />
                         )
                     })}

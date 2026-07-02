@@ -1,6 +1,6 @@
 import {
     X, Edit2, Users, Shield, CheckSquare, Trash2,
-    Calendar, MapPin, Clock, Map, QrCode, Trophy
+    Calendar, MapPin, Clock, Map, QrCode, Trophy, ClipboardList
 } from 'lucide-react'
 
 interface AgendaDetailPanelProps {
@@ -12,6 +12,7 @@ interface AgendaDetailPanelProps {
     onManageStaff: (event: any) => void
     onShowQR: (id: string, title: string) => void
     onFinalize: (id: string) => void
+    onSurvey: (event: any) => void
 }
 
 function formatDate(dateStr: string) {
@@ -30,7 +31,7 @@ function statusBadgeClass(status: string) {
 
 export function AgendaDetailPanel({
     event, onClose, onEdit, onDelete,
-    onViewParticipants, onManageStaff, onShowQR, onFinalize
+    onViewParticipants, onManageStaff, onShowQR, onFinalize, onSurvey
 }: AgendaDetailPanelProps) {
     const participantCount = event.participants?.[0]?.count ?? 0
     const quota = event.quota ?? 0
@@ -163,6 +164,12 @@ export function AgendaDetailPanel({
                         icon={<CheckSquare size={13} />}
                         label="Finalize"
                         className="bg-purple-50 text-purple-700 hover:bg-purple-100"
+                    />
+                    <ActionBtn
+                        onClick={() => onSurvey(event)}
+                        icon={<ClipboardList size={13} />}
+                        label="Survey"
+                        className="bg-teal-50 text-teal-700 hover:bg-teal-100"
                     />
                     <ActionBtn
                         onClick={() => onDelete(event.id)}

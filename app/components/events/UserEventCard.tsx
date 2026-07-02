@@ -29,9 +29,11 @@ interface UserEventCardProps {
     cancellationStatus?: string
     isCheckedIn?: boolean
     queueNumber?: number
+    hasSurvey?: boolean
+    surveyCompleted?: boolean
 }
 
-export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegistering, onRegister, onCancel, registrationStatus, waitlistReason, cancellationStatus, isCheckedIn, queueNumber }: UserEventCardProps) {
+export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegistering, onRegister, onCancel, registrationStatus, waitlistReason, cancellationStatus, isCheckedIn, queueNumber, hasSurvey, surveyCompleted }: UserEventCardProps) {
     const [descExpanded, setDescExpanded] = useState(false)
 
     // Hitung aktif saja untuk cek apakah kuota penuh
@@ -202,6 +204,19 @@ export function UserEventCard({ event, isRegistered, isClosed, isStaff, isRegist
                         <span className="flex items-center justify-center gap-2">
                             Console Panitia
                         </span>
+                    </Link>
+                )}
+
+                {isCheckedIn && hasSurvey && (
+                    <Link
+                        href={`/dashboard/events/${event.id}/survey`}
+                        className={`w-full mt-2 block text-center font-bold py-2 rounded-lg transition text-sm active:scale-95 ${
+                            surveyCompleted
+                                ? 'bg-gray-100 text-gray-400 cursor-default pointer-events-none'
+                                : 'bg-teal-600 text-white hover:bg-teal-700 shadow-sm'
+                        }`}
+                    >
+                        {surveyCompleted ? '✓ Survey Sudah Diisi' : '📋 Isi Survey'}
                     </Link>
                 )}
             </div>
