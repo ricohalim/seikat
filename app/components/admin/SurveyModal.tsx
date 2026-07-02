@@ -67,16 +67,23 @@ export function SurveyModal({ isOpen, onClose, eventId, eventTitle, eventFinaliz
     const [results, setResults] = useState<any>(null)
     const [loadingResults, setLoadingResults] = useState(false)
 
-    // Load event survey on open
+    // Load event survey on open — reset ALL state when eventId changes
     useEffect(() => {
         if (!isOpen) return
+        // Reset stale results from previous event
+        setResults(null)
+        setNotifSent(false)
+        setTab('builder')
         loadEventSurvey()
         loadTemplates()
     }, [isOpen, eventId])
 
     useEffect(() => {
-        if (tab === 'results' && !results) loadResults()
-    }, [tab])
+        if (tab === 'results') {
+            setResults(null)
+            loadResults()
+        }
+    }, [tab, eventId])
 
     async function loadEventSurvey() {
         const data = await getEventSurvey(eventId)
