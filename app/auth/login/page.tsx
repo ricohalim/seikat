@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function LoginPage() {
     const [email, setEmail] = useState('')
@@ -72,6 +73,8 @@ export default function LoginPage() {
 
             // Router refresh to ensure middleware state is updated
             router.refresh()
+
+            toast.success('Berhasil masuk! Selamat datang kembali.')
 
             // Handle Redirect — hanya izinkan path internal (harus dimulai dengan /)
             // mencegah Open Redirect ke situs eksternal via ?next=https://evil.com

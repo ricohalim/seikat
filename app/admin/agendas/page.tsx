@@ -138,7 +138,9 @@ export default function AdminAgendasPage() {
                 isVerified: calculateProfileCompleteness(p.profiles) >= 90,
                 checked_in_at: p.checked_in_at,
                 cancellation_reason: p.cancellation_reason,
-                cancellation_status: p.cancellation_status
+                cancellation_status: p.cancellation_status,
+                registered_at: p.registered_at,
+                waitlist_reason: p.waitlist_reason
             }))
             setParticipants(formatted)
         }

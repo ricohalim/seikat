@@ -15,6 +15,11 @@ interface ParticipantsModalProps {
     onApproveWaitlist: (userId: string, approve: boolean) => void
 }
 
+const WAITLIST_REASON_LABELS: Record<string, { label: string; color: string }> = {
+    quota_full: { label: 'Kuota Penuh', color: 'bg-blue-50 text-blue-600 border-blue-100' },
+    sanction: { label: 'Sanksi Alpha', color: 'bg-red-50 text-red-600 border-red-100' },
+}
+
 export function ParticipantsModal({ isOpen, onClose, eventName, participants, loading, onCheckIn, onApprove, onApproveWaitlist }: ParticipantsModalProps) {
     const [searchTerm, setSearchTerm] = useState('')
     const [statusFilter, setStatusFilter] = useState<'all' | 'Registered' | 'Permitted' | 'Waiting List'>('all')
@@ -126,6 +131,7 @@ export function ParticipantsModal({ isOpen, onClose, eventName, participants, lo
                     <table className="w-full text-left text-sm">
                         <thead className="bg-gray-50 text-gray-500 uppercase text-xs font-bold tracking-wider">
                             <tr>
+                                {statusFilter === 'Waiting List' && <th className="p-4 text-center w-12">#</th>}
                                 <th className="p-4">Peserta</th>
                                 <th className="p-4 text-center">Check-In</th>
                                 <th className="p-4 text-center">Aksi</th>
@@ -140,6 +146,11 @@ export function ParticipantsModal({ isOpen, onClose, eventName, participants, lo
                                 </td></tr>
                             ) : filtered.map((p, idx) => (
                                 <tr key={idx} className="hover:bg-gray-50 transition">
+                                    {statusFilter === 'Waiting List' && (
+                                        <td className="p-4 text-center">
+                                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-orange-100 text-orange-700 text-xs font-black">{idx + 1}</span>
+                                        </td>
+                                    )}
                                     <td className="p-4">
                                         <div className="font-bold text-navy flex items-center flex-wrap gap-2">
                                             {p.full_name}
@@ -158,6 +169,16 @@ export function ParticipantsModal({ isOpen, onClose, eventName, participants, lo
                                             {p.consecutive_absences > 0 && (
                                                 <span className="inline-flex items-center gap-1 text-[10px] bg-red-50 text-red-600 px-1.5 py-0.5 rounded border border-red-100">
                                                     <AlertOctagon size={10} /> {p.consecutive_absences}x Alpha
+                                                </span>
+                                            )}
+                                            {p.waitlist_reason && WAITLIST_REASON_LABELS[p.waitlist_reason] && (
+                                                <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border ${WAITLIST_REASON_LABELS[p.waitlist_reason].color}`}>
+                                                    {WAITLIST_REASON_LABELS[p.waitlist_reason].label}
+                                                </span>
+                                            )}
+                                            {p.registered_at && p.status === 'Waiting List' && (
+                                                <span className="inline-flex items-center gap-1 text-[10px] bg-gray-50 text-gray-500 px-1.5 py-0.5 rounded border border-gray-200">
+                                                    Daftar: {new Date(p.registered_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                                 </span>
                                             )}
                                         </div>
