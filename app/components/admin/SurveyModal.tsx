@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import { Sheet } from '../ui/Sheet'
 import {
     Plus, Trash2, ChevronUp, ChevronDown, Save, BarChart2,
-    FileText, Copy, AlertCircle, Send, CheckCircle2, X
+    FileText, Copy, AlertCircle, Send, CheckCircle2, X, Download
 } from 'lucide-react'
+import * as XLSX from 'xlsx'
 import { toast } from 'sonner'
 import {
     getSurveyTemplates, getTemplateWithQuestions, upsertTemplate,
@@ -160,6 +161,34 @@ export function SurveyModal({ isOpen, onClose, eventId, eventTitle, eventFinaliz
         setQuestions([])
         setResults(null)
         toast.success('Survey dihapus.')
+    }
+
+    const handleDownloadResults = () => {
+        if (!results || !results.responses?.length) return
+        const questions: any[] = results.questions || []
+
+        // Build one row per respondent
+        const rows = results.responses.map((r: any) => {
+            const row: Record<string, any> = {
+                'Nama': r.full_name ?? 'Anonim',
+                'Waktu Isi': new Date(r.submitted_at).toLocaleString('id-ID'),
+            }
+            questions.forEach((q: any) => {
+                const ans = (r.answers || []).find((a: any) => a.question_id === q.id)
+                if (!ans) { row[q.question_text] = '-'; return }
+                if (q.type === 'checkbox') {
+                    row[q.question_text] = (ans.answer_values || []).join(', ')
+                } else {
+                    row[q.question_text] = ans.answer_text ?? '-'
+                }
+            })
+            return row
+        })
+
+        const ws = XLSX.utils.json_to_sheet(rows)
+        const wb = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(wb, ws, 'Hasil Survey')
+        XLSX.writeFile(wb, `survey_${eventTitle.replace(/\s+/g, '_')}.xlsx`)
     }
 
     const handleSendNotif = async () => {
@@ -372,6 +401,12 @@ export function SurveyModal({ isOpen, onClose, eventId, eventTitle, eventFinaliz
                                     <span className="text-sm text-gray-500 font-medium">
                                         <strong className="text-navy">{results.responses.length}</strong> respons diterima
                                     </span>
+                                    <button
+                                        onClick={handleDownloadResults}
+                                        className="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 border border-green-200 rounded-lg text-xs font-bold hover:bg-green-100 transition"
+                                    >
+                                        <Download size={13} /> Download Excel
+                                    </button>
                                 </div>
                                 {(results.questions || []).map((q: any) => (
                                     <QuestionResult
