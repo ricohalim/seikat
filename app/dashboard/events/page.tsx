@@ -44,6 +44,8 @@ export default function EventsPage() {
     const [cancellationModalOpen, setCancellationModalOpen] = useState(false)
     const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
     const [cancellingId, setCancellingId] = useState<string | null>(null)
+    const [surveyGateOpen, setSurveyGateOpen] = useState(false)
+    const [pendingRegisterEventId, setPendingRegisterEventId] = useState<string | null>(null)
 
     // Authorization & Sanction State
     const [isAuthorized, setIsAuthorized] = useState(false)
@@ -174,8 +176,15 @@ export default function EventsPage() {
         }
     }, [isAuthorized, fetchData])
 
-    // Step 1: Click Register -> Open T&C Modal
+    // Step 1: Click Register -> cek survey gate dulu
     const handleRegisterClick = (eventId: string) => {
+        // Block if there are unfilled surveys from past attended events
+        const hasPendingSurvey = Object.values(userSurveyStatus).some(s => s.hasSurvey && !s.completed)
+        if (hasPendingSurvey) {
+            setPendingRegisterEventId(eventId)
+            setSurveyGateOpen(true)
+            return
+        }
         setSelectedEventId(eventId)
         setTermsModalOpen(true)
     }
@@ -453,6 +462,47 @@ export default function EventsPage() {
                 onConfirm={handleConfirmCancellation}
                 loading={!!cancellingId}
             />
+
+            {/* Survey Gate Modal */}
+            {surveyGateOpen && (
+                <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="bg-teal-600 px-5 py-4">
+                            <h3 className="text-white font-black text-lg">📋 Ada Survey Belum Diisi</h3>
+                        </div>
+                        <div className="p-5 space-y-4">
+                            <p className="text-sm text-gray-600">
+                                Kamu perlu mengisi survey dari event sebelumnya terlebih dahulu sebelum bisa mendaftar event baru.
+                            </p>
+                            <div className="space-y-2">
+                                {Object.entries(userSurveyStatus)
+                                    .filter(([, s]) => s.hasSurvey && !s.completed)
+                                    .map(([eventId]) => {
+                                        const ev = events.find(e => e.id === eventId)
+                                        return (
+                                            <a
+                                                key={eventId}
+                                                href={`/dashboard/events/${eventId}/survey`}
+                                                className="flex items-center justify-between p-3 bg-teal-50 border border-teal-200 rounded-xl hover:bg-teal-100 transition"
+                                            >
+                                                <span className="text-sm font-bold text-teal-800 truncate pr-2">{ev?.title ?? 'Survey Event'}</span>
+                                                <span className="text-xs font-bold text-teal-600 flex-shrink-0">Isi Sekarang →</span>
+                                            </a>
+                                        )
+                                    })}
+                            </div>
+                        </div>
+                        <div className="px-5 pb-5 flex gap-2">
+                            <button
+                                onClick={() => setSurveyGateOpen(false)}
+                                className="flex-1 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-200 transition"
+                            >
+                                Nanti Saja
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
