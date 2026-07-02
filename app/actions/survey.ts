@@ -266,14 +266,16 @@ export async function submitSurveyResponse(
         .single()
     if (!survey) return { error: 'Survey tidak ditemukan atau sudah ditutup.' }
 
-    // Verify user Attended
+    // Verify user Attended (also allow if checked_in_at is set, in case status sync lags)
     const { data: participation } = await supabase
         .from('event_participants')
-        .select('status')
+        .select('status, checked_in_at')
         .eq('event_id', eventId)
         .eq('user_id', user.id)
         .single()
-    if (participation?.status !== 'Attended') return { error: 'Survey hanya bisa diisi oleh peserta yang hadir.' }
+    if (participation?.status !== 'Attended' && !participation?.checked_in_at) {
+        return { error: 'Survey hanya bisa diisi oleh peserta yang hadir.' }
+    }
 
     // Insert response
     const { data: response, error: respError } = await supabase
@@ -308,20 +310,40 @@ export async function getSurveyResults(eventId: string) {
     if (!ctx) return null
     const { supabase } = ctx
 
-    const { data: survey } = await supabase
+    // 1. Get survey + questions
+    const { data: survey, error: surveyError } = await supabase
         .from('event_surveys')
-        .select(`
-            *,
-            questions:event_survey_questions(*),
-            responses:survey_responses(
-                id, submitted_at, user_id,
-                profiles:user_id(full_name),
-                answers:survey_answers(question_id, answer_text, answer_values)
-            )
-        `)
+        .select(`*, questions:event_survey_questions(*)`)
         .eq('event_id', eventId)
         .order('order_index', { referencedTable: 'event_survey_questions', ascending: true })
         .single()
 
-    return survey
+    if (!survey) return null
+
+    // 2. Get responses + answers (split to avoid auth.users FK issue)
+    const { data: responses } = await supabase
+        .from('survey_responses')
+        .select(`id, submitted_at, user_id, answers:survey_answers(question_id, answer_text, answer_values)`)
+        .eq('event_survey_id', survey.id)
+        .order('submitted_at', { ascending: true })
+
+    // 3. Lookup profile names separately
+    const userIds = [...new Set((responses || []).map((r: any) => r.user_id))]
+    let profileMap: Record<string, string> = {}
+    if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, full_name')
+            .in('id', userIds)
+        if (profiles) {
+            profiles.forEach((p: any) => { profileMap[p.id] = p.full_name })
+        }
+    }
+
+    const enrichedResponses = (responses || []).map((r: any) => ({
+        ...r,
+        full_name: profileMap[r.user_id] ?? 'Anonim',
+    }))
+
+    return { ...survey, responses: enrichedResponses }
 }
